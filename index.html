@@ -1,0 +1,2463 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<!-- Error dashboard injected: shows first JS error details -->
+<style>
+  #js-error-banner {
+    position: sticky; top: 0; z-index: 9999;
+    font-family: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    font-size: 14px; line-height: 1.3;
+    padding: 8px 12px; border-bottom: 1px solid #c00;
+    background: #fff0f0; color: #900; display: none;
+  }
+  #js-error-banner.ok { background:#f0fff0; border-color:#0a0; color:#064; }
+  #js-error-banner .mono { font-family: ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+</style>
+<script id="early-error-dash">
+(function(){
+  if (window.__errdash) return; window.__errdash = true;
+  function base(p){ try{ return (p||'').split('/').pop(); }catch(e){ return p; } }
+  var banner = document.createElement('div');
+  banner.id = 'js-error-banner';
+  banner.setAttribute('role','alert');
+  banner.textContent = '⏳ JS initializing…';
+  document.addEventListener('DOMContentLoaded', function(){
+    document.body.prepend(banner);
+  });
+
+  function show(msg, ok){
+    banner.style.display = 'block';
+    banner.className = ok ? 'ok' : '';
+    banner.innerHTML = (ok ? '✅ ' : '❌ ') + msg;
+  }
+
+  // Window "error" catches runtime errors AND most parse errors in later scripts
+  window.addEventListener('error', function(e){
+    var fn = base(e.filename||'');
+    var ln = (typeof e.lineno==='number' && e.lineno) ? (':'+e.lineno) : '';
+    var msg = (e && e.message) ? e.message : 'Script error';
+    show('JS not loaded <span class="mono">'+ fn + ln + '</span> ' + msg, false);
+  }, true);
+
+  // Unhandled rejected promises
+  window.addEventListener('unhandledrejection', function(e){
+    var r = e.reason;
+    var t = (r && (r.stack||r.message)) ? (r.stack||r.message) : String(r);
+    show('Unhandled promise rejection: <span class="mono">'+ t +'</span>', false);
+  });
+
+  // If we reach window load without errors, mark OK
+  window.addEventListener('load', function(){
+    // Don't overwrite an existing error
+    if (banner.style.display !== 'block'){
+      show('JS loaded', true);
+    }
+  });
+})();
+</script>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>Turcotte Masonry Estimator</title>
+<style>
+  :root{ --bg:#0d1117; --card:#0f141b; --muted:#9fb4cc; --line:#1f2937;
+    --accent:#4da3ff; --ok-bg:#062012; --ok-border:#224a30; --ok-text:#b7f7c1;
+    --warn-bg:#201606; --warn-border:#5b3a0e; --warn:#ffd58a; }
+  *{box-sizing:border-box}
+  body{font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial; background:var(--bg); color:#e6edf3; margin:0}
+  .wrap{max-width:1140px; margin:0 auto; padding:16px 16px 120px}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; margin:12px 0}
+  .row{display:flex; flex-wrap:wrap; gap:12px; align-items:center}
+  label{font-size:13px; color:#b7c5d9}
+  input, select{background:#0b1017; color:#e6edf3; border:1px solid var(--line); border-radius:10px; padding:8px 10px}
+  input[type="number"]{width:120px}
+  table{width:100%; border-collapse:collapse; font-size:14px; margin-top:8px}
+  th,td{padding:8px 10px; border-bottom:1px dashed var(--line)}
+  th{color:#99c2ff; text-align:left}
+  .right{text-align:right}
+  .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace}
+  .pill{display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:999px; background:#0a1015; border:1px solid var(--line); font-size:12px}
+  .muted{color:var(--muted); font-size:12px}
+  .status{display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; border:1px solid var(--line)}
+  .ok{background:var(--ok-bg); color:var(--ok-text); border-color:var(--ok-border)}
+  .bad{background:#2a1313; color:#ffd2d2; border-color:#5a2a2a}
+  .fade{opacity:.45; filter:grayscale(.2)}
+  .warn{background:var(--warn-bg); border-color:var(--warn-border); color:var(--warn); padding:8px 10px; border-radius:10px; font-size:12px}
+  .spacer{flex:1}
+  button{background:var(--accent); color:#041425; border:0; padding:8px 12px; border-radius:10px; font-weight:600; cursor:pointer}
+  button.ghost{background:#0b1017; color:#d6e6ff; border:1px solid var(--line)}
+  .sticky{position:fixed; left:0; right:0; bottom:0; z-index:10; background:rgba(4,8,12,.92); border-top:1px solid var(--line); backdrop-filter:saturate(140%) blur(6px);}
+  .sticky-inner{max-width:1140px; margin:0 auto; padding:10px 16px; display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+  .sticky .pill{background:#0b121a}
+  .group{display:flex; gap:10px; align-items:center}
+</style>
+<style>
+  /* Turcotte: small UI polish for Mohican mix selector */
+  .mv-mix-wrap{display:inline-flex;align-items:center;gap:6px;margin-left:8px}
+  .mv-mix-wrap select{min-width:260px}
+  .mv-tag{display:inline-flex;align-items:center;gap:6px;background:#0a1015;border:1px solid #1f2937;border-radius:999px;padding:4px 8px;font-size:12px;color:#b7c5d9}
+</style>
+<style>
+  html { scroll-behavior: smooth; } /* smooth scrolling */
+  .groupbar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .groupbar .tag { background:#0b121a; border:1px solid #1f2937; color:#c9d7ee; padding:6px 10px; border-radius:999px; cursor:pointer; font-size:12px;}
+  .groupbar .tag[aria-pressed="true"] { background:#10334b; border-color:#2b6a8e; color:#e6f3ff; }
+  .group-hidden { display:none !important; }
+</style>
+<style>
+  /* A11Y Tabs upgrade */
+  .groupbar { display: none !important; } /* retire old button bar */
+  .a11y-tabs { display:flex; flex-direction:column; gap:8px; }
+  .a11y-tabs [role="tablist"] { display:flex; flex-wrap:wrap; gap:6px; }
+  .a11y-tabs [role="tab"] {
+    appearance:none; border:1px solid #1f2937; background:#0b121a; color:#cfe2ff;
+    padding:6px 12px; border-radius:999px; cursor:pointer; font-size:12px;
+  }
+  .a11y-tabs [role="tab"][aria-selected="true"] { background:#10334b; border-color:#2b6a8e; color:#fff; }
+  .a11y-tabs [role="tab"]:focus { outline:2px solid #2b6a8e; outline-offset:2px; }
+</style>
+<style>
+  /* Subcard bubbles for supplier sections */
+  .subcard {
+    background:#0a1015;
+    border:1px solid #1f2937;
+    border-radius:12px;
+    padding:10px 12px;
+    margin:10px 0 14px;
+  }
+</style>
+<style>
+  /* Dim non-relevant materials rows (safer than hiding) */
+  #matTbody tr.dim { opacity: .45; }
+</style>
+<style id="stucco-hide-waste-css">
+/* Hide the Waste / Disposal card when Stucco tab is active */
+body[data-active-group="stucco"] .wrap > .card[data-card="waste"] { display: none !important; }
+</style>
+<style>
+/* Fallback: hide non-stucco rows when Stucco tab active */
+body[data-active-group="stucco"] #matTbody tr:not([data-cats*="stucco"]) { display: none !important; }
+</style>
+<style>
+/* Hide rows that are NOT stone veneer nor bluestone when Stone Veneer tab is active */
+body[data-active-group="veneer"] #matTbody tr:not([data-cats*="stone veneer"]):not([data-cats*="bluestone"]) { display: none !important; }
+</style>
+<style>#quickGroups,#quick-groups,.quick-groups,[data-section='quick-groups']{display:none!important;}</style></head>
+<body>
+<div class="wrap">
+<h2 style="margin:8px 0">Turcotte Masonry Estimator</h2>
+<div class="status bad" id="jsStatus">❌ JS not loaded</div>
+<!-- TAX -->
+<div class="card">
+<div class="row">
+<h3 style="margin:0">Tax / Reimbursement (CT default 6.35%)</h3>
+<span class="spacer"></span>
+<div class="group">
+<label>Rate % <input id="taxPct" step="0.01" type="number" value="6.35"/></label>
+<label class="pill"><input checked="" id="tax_res" name="taxmode" type="radio"/> Residential — reimburse my material taxes</label>
+<label class="pill"><input id="tax_com" name="taxmode" type="radio"/> Commercial — charge sales tax</label>
+<button class="ghost" id="unlockTax">Manual override</button>
+</div>
+</div>
+<div class="row small muted">Residential reimburses **Materials + Concrete + Disposal** by default. Commercial taxes all buckets by default. You can still override below.</div>
+<div class="row" style="margin-top:6px">
+<label class="pill"><input checked="" disabled="" id="tax_on_materials" type="checkbox"/> Materials</label>
+<label class="pill"><input checked="" disabled="" id="tax_on_concrete" type="checkbox"/> Concrete</label>
+<label class="pill"><input disabled="" id="tax_on_fuel" type="checkbox"/> Fuel</label>
+<label class="pill"><input disabled="" id="tax_on_disposal" type="checkbox"/> Disposal</label>
+<label class="pill"><input disabled="" id="tax_on_labor" type="checkbox"/> Labor</label>
+<label class="pill"><input disabled="" id="tax_on_tools" type="checkbox"/> Tools</label>
+<label class="pill"><input disabled="" id="tax_on_oh" type="checkbox"/> Overhead</label>
+<label class="pill"><input disabled="" id="tax_on_profit" type="checkbox"/> Profit</label>
+</div>
+<div class="row small muted">CT rate is 6.35% with no local add-ons. Motor vehicle fuel is sales-tax-exempt. Use overrides as your policy requires.</div>
+</div>
+<!-- CREW -->
+<div class="card">
+<div class="row">
+<h3 style="margin:0">Crew &amp; Time</h3>
+<span class="spacer"></span>
+<button class="ghost" id="addWorkerBtn">+ Add Worker</button>
+</div>
+<div class="row" style="margin-bottom:6px">
+<label class="pill"><input checked="" id="crewWideToggle" type="checkbox"/> Use CREW‑WIDE time</label>
+<label class="pill"><input checked="" id="timeUnitsDays" type="checkbox"/> Time in Days (8 hr/day)</label>
+<label>Crew‑wide time <input id="crewWideQty" placeholder="e.g., 1" step="1" type="number"/></label>
+</div>
+<table>
+<thead><tr><th>Use</th><th>Name</th><th>Role</th><th>Rate ($/hr)</th><th>Hours</th><th>Cost</th><th></th></tr></thead>
+<tbody id="crewTbody"></tbody>
+<tfoot><tr><td class="right" colspan="5">Crew Subtotal (excl. Company)</td><td class="right mono" id="crewSubtotal">$0.00</td><td></td></tr></tfoot>
+</table>
+<div class="muted small">Set role = <b>Company</b> to flow those hours into <b>Profit</b> (not Crew).</div>
+</div>
+<!-- MATERIALS -->
+<div class="card">
+<div class="row">
+<h3 style="margin:0">Materials</h3>
+<span class="spacer"></span>
+<button class="ghost" id="addMatBtn">+ Add Material</button>
+</div>
+<table>
+<thead><tr><th>Use</th><th>Item</th><th>Supplier</th><th>Units</th><th>Unit Price</th><th>Qty</th><th>Ext.</th><th></th></tr></thead>
+<tbody id="matTbody"></tbody>
+<tfoot><tr><td class="right" colspan="6">Materials Subtotal</td><td class="right mono" id="matSubtotal">$0.00</td><td></td></tr></tfoot>
+</table>
+</div>
+<!-- CONCRETE -->
+<div class="card">
+<div class="row">
+<h3 style="margin:0">Concrete</h3>
+<span class="pill">Concrete Connections (≤ 3 yd/trip)</span>
+<span class="pill">Mohican Valley (10‑yd trucks)</span>
+<span class="spacer"></span>
+</div>
+<div class="subcard">
+<div class="row" style="margin-top:6px"><b>Concrete Connections — small loads</b></div>
+<div class="row">
+<label>Yards <input id="ct_yards" placeholder="0" step="0.25" type="number"/></label>
+<label>Price/yd ($) <input id="ct_price" step="1" type="number" value="185"/></label>
+<label>Delivery fee / trip ($) <input id="ct_delivery" step="1" type="number" value="285"/></label>
+<span class="pill">Trips (auto): <span class="mono" id="ct_trips_read">0</span></span> <label class="pill"><input id="ct_out_of_area" type="checkbox"/> Out of Area (+$75)</label>
+</div>
+<div class="row">
+<span class="pill">Material: <span class="mono" id="ct_mat">$0.00</span></span>
+<span class="pill">Delivery: <span class="mono" id="ct_deliv">$0.00</span></span>
+<span class="pill">CC Subtotal: <span class="mono" id="ct_sub">$0.00</span></span>
+</div>
+</div>
+<div class="subcard">
+<div class="row" style="margin-top:12px"><b>Mohican Valley — big trucks</b> <span class="muted">(enter quoted price/yd; 10‑yd trucks)</span></div>
+<div class="row">
+<label>Yards <input id="mv_yards" placeholder="0" step="0.5" type="number"/></label>
+<label>Price/yd ($) <input id="mv_price" placeholder="0" step="1" type="number"/></label>
+<label>Other/Manual Mohican fee ($) <input id="mv_short" placeholder="0" step="1" type="number"/></label>
+<div class="row" style="margin-top:8px">
+<label>Job date <input id="job_date" type="date"/></label>
+<label>Winter service ($/yd) <input id="mv_winter" step="0.5" type="number" value="11"/></label>
+<label class="pill"><input checked="" id="mv_winter_auto" type="checkbox"/> Auto winter by date (Nov 15–Apr 15)</label>
+<label class="pill"><input id="mv_winter_on" type="checkbox"/> Apply winter now</label>
+</div>
+<div class="row">
+<label>Truck capacity (yd) <input id="mv_cap" step="1" type="number" value="10"/></label>
+<label>Min-load threshold (yd) <input id="mv_min" step="0.5" type="number" value="5"/></label>
+<label>Short‑load fee ($/yd if load &lt; threshold) <input id="mv_short_per_yd" step="1" type="number" value="200"/></label>
+<label>Fuel surcharge / load ($) <input id="mv_fuel" step="0.5" type="number" value="30"/></label>
+<label>Environmental fee / load ($) <input id="mv_env" step="0.1" type="number" value="3.5"/></label>
+</div>
+<div class="row">
+<label class="pill"><input id="mv_ex_38" type="checkbox"/> 1/2" Aggregate (+$/yd)</label>
+<label>$/yd <input id="mv_ex_38_ppy" step="0.5" type="number" value="5"/></label>
+</div>
+<!-- DUP PUMP UI REMOVED (was here)
+<div class="row">
+  <label class="pill"><input id="pump_use" type="checkbox"> Use pump truck</label>
+  <label>Size
+    <select id="pump_size">
+      <option value="32@290">32 m — $290/hr (4 hr min)</option>
+      <option value="40@310">40 m — $310/hr (4 hr min)</option>
+    </select>
+  </label>
+  <label>Hours <input id="pump_hours" type="number" step="0.5" placeholder="0"></label>
+</div>
+-->
+<div class="row">
+<span class="pill">Trucks (auto): <span class="mono" id="mv_trucks">0</span></span>
+<span class="pill">Per‑load fees: <span class="mono" id="mv_loadfees">$0.00</span></span>
+<span class="pill">Short‑load surcharges: <span class="mono" id="mv_shortfees">$0.00</span></span>
+<span class="pill">Material: <span class="mono" id="mv_mat">$0.00</span></span>
+<span class="pill">Extras: <span class="mono" id="mv_extras">$0.00</span></span>
+<span class="pill">Pump: <span class="mono" id="mv_pump">$0.00</span></span>
+</div>
+<div class="row">
+<span class="pill">MV Subtotal: <span class="mono" id="mv_sub">$0.00</span></span>
+</div>
+</div>
+</div>
+</div>
+<!-- FUEL -->
+<div class="card">
+<div class="row">
+<h3 style="margin:0">Vehicle Fuel</h3>
+<span class="pill">PPG = AAA CT peak Regular $4.984 (6/14/22)</span>
+</div>
+<div class="row">
+<label>Price per gallon ($) <input id="fuel_ppg" step="0.001" type="number" value="4.984"/></label>
+<label>Gallons for this job <input id="fuel_gal" placeholder="0" step="0.5" type="number"/></label>
+</div>
+<div class="row">
+<span class="pill">Fuel Subtotal: <span class="mono" id="fuel_sub">$0.00</span></span>
+</div>
+</div>
+<!-- WASTE -->
+<div class="card">
+<div class="row"><h3 style="margin:0">Waste / Disposal</h3><span class="spacer"></span><button class="ghost" id="wasteAdd">+ Add Disposal item</button><span class="muted">Modern Materials — Clean asphalt disposal</span></div>
+<table>
+<thead><tr><th>Use</th><th>Material</th><th>Facility</th><th>Units</th><th>Rate</th><th>Qty</th><th>Ext.</th><th></th></tr></thead>
+<tbody id="wasteTbody"></tbody>
+<tfoot><tr><td class="right" colspan="6">Disposal Subtotal</td><td class="right mono" id="wasteSubtotal">$0.00</td><td></td></tr></tfoot>
+</table>
+</div>
+<!-- TOOLS -->
+<div class="card">
+<div class="row"><h3 style="margin:0">Tools Depreciation Reserve</h3><span class="spacer"></span><button class="ghost" id="addToolBtn">+ Add Tool</button></div>
+<table>
+<thead><tr><th>Use</th><th>Tool</th><th>Replace Cost ($)</th><th>Lifetime (hrs)</th><th>Reserve frac (0–1)</th><th>Use (hrs)</th><th>Ext.</th><th></th></tr></thead>
+<tbody id="toolTbody"></tbody>
+<tfoot><tr><td class="right" colspan="6">Tools Reserve Subtotal</td><td class="right mono" id="toolSubtotal">$0.00</td><td></td></tr></tfoot>
+</table>
+</div>
+<!-- TOTALS -->
+<div class="card">
+<div class="row">
+<span class="pill">Directs (excl. Company): <span class="mono" id="directs">$0.00</span></span>
+<span class="pill">Overhead: <span class="mono" id="ohAmt">$0.00</span></span>
+<span class="pill">Profit (incl. Company): <span class="mono" id="profitAmt">$0.00</span></span>
+<span class="pill"><span id="taxLabel">Tax Reimbursement</span>: <span class="mono" id="taxAmt2">$0.00</span></span>
+<span class="pill" style="background:#153251; border-color:#2c5a8c; color:#d9ecff">GRAND: <span class="mono" id="grand">$0.00</span></span>
+<span class="spacer"></span>
+<div class="group">
+<label>OH % <input id="ohPct" step="1" type="number" value="0"/></label>
+<label>Profit % <input id="profitPct" step="1" type="number" value="0"/></label>
+</div>
+</div>
+<div class="muted small" style="margin-top:6px">
+      Calc: Directs = Crew (excl. Co.) + Materials + Concrete + Fuel + Tools + Disposal. Overhead = Directs × OH%. Profit = Company + (Directs + Overhead) × Profit%. Grand = Directs + Overhead + Profit + Tax/Reimb.
+    </div>
+</div>
+<!-- sticky -->
+<div class="sticky">
+<div class="sticky-inner">
+<span class="pill">Crew (excl. Co.): <span class="mono" id="stickyCrew">$0.00</span></span>
+<span class="pill">Company → Profit: <span class="mono" id="stickyCompanyToProfit">$0.00</span></span>
+<span class="pill">Materials: <span class="mono" id="stickyMat">$0.00</span></span>
+<span class="pill">Concrete: <span class="mono" id="stickyConc">$0.00</span></span>
+<span class="pill">Fuel: <span class="mono" id="stickyFuel">$0.00</span></span>
+<span class="pill">Tools: <span class="mono" id="stickyTools">$0.00</span></span>
+<span class="pill">Disposal: <span class="mono" id="stickyWaste">$0.00</span></span>
+<span class="pill">OH: <span class="mono" id="stickyOH">$0.00</span></span>
+<span class="pill">Profit: <span class="mono" id="stickyProfit">$0.00</span></span>
+<span class="pill"><span id="stickyTaxLabel">Reimb.</span>: <span class="mono" id="stickyTax">$0.00</span></span>
+<span class="spacer"></span>
+<span class="pill" style="background:#153251; border-color:#2c5a8c; color:#d9ecff">GRAND: <span class="mono" id="stickyGrand">$0.00</span></span>
+</div>
+</div>
+<div class="card"><div class="warn" id="err" style="display:none"></div></div>
+</div>
+<script>
+(function(){
+  const byId = id => document.getElementById(id);
+  const fmt = n => '$' + (Number.isFinite(n)?n:0).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2});
+  const num = v => { if(v===null||v===undefined) return 0; const s=String(v).trim(); if(s==='') return 0; const n=parseFloat(s); return Number.isFinite(n)?n:0; };
+
+  const jsStatus = byId('jsStatus'); jsStatus.textContent='✅ JS loaded and running'; jsStatus.classList.remove('bad'); jsStatus.classList.add('ok');
+
+  // ===== Crew =====
+  let crew = [
+    {id:'owner', name:'Owner (Rob)', role:'owner', rate:50, use:true, hrs:0},
+    {id:'company', name:'Company (Overhead → Profit)', role:'company', rate:50, use:true, hrs:0},
+    {id:'dave', name:'Uncle Dave (Foreman)', role:'foreman', rate:43.75, use:true, hrs:0},
+    {id:'jorge', name:'Jorge (Mason)', role:'mason', rate:30, use:true, hrs:0},
+    {id:'labor', name:'Laborer', role:'laborer', rate:25, use:true, hrs:0},
+  ];
+  let crewWideOn = true, crewDaysMode = true;
+  const HOURS_PER_DAY = 8;
+
+  function renderCrew(){
+    const tb = byId('crewTbody'); tb.innerHTML='';
+    crew.forEach(w=>{
+      const tr = document.createElement('tr'); tr.dataset.id=w.id; tr.classList.toggle('fade', crewWideOn);
+      tr.innerHTML = `
+        <td><input type="checkbox" class="crew_use" ${w.use?'checked':''}></td>
+        <td><input class="crew_name" value="${w.name}"></td>
+        <td>
+          <select class="crew_role">
+            <option value="owner" ${w.role==='owner'?'selected':''}>Owner</option>
+            <option value="company" ${w.role==='company'?'selected':''}>Company</option>
+            <option value="foreman" ${w.role==='foreman'?'selected':''}>Foreman</option>
+            <option value="mason" ${w.role==='mason'?'selected':''}>Mason</option>
+            <option value="laborer" ${w.role==='laborer'?'selected':''}>Laborer</option>
+            <option value="other" ${w.role==='other'?'selected':''}>Other</option>
+          </select>
+        </td>
+        <td><input type="number" class="crew_rate" step="0.25" value="${w.rate}"></td>
+        <td><input type="number" class="crew_hrs" step="1" placeholder="0" ${crewWideOn?'disabled':''} value="${crewWideOn?'':(w.hrs||'')}"></td>
+        <td class="right mono crew_cost">$0.00</td>
+        <td><button class="ghost crew_del">✕</button></td>`;
+      tb.appendChild(tr);
+    });
+    bindCrewRowEvents(); updateAll();
+  }
+  function bindCrewRowEvents(){
+    document.querySelectorAll('#crewTbody tr').forEach(tr=>{
+      const id = tr.dataset.id; const idx = crew.findIndex(c=>c.id===id);
+      tr.querySelector('.crew_use').addEventListener('change', e=>{ crew[idx].use=e.target.checked; updateAll(); });
+      tr.querySelector('.crew_name').addEventListener('input', e=>{ crew[idx].name=e.target.value; });
+      tr.querySelector('.crew_role').addEventListener('change', e=>{ crew[idx].role=e.target.value; updateAll(); });
+      tr.querySelector('.crew_rate').addEventListener('input', e=>{ crew[idx].rate=num(e.target.value); updateAll(); });
+      const hrs=tr.querySelector('.crew_hrs'); if(hrs){ hrs.addEventListener('input', e=>{ crew[idx].hrs=num(e.target.value); updateAll(); }); }
+      tr.querySelector('.crew_del').addEventListener('click', ()=>{ crew.splice(idx,1); renderCrew(); });
+    });
+  }
+  byId('addWorkerBtn').addEventListener('click', ()=>{ const id='w_'+Math.random().toString(36).slice(2,7); crew.push({id,name:'Worker',role:'mason',rate:30,use:true,hrs:0}); renderCrew(); });
+  byId('crewWideToggle').addEventListener('change', ()=>{ crewWideOn = byId('crewWideToggle').checked; renderCrew(); });
+  byId('timeUnitsDays').addEventListener('change', ()=>{ crewDaysMode = byId('timeUnitsDays').checked; updateAll(); });
+  byId('crewWideQty').addEventListener('input', updateAll);
+
+  function crewCalc(){
+    const q = num(byId('crewWideQty').value);
+    const baseHours = crewDaysMode ? q*HOURS_PER_DAY : q;
+    let subtotalExclCompany=0, companyCost=0;
+    document.querySelectorAll('#crewTbody tr').forEach(tr=>{
+      const idx = crew.findIndex(c=>c.id===tr.dataset.id); const w = crew[idx];
+      const hrs = crewWideOn ? (w.use ? baseHours : 0) : (w.use ? (w.hrs||0) : 0);
+      const cost = w.use ? hrs * (w.rate||0) : 0;
+      tr.querySelector('.crew_cost').textContent = fmt(cost);
+      if(w.role==='company'){ companyCost+=cost; } else { subtotalExclCompany+=cost; }
+    });
+    byId('crewSubtotal').textContent = fmt(subtotalExclCompany);
+    return {subtotalExclCompany, companyCost};
+  }
+
+  // ===== Materials =====
+  
+  
+let materials = [
+  {id:'mCT_DC_FLAT',   use:false, item:"Desert Creek Mosaic ThinStone — flats",   supplier:"Connecticut Stone", units:"sf",  price:11.87, qty:0, cats:["masonry","stone veneer"]},
+  {id:'mCT_DC_CORNER', use:false, item:"Desert Creek Mosaic Corner ThinStone",    supplier:"Connecticut Stone", units:"lf",  price:17.57, qty:0, cats:["masonry","stone veneer"]},
+  {id:'mCT_PMAVM',     use:false, item:"SPEC MIX Polymer-Modified Adhered Veneer Mortar — 80 lb (Gray)", supplier:"Connecticut Stone", units:"bag", price:21.75, qty:0, cats:["masonry","stone veneer","stucco"]},
+  {id:'mLOW_S_TypeS60',use:false, item:"Sakrete Type S Mortar Mix — 60 lb",       supplier:"Lowe's",           units:"bag", price:8.28,  qty:0, cats:["masonry","stucco"]},
+  {id:'mLOW_SV_50',    use:false, item:"Sakrete Stone Veneer Mortar — 50 lb",     supplier:"Lowe's",           units:"bag", price:9.88,  qty:0, cats:["masonry","stone veneer","stucco"]},
+  {id:'mCOL_DWV9402',  use:false, item:"DeWALT Fleece Dust Bags (DWV9402) — 5-pack", supplier:"Colony Hardware", units:"pack",price:45.00, qty:0, cats:["stucco","masonry","concrete","tools"]},
+
+  {id:'m1',  use:false, item:"8' Plastic paver edging",            supplier:'New Haven Masonry', units:'each',  price:12, qty:0, step:1,    roundUp:true},
+  {id:'m2',  use:false, item:"8' Aluminum paver edging",           supplier:'New Haven Masonry', units:'each',  price:18, qty:0, step:1,    roundUp:true},
+  {id:'m3',  use:false, item:"12\" paver spikes — 150/box",        supplier:'New Haven Masonry', units:'box',   price:72, qty:0, step:1,    roundUp:true, cats:["pavers", ]},
+  {id:'m4',  use:false, item:"SPEC MIX Type S — 80 lb",            supplier:'New Haven Masonry', units:'bag',   price:11, qty:0, cats:["stucco"]},
+  {id:'m5',  use:false, item:"SPEC MIX Stone Veneer — 80 lb",      supplier:'New Haven Masonry', units:'bag',   price:18, qty:0, cats:["masonry","stone veneer","bluestone"]},
+  {id:'m6',  use:false, item:"Concrete wire mesh 5'×10'",          supplier:'New Haven Masonry', units:'sheet', price:11, qty:0, cats:["concrete", ]},
+  {id:'m7',  use:false, item:"6\"×10' expansion joint",            supplier:'New Haven Masonry', units:'each',  price:8,  qty:0, cats:["concrete", ]},
+  {id:'m8',  use:false, item:"SPEC MIX Core Fill Grout 3k — 80 lb",supplier:'Homer C. Godfrey', units:'bag',    price:11, qty:0, cats:["masonry"]},
+  {id:'m9',  use:false, item:"12\" hollow concrete block",         supplier:'New Haven Masonry', units:'each',  price:5,  qty:0},
+  {id:'m10', use:false, item:"Bulk crushed rock 3/4\"",            supplier:'SiteOne',          units:'yard',  price:44, qty:0, step:0.25, roundUp:false},
+  {id:'m11', use:false, item:"Bluestone (enter price per sf)",     supplier:'New Haven Masonry', units:'sf',   price:0,  qty:0, step:1,    roundUp:false},
+  {id:"mNH1", use:false, item:"12\" hollow concrete block", supplier:"New Haven Masonry", units:"each", price:4.8, qty:0, cats:["masonry"]},
+  {id:"mNH2", use:false, item:"12\" Durawall — 10'", supplier:"New Haven Masonry", units:"each", price:7.85, qty:0, cats:["masonry"]},
+  {id:"mNH3", use:false, item:"#5 rebar (5/8\") — 20'", supplier:"New Haven Masonry", units:"each", price:14.95, qty:0, cats:["masonry","concrete"]},
+  {id:"mNH5", use:false, item:"QUIKRETE 5000 — 80 lb", supplier:"New Haven Masonry", units:"bag", price:8.95, qty:0, cats:["concrete", "masonry"]},
+  {id:"mNH6", use:false, item:"5/8\" × 10\" anchor bolt set (bolt+nuts+washer)", supplier:"New Haven Masonry", units:"each", price:2.7, qty:0, cats:["concrete", "masonry"]},
+  {id:"mNH7", use:false, item:"Bluestone 1\" — price per sf", supplier:"New Haven Masonry", units:"sf", price:10.95, qty:0, cats:["masonry","bluestone"]},
+  {id:"mNH8", use:false, item:"Bluestone 1.5\" — price per sf", supplier:"New Haven Masonry", units:"sf", price:12.5, qty:0, cats:["masonry","bluestone"]},
+
+  {id:'m2001',use:false,item:"Stucco Depot PRO BASE — 50 lb basecoat adhesive",supplier:'Stucco Depot',units:'bag',price:19.50,qty:0,step:10,roundUp:false,cats:["stucco"],coverageSqft:90},
+  {id:'m2002',use:false,item:"Standard EIFS Fiberglass Mesh — 38\"×150' roll",supplier:'Stucco Depot',units:'roll',price:60,qty:0,step:50,roundUp:false,cats:["stucco"],coverageSqft:350},
+  {id:'m2003',use:false,item:"Parex DPR Sand Coarse — 5 gal",supplier:'Parex',units:'pail',price:75,qty:0,step:50,roundUp:false,cats:["stucco"],coverageSqft:90},
+  {id:'m2004',use:false,item:"Parex DPR Sand Fine — 5 gal",supplier:'Parex',units:'pail',price:75,qty:0,step:50,roundUp:false,cats:["stucco"],coverageSqft:150},
+  {id:'m2005',use:false,item:"Parex DPR Swirl Fine — 5 gal",supplier:'Parex',units:'pail',price:75,qty:0,step:50,roundUp:false,cats:["stucco"],coverageSqft:120},
+  {id:'m2006',use:false,item:"Parex DPR Sand Smooth — 5 gal",supplier:'Parex',units:'pail',price:75,qty:0,step:50,roundUp:false,cats:["stucco"],coverageSqft:280},
+  {id:'m2007',use:false,item:"MP Roll‑Tex Coating — 5 gal",supplier:'MP Architectural Coatings',units:'pail',price:90,qty:0,step:50,roundUp:false,cats:["stucco"],coverageSqft:300},
+  {id:'m2008',use:false,item:"GREEN MAKER Decoplast Premium Basecoat — 50 lb",supplier:'RMC Stucco Supply',units:'bag',price:31,qty:0,step:10,roundUp:false,cats:["stucco"],coverageSqft:90},
+  {id:'m2009',use:false,item:"EPS EIFS Foam — 2\" (2'×4', 9 sheets) per bundle",supplier:'RMC Stucco Supply',units:'bundle',price:45,qty:0,step:50,roundUp:false,cats:["stucco"],coverageSqft:72},
+  {id:'m2010',use:false,item:"EPS EIFS Foam — 1.5\" (2'×4', 13 sheets) per bundle",supplier:'Local EIFS supplier',units:'bundle',price:45,qty:0,step:50,roundUp:false,cats:["stucco"],coverageSqft:104},
+  {id:'m2011',use:false,item:"EPS EIFS Foam — 1\" (2'×4', 18 sheets) per bundle",supplier:'Local EIFS supplier',units:'bundle',price:45,qty:0,step:50,roundUp:false,cats:["stucco"],coverageSqft:144},
+  {id:'m2012',use:false,item:"EPS EIFS Foam — 3/4\" (2'×4', 30 sheets) per bundle",supplier:'Local EIFS supplier',units:'bundle',price:45,qty:0,step:50,roundUp:false,cats:["stucco"],coverageSqft:240},
+  {id:'m2013',use:false,item:"Red Baron stucco masking tape — 2\" × 180' roll",supplier:'RMC Stucco Supply',units:'roll',price:7.50,qty:0,step:1,roundUp:true,cats:["stucco"]},
+  {id:'m2014',use:false,item:"Stucco knife",supplier:'Stucco Depot',units:'each',price:15,qty:0,step:1,roundUp:true,cats:["stucco"]},
+  {id:'mCT_BBS_TREAD', use:false, item:"Bluestone Blue Select Tread", supplier:"Connecticut Stone", units:"sf", price:20.20, qty:0, cats:["masonry","stone veneer"]},
+  {id:'mCT_HB_STRIP', use:false, item:"Hampton Blend Strip Cut Thinstone", supplier:"Connecticut Stone", units:"sf", price:8.00, qty:0, cats:["masonry","stone veneer"]},
+  {id:'mCT_HB_STRIP_CORNER', use:false, item:"Hampton Blend Strip Cut Thinstone Corners", supplier:"Connecticut Stone", units:"lf", price:17.57, qty:0, cats:["masonry","stone veneer"]},
+  {id:'mTIL_DrivewayMix', use:false, item:"Driveway Mix Asphalt", supplier:"Tilcon", units:"ton", price:108.10, qty:0, cats:["concrete"]},
+  {id:'mBLS_DeepRiver34', use:false, item:"Deep River 3/4\" Stone", supplier:"Branford Landscape Supply", units:"yard", price:65.00, qty:0, cats:["pavers","concrete"]},
+  {id:'mCOL_ScaffoldTag', use:false, item:"Scaffold Tag (All 3 Colors)", supplier:"Colony Hardware", units:"each", price:13.59, qty:0, cats:["tools"]},
+  {id:'mCOL_ScaffoldTagHolder', use:false, item:"Scaffold Tag Holder", supplier:"Colony Hardware", units:"each", price:21.02, qty:0, cats:["tools"]},
+  {id:'mSO_KY_Bluegrass_Sod', use:false, item:"Kentucky Bluegrass Sod", supplier:"SiteOne", units:"sf", price:0.85, qty:0, cats:["pavers"]},
+  {id:'mSO_TopSoil_Bulk', use:false, item:"Top Soil Bulk", supplier:"SiteOne", units:"yard", price:45.00, qty:0, cats:["pavers"]},
+  {id:'mNHM_Concrete_80lb', use:false, item:"Concrete 80lb Bag", supplier:"New Haven Masonry", units:"bag", price:6.36, qty:0, cats:["concrete"]},
+  {id:'mLOW_ColdPatchAsphalt_50lb', use:false, item:"Cold Patch Asphalt 50 lb Bag", supplier:"Lowes", units:"bag", price:22.38, qty:0, cats:["concrete"]},
+  {id:'mLOW_Sakrete_Play_Sand_50lb', use:false, item:"Sakrete Play Sand 50lb Bag", supplier:"Lowes", units:"bag", price:8.28, qty:0, cats:["pavers","concrete"]},
+];
+
+
+  function renderMaterials(){
+    // HTML-escape for attribute values to avoid breaking inputs when labels contain quotes (e.g., 6"×10')
+    const esc = s => String(s).replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+
+    const tb=byId('matTbody'); tb.innerHTML='';
+    // Optional category filter: show only materials matching window.__matCats if defined
+    var cats = (window.__matCats && Array.isArray(window.__matCats) && window.__matCats.length) ? window.__matCats : null;
+    /* ROBUST TAB->CATS MAPPING */
+    try{
+      const t = document.querySelector('#sections-tablist [role="tab"][aria-selected="true"]');
+      const g = t ? t.getAttribute('data-group') : null;
+      // Only force cats if a real group is active (not "all")
+      if (g && g !== 'all') {
+        // Known categories present in data: stucco, masonry, concrete, bluestone, stone veneer
+        // Map group->cats focus; for Stucco we only want stucco
+        if (g === 'stucco') cats = ['stucco'];
+      }
+    }catch(e){}
+    // If Stucco tab is active, force a stucco-only category filter
+    try{
+      const activeTab = document.querySelector('#sections-tablist [role="tab"][aria-selected="true"]');
+      const activeGroup = activeTab ? activeTab.getAttribute('data-group') : null;
+      if(activeGroup==='stucco'){ cats = ['stucco']; }
+    }catch(e){}
+    
+
+    materials.filter(m=> !cats || (m.cats && m.cats.some(c=>cats.includes(c)))).forEach(m=>{
+      const tr=document.createElement('tr'); tr.dataset.id=m.id; tr.classList.toggle('fade', !m.use);
+      tr.innerHTML = `
+        <td><input type="checkbox" class="mat_use" ${m.use?'checked':''}></td>
+        <td><input class="mat_item" value="${esc(m.item)}"></td>
+        <td><input class="mat_sup" value="${esc(m.supplier)}"></td>
+        <td><input class="mat_units" value="${esc(m.units)}"></td>
+        <td><input type="number" class="mat_price" step="0.01" value="${m.price}"></td>
+        <td><input type="number" class="mat_qty" step="${m.step||1}" placeholder="${m.coverageSqft?'Area (sf)':'0'}" value="${m.qty||''}"></td>
+        <td class="right mono mat_ext">$0.00</td>
+        <td><button class="ghost mat_del">✕</button></td>`;
+      tr.setAttribute('data-cats', (m.cats||[]).join(','));
+      tb.appendChild(tr);
+    });
+    bindMatEvents(); updateAll();
+  }
+  function bindMatEvents(){
+    document.querySelectorAll('#matTbody tr').forEach(tr=>{
+      const idx = materials.findIndex(x=>x.id===tr.dataset.id);
+      tr.querySelector('.mat_use').addEventListener('change', e=>{ materials[idx].use=e.target.checked; tr.classList.toggle('fade', !materials[idx].use); updateAll(); });
+      tr.querySelector('.mat_item').addEventListener('input', e=>{ materials[idx].item=e.target.value; });
+      tr.querySelector('.mat_sup').addEventListener('input', e=>{ materials[idx].supplier=e.target.value; });
+      tr.querySelector('.mat_units').addEventListener('input', e=>{ materials[idx].units=e.target.value; });
+      tr.querySelector('.mat_price').addEventListener('input', e=>{ materials[idx].price=num(e.target.value); updateAll(); });
+      tr.querySelector('.mat_qty').addEventListener('input', e=>{ const v=num(e.target.value); materials[idx].qty=v; if(v>0 && !materials[idx].use){ materials[idx].use=true; tr.querySelector('.mat_use').checked=true; tr.classList.remove('fade'); } updateAll(); });
+      tr.querySelector('.mat_del').addEventListener('click', ()=>{ materials.splice(idx,1); renderMaterials(); });
+    });
+  }
+  function materialsSubtotal(){
+    let sub=0;
+    document.querySelectorAll('#matTbody tr').forEach(tr=>{
+      const idx = materials.findIndex(x=>x.id===tr.dataset.id); const m = materials[idx];
+      const areaOrQty = num(m.qty);
+      const price = num(m.price);
+      let units = areaOrQty;
+      if (m.coverageSqft && m.coverageSqft>0) {
+        // Treat qty as AREA in square feet; buy whole units (ceil)
+        units = Math.ceil((areaOrQty||0) / m.coverageSqft);
+        // annotate UI for clarity
+        const extCell = tr.querySelector('.mat_ext');
+        if (extCell) extCell.setAttribute('title', `${units} ${m.units||'unit'}(s) @ ${fmt(price)} each (coverage ${m.coverageSqft} sf/${m.units||'unit'})`);
+      } else if (m.roundUp) {
+        units = Math.ceil(areaOrQty||0);
+      }
+      const ext = m.use ? price * (units||0) : 0;
+      sub += ext; tr.querySelector('.mat_ext').textContent = fmt(ext);
+    });
+    byId('matSubtotal').textContent = fmt(sub); return sub;
+  }
+
+  // ===== Concrete =====
+  function concreTecTS(){
+    const y = num(byId('ct_yards').value);
+    const p = num(byId('ct_price').value);
+    const d = num(byId('ct_delivery').value);
+    const trips = Math.ceil((y||0)/3);
+    byId('ct_trips_read').textContent = isFinite(trips)?trips:0;
+    const mat = y*p; const del = trips*d; const oof = (byId('ct_out_of_area') && byId('ct_out_of_area').checked) ? 75 : 0; const sub = mat+del+oof;
+    byId('ct_mat').textContent = fmt(mat);
+    byId('ct_deliv').textContent = fmt(del);
+    byId('ct_sub').textContent = fmt(sub);
+    return sub;
+  }
+  
+function mohicanValley(){
+    // Inputs
+    const yRaw = num(byId('mv_yards').value);
+    const totalY = (yRaw>0 && yRaw<2) ? 2 : yRaw;
+    const price = num(byId('mv_price').value);
+    const cap = Math.max(1, num(byId('mv_cap')?.value || 10));
+    const minY = num(byId('mv_min')?.value || 5);
+    const shortPerYd = num(byId('mv_short_per_yd')?.value || 200);
+    const fuelPerLoad = num(byId('mv_fuel')?.value || 30);
+    const envPerLoad  = num(byId('mv_env')?.value  || 3.5);
+    const manualOther = num(byId('mv_short')?.value || 0); // legacy manual field
+
+    // Winter logic
+    const winterRate = num(byId('mv_winter')?.value || 0);
+    let winterOn = !!(byId('mv_winter_on') && byId('mv_winter_on').checked);
+    const auto = byId('mv_winter_auto')?.checked;
+    const jd = byId('job_date')?.value;
+    if(auto && jd){
+      const d = new Date(jd+'T00:00:00');
+      const mm = d.getMonth()+1, dd = d.getDate();
+      // Nov 15 - Dec 31 OR Jan 1 - Apr 15
+      winterOn = ( (mm>10 && (mm<12 || (mm===11 && dd>=15) || (mm===12))) || (mm<5 || (mm===4 && dd<=15)) );
+      if(byId('mv_winter_on')) byId('mv_winter_on').checked = winterOn;
+    }
+    const winterPerYd = winterOn ? winterRate : 0;
+
+    // Extras per-yd
+    const ex_air = (byId('mv_ex_air')?.checked ? num(byId('mv_ex_air_ppy').value) : 0);
+    const ex_38  = (byId('mv_ex_38')?.checked ? num(byId('mv_ex_38_ppy').value) : 0);
+    const ex_fib = (byId('mv_ex_fiber')?.checked ? num(byId('mv_ex_fiber_ppy').value) : 0);
+    const ex_col = (byId('mv_ex_color')?.checked ? num(byId('mv_ex_color_ppy').value) : 0);
+    const extrasPerYd = ex_air + ex_38 + ex_fib + ex_col;
+
+    // Trucking math
+    const trucks = Math.ceil((totalY||0)/cap);
+    let remaining = totalY, mvMat=0, shortFees=0, loadFees=0;
+    for(let t=0; t<trucks; t++){
+      const loadY = Math.min(cap, remaining);
+      remaining -= loadY;
+      mvMat += loadY * (price + winterPerYd + extrasPerYd);
+      loadFees += fuelPerLoad + envPerLoad;
+      if(loadY>0 && loadY < minY){ shortFees += loadY * shortPerYd; }
+    }
+
+    // Pump
+    let pump=0;
+    const pumpApply = !!(byId('mv_apply_pump') && byId('mv_apply_pump').checked);
+    const pumpOn = byId('pump_use')?.checked;
+    if(pumpOn){
+      const val = (byId('pump_size')?.value || '32@290');
+      const rate = val.includes('@') ? parseFloat(val.split('@')[1]) : 290;
+      const hrsRaw = num(byId('pump_hours')?.value || 0);
+      const hrs = Math.max(hrsRaw, 4); /// 4 hr minimum
+      pump = rate * hrs;
+    }
+
+
+    // Time overage (6 min/yd allowed) — $300/hr if exceeded
+    let timeOver = 0;
+    const applyTime = !!(byId('mv_apply_time') && byId('mv_apply_time').checked);
+    const avgDischarge = num(byId('mv_discharge')?.value || 0); // minutes per truck
+    if(avgDischarge>0){
+      const allowed = 6 * (totalY||0);               // minutes allowed
+      const actual  = (trucks||0) * avgDischarge;    // minutes used
+      if(actual > allowed){
+        const overMin = actual - allowed;
+        const overHrs = overMin / 60;
+        timeOver = overHrs * 300; // $300/hr
+      }
+    }
+    const extras = (totalY||0)*extrasPerYd; // separate display for clarity
+    const sub = mvMat + shortFees + loadFees + (pumpApply ? pump : 0) + (applyTime ? timeOver : 0) + manualOther;
+
+    // Display
+    byId('mv_trucks') && (byId('mv_trucks').textContent = trucks||0);
+    byId('mv_mat')    && (byId('mv_mat').textContent = fmt(mvMat));
+    byId('mv_shortfees') && (byId('mv_shortfees').textContent = fmt(shortFees));
+    byId('mv_loadfees')  && (byId('mv_loadfees').textContent  = fmt(loadFees));
+    byId('mv_extras') && (byId('mv_extras').textContent = fmt(extras));
+    byId('mv_pump')   && (byId('mv_pump').textContent   = fmt(pump));
+    byId('mv_pump_fee') && (byId('mv_pump_fee').textContent = fmt(pump));
+    byId('mv_time_overage') && (byId('mv_time_overage').textContent = fmt(timeOver));
+    byId('mv_sub').textContent = fmt(sub);
+    return sub;
+  }
+
+  // ===== Fuel =====
+  function fuelSubtotal(){
+    const ppg=num(byId('fuel_ppg').value), gal=num(byId('fuel_gal').value);
+    const sub = ppg*gal; byId('fuel_sub').textContent = fmt(sub); return sub;
+  }
+
+  // ===== Waste =====
+  let waste=[{id:'w1', use:false, item:'Clean asphalt (disposal)', facility:'Modern Materials', units:'ton', rate:9, qty:0}];
+  function renderWaste(){
+    const tb=byId('wasteTbody'); tb.innerHTML='';
+    waste.forEach(w=>{
+      const tr=document.createElement('tr'); tr.dataset.id=w.id; tr.classList.toggle('fade', !w.use);
+      tr.innerHTML = `
+        <td><input type="checkbox" class="w_use" ${w.use?'checked':''}></td>
+        <td><input class="w_item" value="${w.item}"></td>
+        <td><input class="w_fac" value="${w.facility}"></td>
+        <td><input class="w_units" value="${w.units}"></td>
+        <td><input type="number" class="w_rate" step="0.01" value="${w.rate}"></td>
+        <td><input type="number" class="w_qty" step="0.25" placeholder="0" value="${w.qty||''}"></td>
+        <td class="right mono w_ext">$0.00</td>
+        <td><button class="ghost w_del">✕</button></td>`;
+      tb.appendChild(tr);
+    });
+    bindWasteEvents(); updateAll();
+  }
+  function bindWasteEvents(){
+    document.querySelectorAll('#wasteTbody tr').forEach(tr=>{
+      const idx=waste.findIndex(x=>x.id===tr.dataset.id);
+      tr.querySelector('.w_use').addEventListener('change', e=>{ waste[idx].use=e.target.checked; tr.classList.toggle('fade', !waste[idx].use); updateAll(); });
+      tr.querySelector('.w_item').addEventListener('input', e=>{ waste[idx].item=e.target.value; });
+      tr.querySelector('.w_fac').addEventListener('input', e=>{ waste[idx].facility=e.target.value; });
+      tr.querySelector('.w_units').addEventListener('input', e=>{ waste[idx].units=e.target.value; });
+      tr.querySelector('.w_rate').addEventListener('input', e=>{ waste[idx].rate=num(e.target.value); updateAll(); });
+      tr.querySelector('.w_qty').addEventListener('input', e=>{ const v=num(e.target.value); waste[idx].qty=v; if(v>0 && !waste[idx].use){ waste[idx].use=true; tr.querySelector('.w_use').checked=true; tr.classList.remove('fade'); } updateAll(); });
+    });
+  }
+  function wasteSubtotal(){
+    let sub=0;
+    document.querySelectorAll('#wasteTbody tr').forEach(tr=>{
+      const idx=waste.findIndex(x=>x.id===tr.dataset.id); const w=waste[idx];
+      const ext = w.use ? num(w.rate)*num(w.qty) : 0;
+      sub += ext; tr.querySelector('.w_ext').textContent = fmt(ext);
+    });
+    byId('wasteSubtotal').textContent = fmt(sub); return sub;
+  }
+
+  // ===== Tools =====
+  let tools=[{id:'t1', use:false, name:'14\" demo saw', cost:1200, life:100000, frac:0.8, useHrs:0}];
+  function renderTools(){
+    const tb=byId('toolTbody'); tb.innerHTML='';
+    tools.forEach(t=>{
+      const tr=document.createElement('tr'); tr.dataset.id=t.id; tr.classList.toggle('fade', !t.use);
+      tr.innerHTML = `
+        <td><input type="checkbox" class="t_use" ${t.use?'checked':''}></td>
+        <td><input class="t_name" value="${t.name}"></td>
+        <td><input type="number" class="t_cost" step="1" value="${t.cost}"></td>
+        <td><input type="number" class="t_life" step="100" value="${t.life}"></td>
+        <td><input type="number" class="t_frac" step="0.05" value="${t.frac}"></td>
+        <td><input type="number" class="t_usehrs" step="1" placeholder="0" value="${t.useHrs||''}"></td>
+        <td class="right mono t_ext">$0.00</td>
+        <td><button class="ghost t_del">✕</button></td>`;
+      tb.appendChild(tr);
+    });
+    bindToolEvents(); updateAll();
+  }
+  function bindToolEvents(){
+    document.querySelectorAll('#toolTbody tr').forEach(tr=>{
+      const idx=tools.findIndex(x=>x.id===tr.dataset.id);
+      tr.querySelector('.t_use').addEventListener('change', e=>{ tools[idx].use=e.target.checked; tr.classList.toggle('fade', !tools[idx].use); updateAll(); });
+      tr.querySelector('.t_name').addEventListener('input', e=>{ tools[idx].name=e.target.value; });
+      tr.querySelector('.t_cost').addEventListener('input', e=>{ tools[idx].cost=num(e.target.value); updateAll(); });
+      tr.querySelector('.t_life').addEventListener('input', e=>{ tools[idx].life=Math.max(1,num(e.target.value)); updateAll(); });
+      tr.querySelector('.t_frac').addEventListener('input', e=>{ tools[idx].frac=num(e.target.value); updateAll(); });
+      tr.querySelector('.t_usehrs').addEventListener('input', e=>{ const v=num(e.target.value); tools[idx].useHrs=v; if(v>0 && !tools[idx].use){ tools[idx].use=true; tr.querySelector('.t_use').checked=true; tr.classList.remove('fade'); } updateAll(); });
+      const del=tr.querySelector('.t_del'); if(del){ del.addEventListener('click', ()=>{ tools.splice(idx,1); renderTools(); }); }
+    });
+  }
+
+  // ===== Assemblies (same as v0.13) omitted for brevity =====
+
+  // ===== OH / Profit / Tax =====
+  byId('ohPct').addEventListener('input', updateAll);
+  byId('profitPct').addEventListener('input', updateAll);
+  byId('taxPct').addEventListener('input', updateAll); // NEW
+
+  const taxBoxes=['tax_on_materials','tax_on_concrete','tax_on_fuel','tax_on_disposal','tax_on_labor','tax_on_tools','tax_on_oh','tax_on_profit'];
+  function setTaxLabels(res){ byId('taxLabel').textContent = res ? 'Tax Reimbursement' : 'Customer Sales Tax'; byId('stickyTaxLabel').textContent = res ? 'Reimb.' : 'Tax'; }
+  function setTaxMode(res){ setTaxLabels(res); if(res){ byId('tax_on_materials').checked=true; byId('tax_on_concrete').checked=true; byId('tax_on_disposal').checked=true; byId('tax_on_fuel').checked=false; byId('tax_on_disposal').checked=false; byId('tax_on_labor').checked=false; byId('tax_on_tools').checked=false; byId('tax_on_oh').checked=false; byId('tax_on_profit').checked=false;
+    } else { taxBoxes.forEach(id=>byId(id).checked=true); }
+    taxBoxes.forEach(id=>byId(id).disabled=true);
+    updateAll();
+  }
+  byId('tax_res').addEventListener('change', ()=>setTaxMode(true));
+  byId('tax_com').addEventListener('change', ()=>setTaxMode(false));
+  byId('unlockTax').addEventListener('click', ()=>{ taxBoxes.forEach(id=>byId(id).disabled=false); });
+
+  // ===== Totals =====
+  function ohProfit(directs, companyCost){
+    const ohPct = num(byId('ohPct').value)/100;
+    const profitPct = num(byId('profitPct').value)/100;
+    const oh = directs*ohPct;
+    const profit = companyCost + (directs+oh)*profitPct;
+    return {oh, profit};
+  }
+  function customerTaxBase(parts){
+    let base=0;
+    if(byId('tax_on_materials').checked) base+=parts.mat;
+    if(byId('tax_on_concrete').checked) base+=parts.conc;
+    if(byId('tax_on_fuel').checked) base+=parts.fuel;
+    if(byId('tax_on_disposal').checked) base+=parts.waste;
+    if(byId('tax_on_labor').checked) base+=parts.crew;
+    if(byId('tax_on_tools').checked) base+=parts.tools;
+    if(byId('tax_on_oh').checked) base+=parts.oh;
+    if(byId('tax_on_profit').checked) base+=parts.profit;
+    return base;
+  }
+  function totals(){
+    try{
+      const {subtotalExclCompany, companyCost} = crewCalc();
+      const matsub = materialsSubtotal();
+      const cc = concreTecTS();
+      const mv = mohicanValley();
+      const concTotal = cc + mv;
+      const fuel = fuelSubtotal();
+      const toolsSub = toolsSubtotal();
+      const wasteSub = wasteSubtotal();
+      const directs = subtotalExclCompany + matsub + concTotal + fuel + toolsSub + wasteSub;
+      const {oh, profit} = ohProfit(directs, companyCost);
+      const taxPct = num(byId('taxPct').value)/100;
+      const taxBase = customerTaxBase({mat:matsub, conc:concTotal, fuel, waste:wasteSub, crew:subtotalExclCompany, tools:toolsSub, oh, profit});
+      const tax = taxBase * taxPct;
+      const grand = directs + oh + profit + tax;
+
+      byId('directs').textContent = fmt(directs);
+      byId('ohAmt').textContent = fmt(oh);
+      byId('profitAmt').textContent = fmt(profit);
+      byId('taxAmt2').textContent = fmt(tax);
+      byId('grand').textContent = fmt(grand);
+
+      byId('stickyCrew').textContent = fmt(subtotalExclCompany);
+      byId('stickyCompanyToProfit').textContent = fmt(companyCost);
+      byId('stickyMat').textContent = fmt(matsub);
+      byId('stickyConc').textContent = fmt(concTotal);
+      byId('stickyFuel').textContent = fmt(fuel);
+      byId('stickyTools').textContent = fmt(toolsSub);
+      byId('stickyWaste').textContent = fmt(wasteSub);
+      byId('stickyOH').textContent = fmt(oh);
+      byId('stickyProfit').textContent = fmt(profit);
+      byId('stickyTax').textContent = fmt(tax);
+      byId('stickyGrand').textContent = fmt(grand);
+    }catch(e){ const err=byId('err'); err.style.display='block'; err.textContent=e.message; console.error(e); }
+  }
+  function updateAll(){ totals(); }
+  // --- Turcotte PUMP→GRAND patch (v14+): expose functions + delegated listeners ---
+  try {
+    window.updateAll = updateAll;
+    window.totals = totals;
+    window.mohicanValley = mohicanValley;
+  } catch (e) { console && console.warn && console.warn('Export patch warn:', e); }
+
+  // When pump-related controls (inserted later) change, force a full recalc so GRAND updates.
+  (function(){
+    const pumpIds = new Set(['pump_use','pump_size','pump_hours','mv_apply_pump','mv_apply_time','mv_discharge']);
+    document.addEventListener('input', (ev) => { if (pumpIds.has(ev.target && ev.target.id)) { try{ updateAll(); }catch(e){} } }, true);
+    document.addEventListener('change', (ev) => { if (pumpIds.has(ev.target && ev.target.id)) { try{ updateAll(); }catch(e){} } }, true);
+  })();
+  // --- end patch ---
+
+
+  // Wire up missing listeners — THIS FIX
+  ['ct_yards','ct_price','ct_delivery','mv_yards','mv_price','mv_short','mv_ex_38','mv_ex_38_ppy','pump_use','pump_size','pump_hours','mv_apply_pump','mv_discharge','mv_apply_time','fuel_ppg','fuel_gal','taxPct','job_date','ct_out_of_area']
+    .forEach(id=>{ const el=byId(id); if(el) el.addEventListener('input', updateAll); });
+
+  // Waste & Tools renders
+  function toolsSubtotal(){ let sub=0; document.querySelectorAll('#toolTbody tr').forEach(tr=>{ const idx=tools.findIndex(x=>x.id===tr.dataset.id); const t=tools[idx]; const ext = t.use ? (num(t.cost)*num(t.frac)/Math.max(1,num(t.life))) * num(t.useHrs) : 0; sub+=ext; tr.querySelector('.t_ext').textContent = fmt(ext); }); byId('toolSubtotal').textContent = fmt(sub); return sub; }
+
+  // Reset
+  function resetBlank(){
+    byId('taxPct').value = 6.35; byId('tax_res').checked = true; byId('tax_com').checked = false; setTaxMode(true);
+    crewWideOn = true; byId('crewWideToggle').checked = true; crewDaysMode = true; byId('timeUnitsDays').checked = true; byId('crewWideQty').value='';
+    crew.forEach(w=>{ w.use=true; w.hrs=0; }); renderCrew();
+    materials.forEach(m=>{ m.use=false; m.qty=0; }); renderMaterials();
+    byId('ct_yards').value=''; byId('ct_trips_read').textContent='0';
+    byId('fuel_gal').value='';
+    waste.forEach(w=>{ w.use=false; w.qty=0; }); renderWaste();
+    tools.forEach(t=>{ t.use=false; t.useHrs=0; }); renderTools();
+    byId('ohPct').value=0; byId('profitPct').value=0; totals();
+  }
+  document.getElementById('addToolBtn').addEventListener('click', ()=>{ const id='t_'+Math.random().toString(36).slice(2,7); tools.push({id, use:true, name:'Tool', cost:0, life:100000, frac:0.8, useHrs:0}); renderTools(); });
+  document.getElementById('resetBtn') && document.getElementById('resetBtn').addEventListener('click', resetBlank);
+
+  // Initial render
+  renderCrew(); renderMaterials(); renderWaste(); renderTools(); setTaxMode(true); totals();
+})();
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  var jd = document.getElementById('job_date');
+  if(jd && !jd.value){
+    const today = new Date();
+    const mm = String(today.getMonth()+1).padStart(2,'0');
+    const dd = String(today.getDate()).padStart(2,'0');
+    jd.value = today.getFullYear() + '-' + mm + '-' + dd;
+    // Trigger initial auto-winter calc
+    jd.dispatchEvent(new Event('input', {bubbles:true}));
+  }
+});
+</script>
+<!-- Turcotte patch v14+: Mohican PSI mix selector and mv_price default -->
+<script>
+(function(){
+  function $(id){ return document.getElementById(id); }
+  function ready(fn){ if(document.readyState!=='loading'){ fn(); } else { document.addEventListener('DOMContentLoaded', fn); } }
+  ready(function(){
+    var priceInput = $('mv_price') || document.querySelector('input#mv_price');
+    if(!priceInput){ return; } // layout unknown; bail quietly
+
+    // Build selector
+    var mixes=[
+      {psi:3000, label:'3000 PSI (3/4")', price:161},
+      {psi:3500, label:'3500 PSI (3/4")', price:166},
+      {psi:4000, label:'4000 PSI (3/4")', price:171},
+      {psi:4500, label:'4500 PSI (3/4")', price:176},
+    ];
+    var wrap=document.createElement('span'); wrap.className='mv-mix-wrap';
+    var tag=document.createElement('span'); tag.className='mv-tag'; tag.textContent='MV Mix';
+    var sel=document.createElement('select'); sel.id='mv_mix_sel';
+    mixes.forEach(function(m){
+      var o=document.createElement('option');
+      o.value=String(m.price);
+      o.textContent=m.label+' — $'+m.price.toFixed(2)+'/yd';
+      sel.appendChild(o);
+    });
+    var manualChk=document.createElement('input'); manualChk.type='checkbox'; manualChk.id='mv_manual_override';
+    var manualLbl=document.createElement('span'); manualLbl.textContent='Manual price';
+    wrap.appendChild(tag); wrap.appendChild(sel); wrap.appendChild(manualChk); wrap.appendChild(manualLbl);
+
+    // Insert after price input
+    priceInput.parentNode.insertBefore(wrap, priceInput.nextSibling);
+
+    // Init: if blank or <=0, set to 3000 PSI
+    var current=parseFloat((priceInput.value||'').trim());
+    if(!isFinite(current) || current<=0){ current = mixes[0].price; priceInput.value = String(current); }
+    // Select the matching option
+    var found = mixes.find(function(m){ return Math.abs(m.price - current) < 0.001; });
+    sel.value = String(found ? found.price : mixes[0].price);
+
+    function fireInput(el){ try{ el.dispatchEvent(new Event('input',{bubbles:true})); }catch(e){} }
+    // Keep price in sync unless Manual is checked
+    sel.addEventListener('change', function(){
+      if(!manualChk.checked){ priceInput.value=this.value; fireInput(priceInput); }
+    });
+    priceInput.addEventListener('input', function(){ manualChk.checked=true; });
+
+    // Also, if user unchecks manual, snap back to selected
+    manualChk.addEventListener('change', function(){ if(!this.checked){ priceInput.value=sel.value; fireInput(priceInput);} });
+  });
+})();
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  var price = document.getElementById('mv_price');
+  var manual = document.getElementById('mv_manual_override');
+  if (!price || !manual) return;
+  function sync() {
+    price.style.display = manual.checked ? 'inline-block' : 'none';
+  }
+  sync();
+  manual.addEventListener('change', sync);
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  var yards = document.getElementById('mv_yards');
+  if (!yards) return;
+  // Create banner once
+  var warn = document.getElementById('mv_min_batch_warn');
+  if (!warn) {
+    warn = document.createElement('div');
+    warn.id = 'mv_min_batch_warn';
+    warn.textContent = 'Mohican minimum allowable batch size is 2 yd (consider CC for very small loads).';
+    warn.style.cssText = 'display:none;margin-top:6px;background:#2a1313;color:#ffd2d2;border:1px solid #5a2a2a;border-radius:10px;padding:6px 10px;font-size:12px';
+    var mvSub = document.getElementById('mv_sub');
+    if (mvSub && mvSub.parentNode && mvSub.parentNode.parentNode) {
+      mvSub.parentNode.parentNode.parentNode.appendChild(warn);
+    } else {
+      document.body.appendChild(warn);
+    }
+  }
+  function toggle(){
+    var v = parseFloat(yards.value || '0');
+    warn.style.display = (v>0 && v<2) ? 'block' : 'none';
+  }
+  yards.addEventListener('input', toggle);
+  toggle();
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  const wrap = document.querySelector('.wrap');
+  if(!wrap) return;
+  // Build Job Info card at top
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.innerHTML = `<div class="row">
+    <h3 style="margin:0">Job Info</h3>
+    <span class="spacer"></span>
+    <label>Job date <input id="job_date_header" type="date"></label>
+  </div>`;
+  wrap.insertBefore(card, wrap.firstChild);
+
+  // If there is an existing #job_date in Concrete section, move its value; else create canonical #job_date
+  let old = document.getElementById('job_date');
+  const headerInput = document.getElementById('job_date_header');
+
+  function setToday(el){
+    const today = new Date();
+    const mm = String(today.getMonth()+1).padStart(2,'0');
+    const dd = String(today.getDate()).padStart(2,'0');
+    el.value = today.getFullYear() + '-' + mm + '-' + dd;
+  }
+
+  if(old){
+    // Bring over value
+    headerInput.value = old.value || '';
+  }
+  if(!headerInput.value){
+    setToday(headerInput);
+  }
+
+  // Create a single canonical #job_date that all logic uses (rename/mirror header to #job_date)
+  // Approach: if an element with id=job_date exists, reuse it (hidden), else create one.
+  let canonical = document.getElementById('job_date');
+  if(!canonical){
+    canonical = document.createElement('input');
+    canonical.type = 'date';
+    canonical.id = 'job_date';
+    canonical.style.display = 'none';
+    document.body.appendChild(canonical);
+  }
+  // Sync header -> canonical
+  function syncToCanonical(){
+    canonical.value = headerInput.value;
+    canonical.dispatchEvent(new Event('input', {bubbles:true}));
+    canonical.dispatchEvent(new Event('change', {bubbles:true}));
+  }
+  headerInput.addEventListener('input', syncToCanonical);
+  headerInput.addEventListener('change', syncToCanonical);
+  // Initial sync
+  syncToCanonical();
+
+  // Hide the old job_date control if present
+  if(old){
+    old.closest('label') ? old.closest('label').style.setProperty('display','none') : old.style.setProperty('display','none');
+  }
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  // Find the Mohican subtotal pill row (mv_sub exists)
+  var mvSub = document.getElementById('mv_sub');
+  if(!mvSub) return;
+  var row = mvSub.closest('.row');
+  var host = row && row.parentElement ? row.parentElement : null;
+  if(!host) return;
+
+  // Build UI rows if not already present
+  if(!document.getElementById('mv_overage_row')){
+    var r1 = document.createElement('div');
+    r1.className = 'row';
+    r1.id = 'mv_overage_row';
+    r1.innerHTML = `
+      <label>Avg discharge time per truck (min) <input id="mv_discharge" type="number" step="1" placeholder="e.g., 45"></label>
+      <span class="pill">Time Overage: <span id="mv_time_overage" class="mono">$0.00</span></span>
+      <label class="pill"><input id="mv_apply_time" type="checkbox" checked> Apply to Mohican fees</label>
+    `;
+    host.insertBefore(r1, row);
+  }
+
+  if(!document.getElementById('mv_pump_row')){
+    var r2 = document.createElement('div');
+    r2.className = 'row';
+    r2.id = 'mv_pump_row';
+    r2.innerHTML = `
+      <label class="pill"><input id="pump_use" type="checkbox"> Use pump truck</label>
+      <label>Size
+        <select id="pump_size">
+          <option value="32@290">32 m — $290/hr (4 hr min)</option>
+          <option value="40@310">40 m — $310/hr (4 hr min)</option>
+        </select>
+      </label>
+      <label>Hours <input id="pump_hours" type="number" step="0.5" placeholder="0"></label>
+      <span class="pill">Pump Fee: <span id="mv_pump_fee" class="mono">$0.00</span></span>
+      <label class="pill"><input id="mv_apply_pump" type="checkbox" checked> Apply to Mohican fees</label>
+    `;
+    host.insertBefore(r2, row);
+    // Wire pump controls to recalc
+    ['pump_use','pump_size','pump_hours','mv_apply_pump'].forEach(function(id){
+      var el = document.getElementById(id);
+      if(!el) return;
+      el.addEventListener('input', function(){
+        if (window.mohicanValley) try{ mohicanValley(); }catch(e){}
+        if (window.totals) try{ totals(); }catch(e){}
+        if (window.updateAll) updateAll();
+      });
+      el.addEventListener('change', function(){
+        if (window.mohicanValley) try{ mohicanValley(); }catch(e){}
+        if (window.totals) try{ totals(); }catch(e){}
+        if (window.updateAll) updateAll();
+      });
+    });
+    
+  }
+
+  // Helper
+  function num(v){ if(v===null||v===undefined) return 0; const s=String(v).trim(); if(s==='') return 0; const n=parseFloat(s); return Number.isFinite(n)?n:0; }
+  function fmt(n){ return '$' + (Number(n)||0).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2}); }
+  function byId(id){ return document.getElementById(id); }
+
+  function trucksCalc(){
+    var totalY = num(byId('mv_yards')?.value || 0);
+    var cap = Math.max(1, num(byId('mv_cap')?.value || 10));
+    return Math.ceil((totalY||0)/cap);
+  }
+  function allowedMinutes(){
+    var totalY = num(byId('mv_yards')?.value || 0);
+    return (totalY||0) * 6; // 6 min/yd total across all trucks
+  }
+  function timeOverage(){
+    var t = trucksCalc();
+    var avg = num(byId('mv_discharge')?.value || 0);
+    if(t<=0 || avg<=0) return 0;
+    var actual = avg * t;
+    var overMin = Math.max(0, actual - allowedMinutes());
+    return (overMin/60) * 300; // $300/hr
+  }
+  function pumpFee(){
+    if(!byId('pump_use')?.checked) return 0;
+    var val = byId('pump_size')?.value || '32@290';
+    var rate = val.includes('@') ? parseFloat(val.split('@')[1]) : 290;
+    var hrs = Math.max( num(byId('pump_hours')?.value || 0), 4 ); // 4 hr min
+    return rate * hrs;
+  }
+  function updateExtrasIntoManual(){
+    var total = 0;
+    if(byId('mv_apply_time')?.checked) total += timeOverage();
+    if(byId('mv_apply_pump')?.checked) total += pumpFee();
+    var dst = byId('mv_short'); // existing manual Mohican field (already included by calc)
+    if(!dst) return;
+    // Only auto-write if user hasn't touched it recently; use an "auto" flag
+    var lock = byId('mv_short_manual_lock');
+    if(lock && lock.checked) return;
+    if (typeof updateAll==='function'){ try{ updateAll(); }catch(e){} }}
+
+  // Add a small "Auto calc" toggle near mv_short if possible
+  var mvShort = byId('mv_short');
+  if(mvShort && !byId('mv_short_manual_lock')){
+    var lbl = mvShort.closest('label');
+    var holder = lbl ? lbl.parentElement : mvShort.parentElement;
+    var auto = document.createElement('label');
+    auto.className = 'pill';
+    auto.style.marginLeft = '8px';
+    auto.innerHTML = `<input id="mv_short_manual_lock" type="checkbox"> Manual override for Mohican fees`;
+    holder && holder.appendChild(auto);
+    mvShort.addEventListener('input', function(){ byId('mv_short_manual_lock').checked = true; });
+  }
+
+  // Wire events
+  ['mv_discharge','mv_yards','mv_cap','pump_use','pump_size','pump_hours','mv_apply_time','mv_apply_pump','mv_short_manual_lock']
+    .forEach(function(id){ var el = byId(id); if(el){ el.addEventListener('input', function(){ byId('mv_time_overage').textContent = fmt(timeOverage()); byId('mv_pump_fee').textContent = fmt(pumpFee()); updateExtrasIntoManual(); }); el.addEventListener('change', function(){ byId('mv_time_overage').textContent = fmt(timeOverage()); byId('mv_pump_fee').textContent = fmt(pumpFee()); updateExtrasIntoManual(); }); }});
+
+  // Initial paint
+  byId('mv_time_overage').textContent = fmt(timeOverage());
+  byId('mv_pump_fee').textContent = fmt(pumpFee());
+  updateExtrasIntoManual();
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  var taxRes = document.getElementById('tax_res');
+  var taxDisposal = document.getElementById('tax_on_disposal');
+  function enforce(){
+    if(!taxRes || !taxDisposal) return;
+    if(taxRes.checked){
+      taxDisposal.checked = true;
+      if (!taxDisposal.disabled) { /* leave disabled state as-is */ }
+      if (typeof updateAll==='function'){ try{ updateAll(); }catch(e){} }
+    }
+  }
+  if(taxRes){
+    taxRes.addEventListener('change', enforce);
+    // Initial enforce
+    enforce();
+  }
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  var pumpUse = document.getElementById('pump_use');
+  var pumpHours = document.getElementById('pump_hours');
+  function ensureMinHours(){
+    if (!pumpUse || !pumpHours) return;
+    if (pumpUse.checked){
+      var v = parseFloat(pumpHours.value||'0')||0;
+      if (v <= 0){ pumpHours.value = '4'; }
+    }
+  }
+  if (pumpUse){
+    pumpUse.addEventListener('change', function(){ ensureMinHours(); });
+  }
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  const wrap = document.querySelector('.wrap');
+  if(!wrap) return;
+
+  // Try to place below the Job Info card (if exists); else at top.
+  const jobCard = Array.from(document.querySelectorAll('.card')).find(c => c.textContent.includes('Job Info'));
+  const holder = document.createElement('div');
+  holder.className = 'card';
+  holder.innerHTML = '<div class="row"><h3 style="margin:0">Quick Groups</h3></div>' +
+                     '<div class="row groupbar" role="toolbar" aria-label="Quick Groups">'+
+                     '<button class="tag" type="button" data-group="all" aria-pressed="true">All</button>'+
+                     '<button class="tag" type="button" data-group="concrete">Concrete</button>'+
+                     '<button class="tag" type="button" data-group="masonry">Masonry</button>'+
+                     '<button class="tag" type="button" data-group="pavers">Pavers</button>'+                     '<button class="tag" type="button" data-group="bluestone">Bluestone</button>'+                     '<button class="tag" type="button" data-group="veneer">Stone Veneer</button>'+
+                     '<button class="tag" type="button" data-group="disposal">Waste / Disposal</button>'+
+                     '<button class="tag" type="button" data-group="crew">Crew & Time</button>'+
+                     '<button class="tag" type="button" data-group="fuel">Fuel</button>'+
+                     '</div>';
+
+  if(jobCard && jobCard.nextSibling){
+    wrap.insertBefore(holder, jobCard.nextSibling);
+  } else {
+    wrap.insertBefore(holder, wrap.firstChild);
+  }
+
+  // Define simple group rules by card heading text to avoid touching any calc code.
+  // "Concrete" group shows cards with headings containing "Concrete", "Materials", or "Waste / Disposal".
+  function headingText(card){
+    const h = card.querySelector('h3,h2,h4');
+    return (h ? h.textContent : '').toLowerCase();
+  }
+  function isCardForGroup(card, group){
+  const h = headingText(card);
+  if(group==='all') return true;
+  if(group==='concrete') return /(concrete|materials|waste|disposal)/i.test(h);
+  if(group==='masonry' || group==='pavers' || group==='bluestone' || group==='veneer' || group==='stucco') return /materials/i.test(h);
+  if(group==='disposal') return /(waste|disposal)/i.test(h);
+  if(group==='crew') return /(crew|time|overhead|profit)/i.test(h);
+  if(group==='fuel') return /(fuel|vehicle|gas)/i.test(h);
+  return true;
+}
+
+
+    
+
+  const cards = Array.from(document.querySelectorAll('.wrap > .card'));
+
+  function applyGroup(group){
+  try{
+    if(group==='masonry') window.__matCats=['masonry'];
+    else if(group==='pavers') window.__matCats=['pavers'];
+    else if(group==='bluestone') window.__matCats=['bluestone'];
+    else if(group==='veneer') window.__matCats=['stone veneer'];
+    else if(group==='stucco') window.__matCats=['stucco'];
+    else window.__matCats=null;
+    if(typeof renderMaterials==='function') renderMaterials();
+  }catch(e){}
+const cards = Array.from(document.querySelectorAll('.wrap > .card'));
+  // Filter
+  cards.forEach(card => {
+    if(card.contains(holder)) return; // do not hide the group card itself
+    // Keep Materials card visible; its rows are filtered elsewhere
+    if(card.querySelector('#matTbody')){ card.classList.remove('group-hidden'); return; }
+    if(isCardForGroup(card, group)) card.classList.remove('group-hidden');
+    else card.classList.add('group-hidden');
+  });
+  // Scroll to first visible card after the group bar.
+const first = cards.find(c => !c.contains(holder) && !c.classList.contains('group-hidden'));
+    if(first){
+      first.scrollIntoView({behavior:'smooth', block:'start'});
+    }
+  }
+
+  holder.querySelectorAll('.tag').forEach(btn => {
+    btn.addEventListener('click', () => applyGroup(btn.dataset.group));
+  });
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  function clampToMin(el){
+    var min = (el.getAttribute('min')!==null) ? parseFloat(el.getAttribute('min')) : 0;
+    if(!isFinite(min)) min = 0;
+    var v = parseFloat(el.value || '0');
+    if(!isFinite(v)) return;
+    if(v < min){
+      el.value = String(min);
+      try { el.dispatchEvent(new Event('input',{bubbles:true})); } catch(e){}
+      try { el.dispatchEvent(new Event('change',{bubbles:true})); } catch(e){}
+    }
+  }
+  document.querySelectorAll('input[type="number"]:not([data-allow-negative])').forEach(function(el){
+    if(!el.hasAttribute('min')) el.setAttribute('min','0');
+    el.addEventListener('input', function(){ clampToMin(el); });
+    el.addEventListener('change', function(){ clampToMin(el); });
+    // Initial clamp for any prefilled negatives (just in case)
+    clampToMin(el);
+  });
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  const wrap = document.querySelector('.wrap');
+  if(!wrap) return;
+
+  // Ensure the main content is a tabpanel
+  wrap.id = wrap.id || 'main_content_wrap';
+  wrap.setAttribute('role','tabpanel');
+  wrap.setAttribute('tabindex','0'); // allow focus into panel
+  // active tab will update aria-labelledby to itself
+  wrap.setAttribute('aria-labelledby','tab-all');
+
+  // Build the tabs card
+  const tabsCard = document.createElement('div');
+  tabsCard.className = 'card a11y-tabs';
+  tabsCard.innerHTML = `
+    <div class="row">
+      <h3 id="sections-label" style="margin:0">Sections</h3>
+    </div>
+    <div class="row">
+      <div id="sections-tablist" role="tablist" aria-labelledby="sections-label">
+        <button role="tab" id="tab-all" aria-selected="true" aria-controls="main_content_wrap" tabindex="0" data-group="all">All</button>
+        <button role="tab" id="tab-concrete" aria-selected="false" aria-controls="main_content_wrap" tabindex="-1" data-group="concrete">Concrete</button>
+        <button role="tab" id="tab-masonry" aria-selected="false" aria-controls="main_content_wrap" tabindex="-1" data-group="masonry">Masonry</button>
+  <button role="tab" id="tab-veneer" aria-selected="false" aria-controls="main_content_wrap" tabindex="-1" data-group="veneer">Stone Veneer</button>
+        <button role="tab" id="tab-pavers" aria-selected="false" aria-controls="main_content_wrap" tabindex="-1" data-group="pavers">Pavers</button>
+<button role="tab" id="tab-stucco" aria-selected="false" aria-controls="main_content_wrap" tabindex="-1" data-group="stucco">Stucco</button>
+
+        <button role="tab" id="tab-disposal" aria-selected="false" aria-controls="main_content_wrap" tabindex="-1" data-group="disposal">Waste / Disposal</button>
+        <button role="tab" id="tab-crew" aria-selected="false" aria-controls="main_content_wrap" tabindex="-1" data-group="crew">Crew &amp; Time</button>
+        <button role="tab" id="tab-fuel" aria-selected="false" aria-controls="main_content_wrap" tabindex="-1" data-group="fuel">Fuel</button>
+      </div>
+    </div>
+  `;
+
+  // Put tabs before the wrap container
+  wrap.parentNode.insertBefore(tabsCard, wrap);
+
+  // Helper for filter logic (same as the old, but scoped here)
+  function headingText(card){
+    const h = card.querySelector('h3,h2,h4'); 
+    return (h ? h.textContent : '').toLowerCase();
+  }
+  function isCardForGroup(card, group){
+  const h = headingText(card);
+  if(group==='all') return true;
+  if(group==='concrete') return /(concrete|materials|waste|disposal)/i.test(h);
+  if(group==='masonry' || group==='pavers' || group==='bluestone' || group==='veneer' || group==='stucco') return /materials/i.test(h);
+  if(group==='disposal') return /(waste|disposal)/i.test(h);
+  if(group==='crew') return /(crew|time|overhead|profit)/i.test(h);
+  if(group==='fuel') return /(fuel|vehicle|gas)/i.test(h);
+  return true;
+}
+
+
+    
+
+  const cards = Array.from(document.querySelectorAll('.wrap > .card'));
+
+  function applyGroup(group){
+  try{
+    if(group==='masonry') window.__matCats=['masonry'];
+    else if(group==='pavers') window.__matCats=['pavers'];
+    else if(group==='bluestone') window.__matCats=['bluestone'];
+    else if(group==='veneer') window.__matCats=['stone veneer'];
+    else if(group==='stucco') window.__matCats=['stucco'];
+    else window.__matCats=null;
+    if(typeof renderMaterials==='function') renderMaterials();
+  }catch(e){}
+cards.forEach(card => {
+      if(card.querySelector('#matTbody')){ card.classList.remove('group-hidden'); return;
+}
+      if(isCardForGroup(card, group)) card.classList.remove('group-hidden');
+      else card.classList.add('group-hidden');
+    });
+  }
+
+  // Tabs behavior: manual activation (APG pattern)
+  const tablist = document.getElementById('sections-tablist');
+  const tabs = Array.from(tablist.querySelectorAll('[role="tab"]'));
+
+  function setActiveTab(newTab){
+    tabs.forEach(tab => {
+      const selected = (tab === newTab);
+      tab.setAttribute('aria-selected', String(selected));
+      tab.tabIndex = selected ? 0 : -1;
+    });
+    // Filter content
+    const group = newTab.getAttribute('data-group');
+    applyGroup(group);
+    // Update label reference for the panel
+    wrap.setAttribute('aria-labelledby', newTab.id);
+  }
+
+  // Click = activate
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => { setActiveTab(tab); tab.focus(); });
+  });
+
+  // Keyboard roving tabindex + manual activation
+  tablist.addEventListener('keydown', (e) => {
+    const currentIndex = tabs.findIndex(t => t === document.activeElement);
+    if(currentIndex === -1) return;
+    let nextIndex = currentIndex;
+    switch(e.key){
+      case 'ArrowRight':
+      case 'ArrowDown':
+        nextIndex = (currentIndex + 1) % tabs.length; 
+        e.preventDefault(); tabs[nextIndex].focus(); break;
+      case 'ArrowLeft':
+      case 'ArrowUp':
+        nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+        e.preventDefault(); tabs[nextIndex].focus(); break;
+      case 'Home':
+        e.preventDefault(); tabs[0].focus(); break;
+      case 'End':
+        e.preventDefault(); tabs[tabs.length - 1].focus(); break;
+      case 'Enter':
+      case ' ':
+        e.preventDefault(); setActiveTab(document.activeElement); break;
+    }
+  });
+
+  // Initial apply
+  applyGroup('all');
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  /* 1) Insert a clean spacer between the two concrete suppliers */
+  (function(){
+    const heading = Array.from(document.querySelectorAll('.card h3, .card h4, label'))
+      .find(el => /Mohican\s+Valley/i.test(el.textContent||''));
+    if (heading && heading.closest('.row')){
+      const row = document.createElement('div');
+      row.className = 'row';
+      const hr = document.createElement('hr');
+      hr.style.cssText = 'border:0;border-top:1px dashed #334155;margin:12px 0 16px;opacity:.9';
+      row.appendChild(hr);
+      heading.closest('.row').insertAdjacentElement('beforebegin', row);
+    }
+  })();
+
+  /* 2) Make "+ Add Material" work: append to materials[], re-render, and focus new row */
+  (function(){
+    var btn = document.getElementById('addMatBtn');
+    if (!btn) return;
+    btn.addEventListener('click', function(){
+      try {
+        if (!window.materials || !Array.isArray(window.materials)) return;
+        var id = 'u' + Date.now();
+        window.materials.push({
+          id: id,
+          use: true,
+          item: '',
+          supplier: '',
+          units: 'each',
+          price: 0,
+          qty: 1,
+          step: 1,
+          roundUp: false
+        });
+        if (typeof renderMaterials === 'function') renderMaterials();
+        // Focus the newly added item's name field
+        setTimeout(function(){
+          var rows = document.querySelectorAll('#matTbody tr');
+          if (!rows.length) return;
+          var last = rows[rows.length - 1];
+          var input = last.querySelector('.mat_item');
+          if (input) input.focus();
+        }, 0);
+      } catch(e){ console.error('Add Material failed', e); }
+    });
+  })();
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  var btn = document.getElementById('addMatBtn');
+  if(!btn) return;
+
+  function getMaterialsRef(){
+    try { return (typeof materials !== 'undefined') ? materials : (window.materials||null); }
+    catch(e){ return window.materials || null; }
+  }
+
+  btn.addEventListener('click', function(){
+    var mat = getMaterialsRef();
+    if (Array.isArray(mat)) {
+      var id = 'u' + Date.now();
+      mat.push({ id:id, use:true, item:'', supplier:'', units:'each', price:0, qty:1, step:1, roundUp:false });
+      if (typeof renderMaterials === 'function') { try { renderMaterials(); } catch(e){} }
+      setTimeout(function(){
+        var rows = document.querySelectorAll('#matTbody tr');
+        if (rows.length){
+          var last = rows[rows.length-1];
+          var input = last.querySelector('.mat_item');
+          if (input) input.focus();
+        }
+      }, 0);
+      if (typeof updateAll === 'function') { try { updateAll(); } catch(e){} }
+      return;
+    }
+    // Fallback: append a DOM-only row (in case data structure is unavailable)
+    var tb = document.getElementById('matTbody'); if(!tb) return;
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td><input type="checkbox" class="mat_use" checked></td>' +
+                   '<td><input class="mat_item" placeholder="Item"></td>' +
+                   '<td><input class="mat_sup" placeholder="Supplier"></td>' +
+                   '<td><input class="mat_units" value="each"></td>' +
+                   '<td><input type="number" class="mat_price" min="0" step="0.01" value="0"></td>' +
+                   '<td><input type="number" class="mat_qty" min="0" step="1" value="1"></td>' +
+                   '<td class="right mono mat_ext">$0.00</td>' +
+                   '<td><button class="ghost mat_del">✕</button></td>';
+    tb.appendChild(tr);
+    tr.querySelectorAll('input').forEach(function(el){
+      el.addEventListener('input', function(){ if (typeof updateAll === 'function') updateAll(); });
+    });
+    setTimeout(function(){ tr.querySelector('.mat_item') && tr.querySelector('.mat_item').focus(); }, 0);
+    if (typeof updateAll === 'function') { try { updateAll(); } catch(e){} }
+  });
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  var tablist = document.getElementById('sections-tablist');
+  var tbody = document.getElementById('matTbody');
+  if(!tbody) return;
+  var GROUPS = {
+  all: null,
+  concrete: new Set(['m6','m7','m10']),
+  masonry:  new Set(['m4','m8','m9','m11']),
+  pavers:   new Set(['m1','m2','m3'])
+};
+  function currentGroup(){
+    var active = tablist && tablist.querySelector('[role="tab"][aria-selected="true"]');
+    return active ? (active.getAttribute('data-group')||'all') : 'all';
+  }
+  function applyDim(){
+    var g = currentGroup();
+    var allow = GROUPS[g];
+    tbody.querySelectorAll('tr').forEach(function(tr){
+      var id = tr.dataset.id || '';
+      var dim = (!!allow && id && !allow.has(id));
+      tr.classList.toggle('dim', dim);
+    });
+  }
+  if (tablist){
+    tablist.addEventListener('click', function(){ setTimeout(applyDim, 0); });
+    tablist.addEventListener('keydown', function(e){
+      if(e.key==='Enter' || e.key===' ') setTimeout(applyDim, 0);
+    });
+  }
+  // Re-apply after Materials re-render/add
+  var mo = new MutationObserver(function(){ applyDim(); });
+  mo.observe(tbody, {childList:true});
+  applyDim();
+});
+</script>
+<script>
+(function(){
+  function ready(cb){ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded', cb, {once:true});} else { cb(); } }
+  ready(function(){
+    try{
+      var tablist = document.getElementById('sections-tablist');
+      var tbody = document.getElementById('matTbody');
+      if(!tbody) return;
+
+      // Map *existing* tabs to materials row IDs (dataset.id set by renderMaterials)
+      // m1: 8' Plastic paver edging
+      // m2: 8' Aluminum paver edging
+      // m3: 12" paver spikes — 150/box
+      // m4: SPEC MIX Type S — 80 lb
+      // m5: SPEC MIX Stone Veneer — 80 lb   (kept visible in all tabs since no 'Veneer' tab yet)
+      // m6: Bulk crushed rock 3/4"
+      // m7: Concrete wire mesh 5'×10'
+      // m8: SPEC MIX Core Fill Grout 3k — 80 lb
+      // m9: 12" hollow concrete block
+      // m10: 6"×10' expansion joint
+      var GROUPS = {
+        all: null,
+        concrete: new Set(['m6','m7','m10']),
+        masonry:  new Set(['m4','m8','m9']),
+        pavers:   new Set(['m1','m2','m3'])
+      };
+
+      function activeGroup(){
+        var active = tablist && tablist.querySelector('[role="tab"][aria-selected="true"]');
+        var g = active ? (active.getAttribute('data-group')||'all') : 'all';
+        if(!GROUPS.hasOwnProperty(g)) g = 'all';
+        return g;
+      }
+
+      function applyHide(){
+        var g = activeGroup();
+        var allow = GROUPS[g];
+        tbody.querySelectorAll('tr').forEach(function(tr){
+          var id = tr.dataset.id || '';
+          var show = (!allow) || !id || allow.has(id); // unknown/new rows always show
+          tr.style.display = show ? '' : 'none';
+        });
+      }
+
+      if (tablist){
+        tablist.addEventListener('click', function(){ setTimeout(applyHide, 0); });
+        tablist.addEventListener('keydown', function(e){
+          if(e.key==='Enter' || e.key===' ') setTimeout(applyHide, 0);
+        });
+      }
+
+      // Re-apply when materials re-render or rows added
+      var mo = new MutationObserver(function(){ applyHide(); });
+      mo.observe(tbody, {childList:true});
+
+      // Initial pass
+      applyHide();
+    }catch(e){
+      console.warn('Row-hide filter disabled:', e);
+    }
+  });
+})();
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  var mvY = document.getElementById('mv_yards');
+  if(mvY){
+    mvY.setAttribute('min','0');
+    mvY.setAttribute('step','0.5'); // allow halves if needed
+    function clamp2(){
+      var v = parseFloat(mvY.value||'0');
+      if (v>0 && v<2) { mvY.value = 2; }
+      if (v<0 || isNaN(v)) { mvY.value = 0; }
+      if (typeof updateAll === 'function') updateAll();
+    }
+    mvY.addEventListener('change', clamp2);
+    mvY.addEventListener('blur', clamp2);
+    mvY.addEventListener('input', function(){ /* don't force during typing */ });
+  }
+});
+</script>
+<script id="currency-formatter-safe">
+document.addEventListener('DOMContentLoaded', function(){
+  try{
+    if(!window.USD){ window.USD = new Intl.NumberFormat('en-US', {style:'currency', currency:'USD', maximumFractionDigits:2}); }
+    if(!window.$$){ window.$$ = function(n){ return window.USD.format((Number(n)||0)); }; }
+    if(typeof window.fmt === 'function'){ window.fmt = function(n){ return window.$$((Number(n)||0)); }; }
+  }catch(e){ console.warn('currency formatter patch:', e); }
+});
+</script>
+<script id="updateall-raf-safe">
+document.addEventListener('DOMContentLoaded', function(){
+  try{
+    if(typeof window.updateAll === 'function' && !window.__updateAllWrapped){
+      const raw = window.updateAll;
+      let raf = 0;
+      window.updateAll = function(){
+        if(raf) return;
+        raf = requestAnimationFrame(function(){ raf = 0; try{ raw(); }catch(e){ console.warn('updateAll error', e); } });
+      };
+      window.__updateAllWrapped = true;
+    }
+  }catch(e){ console.warn('updateAll raf patch:', e); }
+});
+</script>
+<script id="updateall-posthook">
+document.addEventListener('DOMContentLoaded', function(){
+  try{
+    if(typeof window.updateAll === 'function' && !window.__updateAllPost){
+      var raw = window.updateAll;
+      window.updateAll = (function(orig){
+        return function(){
+          return orig.apply(this, arguments), (function(){ try{ if(window.totals) totals(); }catch(e){} })();
+        };
+      })(raw);
+      window.__updateAllPost = true;
+    }
+  }catch(e){ console.warn('updateAll posthook error', e); }
+});
+</script>
+<script id="mv-any-change">
+document.addEventListener('DOMContentLoaded', function(){
+  function recalcMV(){
+    try{ if(window.mohicanValley) mohicanValley(); }catch(e){}
+    try{ if(window.totals) totals(); }catch(e){}
+    try{ if(window.updateAll) updateAll(); }catch(e){}
+  }
+  ['input','change'].forEach(function(type){
+    document.addEventListener(type, function(e){
+      var id = e.target && e.target.id || '';
+      if(/^mv_/.test(id) || /^pump_/.test(id)){
+        recalcMV();
+      }
+    }, true); // capture to catch dynamically inserted controls
+  });
+});
+</script>
+<script id="any-change-controller">
+document.addEventListener('DOMContentLoaded', function(){
+  function needsTotals(id){
+    return /^mv_/.test(id) || /^pump_/.test(id) || /^fuel_/.test(id);
+  }
+  function recalc(){
+    try{ if(window.totals) totals(); }catch(e){}
+  }
+  ['input','change'].forEach(function(type){
+    document.addEventListener(type, function(e){
+      if(!e || !e.target) return;
+      var id = e.target.id || '';
+      if(needsTotals(id)) recalc();
+    }, true); // capture phase to catch dynamic inserts
+  });
+});
+</script>
+<script id="global-delegate">
+document.addEventListener('DOMContentLoaded', function(){
+  function recalc(){
+    try{ updateAll(); }catch(e){}
+  }
+  ['input','change'].forEach(function(type){
+    document.addEventListener(type, function(e){
+      var id = e && e.target && e.target.id || '';
+      if(/^mv_/.test(id) || /^pump_/.test(id) || /^fuel_/.test(id)){
+        recalc();
+      }
+    }, true);
+  });
+});
+</script>
+<script id="pump-autocheck">
+document.addEventListener('DOMContentLoaded', function(){
+  var use = document.getElementById('pump_use');
+  var ap  = document.getElementById('mv_apply_pump');
+  if(use && ap){
+    function sync(){ ap.checked = !!use.checked; try{ updateAll(); }catch(e){} }
+    use.addEventListener('input', sync);
+    use.addEventListener('change', sync);
+  }
+});
+</script>
+<!-- Global live-totals delegate: keeps every input/select/checkbox in sync -->
+<script id="global-live-totals-v1">
+document.addEventListener('DOMContentLoaded', function(){
+  function recalc(){ try{ if (typeof updateAll==='function') updateAll(); }catch(e){} }
+  // Recalc on any input/change across the app (capture = catches dynamic rows too)
+  document.addEventListener('input',  function(e){
+    try{
+      var t = e && e.target;
+      if(!t) return;
+      // Auto-check a nearby "Use" checkbox if a numeric qty > 0 is entered (materials/waste rows)
+      if(t.matches && t.matches('input[type="number"]')){
+        var v = parseFloat(t.value);
+        if(!isNaN(v) && v>0){
+          var row = t.closest && (t.closest('tr') || t.closest('.row') || t.parentElement);
+          if(row){
+            var chk = row.querySelector && row.querySelector('input[type="checkbox"]');
+            if(chk && !chk.checked){ chk.checked = true; }
+          }
+        }
+      }
+    }catch(err){}
+    recalc();
+  }, true);
+  document.addEventListener('change', function(){ recalc(); }, true);
+});
+</script>
+<script id="mat-cat-filters">
+document.addEventListener('DOMContentLoaded', function(){
+  function setCats(c){ window.__matCats = c; if (typeof renderMaterials==='function') renderMaterials(); }
+  function pick(group){
+    if(group==='bluestone') setCats(['bluestone','masonry','stone veneer']);
+    else if(group==='veneer') setCats(['stone veneer','masonry','bluestone']);
+    else setCats(null);
+    var h3s = Array.from(document.querySelectorAll('.card h3'));
+    var matCard = h3s.find(h=>/Materials/i.test(h.textContent));
+    if(matCard){ matCard.scrollIntoView({behavior:'smooth', block:'start'}); }
+  }
+  document.querySelectorAll('.groupbar .tag[data-group="bluestone"]').forEach(btn=>{
+    btn.addEventListener('click', function(){ pick('bluestone'); });
+  });
+  document.querySelectorAll('.groupbar .tag[data-group="veneer"]').forEach(btn=>{
+    btn.addEventListener('click', function(){ pick('veneer'); });
+  });
+});
+</script>
+<script id="auto-cov-sq">
+(function(){
+  if (window.__autoCovSq) return; window.__autoCovSq = true;
+  function markSqCoverage(){
+    try{
+      (window.materials||[]).forEach(function(m){
+        var u = (m && m.units ? String(m.units).toLowerCase() : '').trim();
+        var norm = u.replace(/\s+/g,'');
+        // If units look like square feet (sf, sq ft, sqft, square foot/feet, ft²), and no explicit coverage set, default to 1 sf/unit
+        if (!m.coverageSqft && (
+            norm.startsWith('sf') ||
+            norm.startsWith('sqft') ||
+            norm.startsWith('sqft.') ||
+            norm.startsWith('sqft2') ||
+            norm.startsWith('sq') ||
+            norm.includes('squarefoot') ||
+            norm.includes('squarefeet') ||
+            norm==='ft²' || norm==='ft2'
+        )){
+          m.coverageSqft = 1;
+        }
+      });
+    }catch(e){/* no-op */}
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    markSqCoverage();
+    // Re-render so Area (sf) placeholder appears for these items, then recompute totals
+    try{ if (typeof renderMaterials==='function') renderMaterials(); }catch(e){}
+    try{ if (typeof updateAll==='function') updateAll(); }catch(e){}
+  });
+})();
+</script>
+<script id="stucco-hard-filter">
+(function(){
+  if (window.__stuccoHardFilter) return; window.__stuccoHardFilter = true;
+  function hardHideWasteForStucco(group){
+    try{
+      if(group!=='stucco') return;
+      // Make sure materials are filtered to Stucco
+      window.__matCats = ['stucco'];
+      if (typeof renderMaterials==='function') renderMaterials();
+      // Hide Waste / Disposal card explicitly
+      document.querySelectorAll('.wrap > .card').forEach(function(card){
+        var h = (card.querySelector('h3')||{}).textContent||'';
+        if (/waste\s*\/\s*disposal/i.test(h)) card.classList.add('group-hidden');
+      });
+    }catch(e){/* no-op */}
+  }
+  // Monkey-patch setActiveTab to run our hard filter after applyGroup
+  const tablist = document.getElementById('sections-tablist');
+  if (!tablist) return;
+  const tabs = Array.from(tablist.querySelectorAll('[role="tab"]'));
+  // Find existing setActiveTab in window scope (bound in closure); re-bind click handlers instead
+  tabs.forEach(function(tab){
+    tab.addEventListener('click', function(){
+      const group = tab.getAttribute('data-group');
+      // run shortly after built-in handler
+      setTimeout(function(){ hardHideWasteForStucco(group); }, 0);
+    });
+  });
+  // Also run on load in case Stucco is initially selected
+  document.addEventListener('DOMContentLoaded', function(){
+    const selected = tablist.querySelector('[role="tab"][aria-selected="true"]');
+    if (selected) hardHideWasteForStucco(selected.getAttribute('data-group'));
+  });
+})();
+</script>
+<script id="stucco-hide-waste-js">
+// Minimal, robust: label the Waste/Disposal card, track active tab, and let CSS do the hiding.
+(function(){
+  if (window.__stuccoHideWasteApplied) return; window.__stuccoHideWasteApplied = true;
+
+  function labelCards(){
+    try{
+      document.querySelectorAll('.wrap > .card').forEach(function(card){
+        var h = (card.querySelector('h3')||{}).textContent||'';
+        if (/^\s*Waste\s*\/\s*Disposal\s*$/i.test(h)) card.dataset.card = 'waste';
+      });
+    }catch(e){/* no-op */}
+  }
+
+  function readActiveGroup(){
+    var tablist = document.getElementById('sections-tablist');
+    if (!tablist) return null;
+    var sel = tablist.querySelector('[role="tab"][aria-selected="true"]');
+    return sel ? sel.getAttribute('data-group') : null;
+  }
+
+  function updateBodyData(){
+    try{
+      var g = readActiveGroup();
+      if (g) document.body.dataset.activeGroup = g;
+    }catch(e){/* no-op */}
+  }
+
+  function setupListeners(){
+    var tablist = document.getElementById('sections-tablist');
+    if (!tablist) return;
+    // Click handler ensures body dataset stays in sync
+    tablist.addEventListener('click', function(ev){
+      var t = ev.target.closest('[role="tab"]');
+      if (!t) return;
+      // allow original handler to run first (which toggles aria-selected)
+      setTimeout(updateBodyData, 0);
+    });
+
+    // Keyboard handler (Enter/Space activation) — mirror approach
+    tablist.addEventListener('keydown', function(ev){
+      if (ev.key==='Enter' || ev.key===' ') {
+        setTimeout(updateBodyData, 0);
+      }
+    });
+
+    // As a fallback, observe aria-selected changes with MutationObserver
+    try{
+      var obs = new MutationObserver(function(){
+        updateBodyData();
+      });
+      obs.observe(tablist, { subtree:true, attributes:true, attributeFilter:['aria-selected'] });
+    }catch(e){/* MutationObserver support assumed modern; ignore if blocked */}
+  }
+
+  function init(){
+    labelCards();
+    setupListeners();
+    // Run once on load
+    updateBodyData();
+  }
+
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', init, {once:true});
+  } else {
+    init();
+  }
+})();
+</script>
+<!-- FIX: Ensure Materials re-filters when the Stucco tab is active; also sync data-active-group for CSS -->
+<script id="tab-sync-robust">
+(function(){
+  var TABLIST_SEL = '#sections-tablist';
+  var lastClickedGroup = null;
+
+  function getGroupFromAria(){
+    var t = document.querySelector(TABLIST_SEL+' [role="tab"][aria-selected="true"]');
+    return t ? (t.getAttribute('data-group') || null) : null;
+  }
+  function getGroupFromActiveClass(){
+    var t = document.querySelector(TABLIST_SEL+' .active,[data-active="true"]');
+    return t ? (t.getAttribute('data-group') || null) : null;
+  }
+  function computeActiveGroup(){
+    return getGroupFromAria() || lastClickedGroup || getGroupFromActiveClass() || 'all';
+  }
+  function setActiveGroup(g){
+    document.body.dataset.activeGroup = g || 'all';
+    // Clear forced filter for non-stucco; only force for Stucco
+    window.__matCats = (g === 'stucco') ? ['stucco'] : null;
+    if (typeof renderMaterials === 'function') renderMaterials();
+    if (typeof updateAll === 'function') updateAll();
+  }
+  function onTabsMutation(){
+    setActiveGroup(computeActiveGroup());
+  }
+  function onPossibleTabClick(ev){
+    var btn = ev.target.closest(TABLIST_SEL+' [role="tab"], '+TABLIST_SEL+' [data-group]');
+    if (btn){
+      lastClickedGroup = btn.getAttribute('data-group') || null;
+      // Defer to let aria-selected update if their code sets it
+      setTimeout(onTabsMutation, 0);
+    }
+  }
+
+  document.addEventListener('click', onPossibleTabClick, true);
+  document.addEventListener('keydown', function(ev){
+    if ((ev.key === 'Enter' || ev.key === ' ') && document.activeElement && document.activeElement.matches(TABLIST_SEL+' [role="tab"]')){
+      lastClickedGroup = document.activeElement.getAttribute('data-group') || null;
+      setTimeout(onTabsMutation, 0);
+    }
+  }, true);
+
+  // MutationObserver for aria-selected changes
+  var list = document.querySelector(TABLIST_SEL);
+  if (list){
+    var mo = new MutationObserver(onTabsMutation);
+    mo.observe(list, { subtree:true, attributes:true, attributeFilter:['aria-selected'] });
+  }
+
+  // Initial sync
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', function(){ setActiveGroup(computeActiveGroup()); }, {once:true});
+  } else {
+    setActiveGroup(computeActiveGroup());
+  }
+})();
+</script>
+<script id="ct_out_of_area_default">
+document.addEventListener('DOMContentLoaded', function(){
+  var o = document.getElementById('ct_out_of_area');
+  if(o){ o.checked = false; try{ updateAll(); }catch(e){} }
+}, true);
+</script>
+
+<script id="autorate_rob_patch">
+(function(){
+  function findOwnerRow(){
+    var tr = document.querySelector("#crewTbody tr[data-id='owner']");
+    if (tr) return tr;
+    // Fallback: try to find a row whose name cell includes Owner or Rob
+    var rows = document.querySelectorAll("#crewTbody tr");
+    for (var i=0;i<rows.length;i++){
+      var nameEl = rows[i].querySelector(".crew_name, .name, input[type='text']");
+      var name = nameEl ? (nameEl.value || nameEl.textContent || "") : "";
+      if (/owner/i.test(name) || /rob/i.test(name)) return rows[i];
+    }
+    return null;
+  }
+  function syncOwnerRate(tr){
+    try{
+      if(!tr) return;
+      var roleSel = tr.querySelector(".crew_role");
+      var rateInp = tr.querySelector(".crew_rate");
+      if(!roleSel || !rateInp) return;
+      var role = String(roleSel.value||"").toLowerCase();
+      var rate = null;
+      if (role === "owner") rate = 50;
+      else if (role === "laborer") rate = 25;
+      if (rate != null){
+        rateInp.value = String(rate);
+        // Update model if present
+        if (window.crew && Array.isArray(window.crew)){
+          var idx = crew.findIndex(function(c){ return c && c.id === (tr.dataset && tr.dataset.id); });
+          if (idx >= 0 && crew[idx]){
+            crew[idx].rate = rate*1;
+            crew[idx].role = role;
+          }
+        }
+        if (typeof updateAll === "function") { try{ updateAll(); }catch(e){} }
+      }
+    }catch(e){/* noop */}
+  }
+  function attach(){
+    var tr = findOwnerRow();
+    if(!tr) return false;
+    var roleSel = tr.querySelector(".crew_role");
+    if(!roleSel) return false;
+    if(!roleSel.__robAutorate){
+      roleSel.addEventListener("change", function(){ syncOwnerRate(tr); }, true);
+      roleSel.__robAutorate = true;
+    }
+    // Enforce once on attach (handles initial state)
+    syncOwnerRate(tr);
+    return true;
+  }
+  // Try on DOM ready, and a few retries in case UI renders late
+  function onReady(fn){ if(document.readyState!=="loading") fn(); else document.addEventListener("DOMContentLoaded", fn, {once:true}); }
+  onReady(function(){
+    var ok = attach();
+    var tries = 0;
+    var t = setInterval(function(){
+      if (ok || tries>10){ clearInterval(t); return; }
+      ok = attach(); tries++;
+    }, 200);
+  });
+})();
+</script>
+
+<script id="autorate_all_roles_patch">
+// Default hourly rates by role (extend/adjust here if needed)
+const TM_DEFAULT_RATES = {
+  owner: 50,
+  company: 50,
+  foreman: 43.75,
+  mason: 30,
+  laborer: 25,
+  other: 30
+};
+
+(function(){
+  function getRows(){
+    return Array.from(document.querySelectorAll("#crewTbody tr"));
+  }
+  function getRole(tr){
+    var sel = tr && tr.querySelector(".crew_role");
+    return String(sel && sel.value || "").toLowerCase();
+  }
+  function setRate(tr, val){
+    var inp = tr && tr.querySelector(".crew_rate");
+    if(!inp) return;
+    inp.value = String(val);
+    // update backing model if present
+    try{
+      if(window.crew && Array.isArray(window.crew)){
+        var id = tr.dataset && tr.dataset.id;
+        var idx = crew.findIndex(c=>c && c.id===id);
+        if(idx>=0 && crew[idx]){
+          crew[idx].rate = Number(val)||0;
+        }
+      }
+    }catch(e){}
+  }
+  function isOwnerRow(tr){
+    if(!tr) return false;
+    if(tr.dataset && tr.dataset.id === "owner") return true;
+    try{
+      var nameEl = tr.querySelector(".crew_name, .name, input[type='text']");
+      var name = nameEl ? (nameEl.value || nameEl.textContent || "") : "";
+      return /\bowner\b/i.test(name) || /\brob\b/i.test(name);
+    }catch(e){ return false; }
+  }
+  function currentRate(tr){
+    var inp = tr && tr.querySelector(".crew_rate");
+    return inp ? Number(inp.value||0) : 0;
+  }
+  function anyDefaultValue(val){
+    return Object.values(TM_DEFAULT_RATES).some(v => Math.abs((Number(val)||0) - v) < 1e-9);
+  }
+  function markManual(tr){
+    if(!tr) return;
+    tr.dataset.manualRate = "true";
+    try{
+      if(window.crew && Array.isArray(window.crew)){
+        var id = tr.dataset && tr.dataset.id;
+        var idx = crew.findIndex(c=>c && c.id===id);
+        if(idx>=0 && crew[idx]) crew[idx].manualRate = true;
+      }
+    }catch(e){}
+  }
+  function applyDefaultForRow(tr){
+    if(!tr) return;
+    var role = getRole(tr);
+    var def = TM_DEFAULT_RATES[role];
+    if(def==null) return;
+    var isOwner = isOwnerRow(tr);
+    var manual = tr.dataset.manualRate === "true";
+    var cur = currentRate(tr);
+    // Rule: always enforce defaults for the Owner row on role change.
+    // For other rows: set default if user hasn't manually overridden OR current equals some other default (i.e., still baseline).
+    if(isOwner || !manual || anyDefaultValue(cur)){
+      setRate(tr, def);
+      // If we just applied a default due to role change, keep manual flag as-is (do not set).
+      try{ if(typeof updateAll==="function") updateAll(); }catch(e){}
+    }
+  }
+  function bindRow(tr){
+    if(!tr || tr.__tmBound) return;
+    var roleSel = tr.querySelector(".crew_role");
+    var rateInp = tr.querySelector(".crew_rate");
+    if(roleSel){
+      roleSel.addEventListener("change", function(){
+        applyDefaultForRow(tr);
+      }, true);
+    }
+    if(rateInp){
+      rateInp.addEventListener("input", function(){
+        markManual(tr);
+      }, true);
+    }
+    tr.__tmBound = true;
+  }
+  function attachAll(){
+    getRows().forEach(bindRow);
+    // On first attach, enforce Owner row mapping once (in case initial load has wrong value)
+    try{
+      var ownerRow = getRows().find(isOwnerRow);
+      if(ownerRow){
+        var def = TM_DEFAULT_RATES[getRole(ownerRow)];
+        if(def!=null && currentRate(ownerRow)!==def){
+          setRate(ownerRow, def);
+          if(typeof updateAll==="function") updateAll();
+        }
+      }
+    }catch(e){}
+  }
+  function onReady(fn){ if(document.readyState!=="loading") fn(); else document.addEventListener("DOMContentLoaded", fn, {once:true}); }
+  onReady(function(){
+    // Initial attach
+    attachAll();
+    // Retry a few times in case crew table renders late
+    var tries = 0, t = setInterval(function(){
+      attachAll();
+      if(++tries>10) clearInterval(t);
+    }, 250);
+    // Also re-attach after any global updateAll if available
+    try{
+      if(typeof window.updateAll === "function" && !window.updateAll.__tmWrapped){
+        var _u = window.updateAll;
+        window.updateAll = function(){ var r = _u.apply(this, arguments); try{ attachAll(); }catch(e){} return r; };
+        window.updateAll.__tmWrapped = true;
+      }
+    }catch(e){}
+  });
+})();
+</script>
+</body>
+</html>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  var btn = document.getElementById('wasteAdd');
+  if(!btn) return;
+  btn.addEventListener('click', function(){
+    try{
+      if (!Array.isArray(window.waste)) window.waste = [];
+      var nid = 'w' + (Date.now()%100000);
+      window.waste.push({id:nid, use:false, item:"Custom disposal item", facility:"", units:"ton", rate:0, qty:0});
+      if (typeof renderWaste === 'function') renderWaste();
+      else if (typeof updateAll === 'function') updateAll();
+    }catch(e){ console.warn(e); }
+  });
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  try{
+    var tbody = document.getElementById('matTbody');
+    var tablist = document.getElementById('sections-tablist');
+    if(!tbody || !tablist) return;
+    var GROUPS = {
+      all: null,
+      concrete: new Set(['m6','m7','m10']),
+      masonry:  new Set(['m4','m8','m9','m11']),
+      pavers:   new Set(['m1','m2','m3'])
+    };
+    function activeGroup(){
+      var t = tablist.querySelector('[role="tab"][aria-selected="true"]');
+      return t ? (t.getAttribute('data-group') || 'all') : 'all';
+    }
+    function applyMaterialsFilter(){
+      var g = activeGroup();
+      var allow = GROUPS[g];
+      tbody.querySelectorAll('tr').forEach(function(tr){
+        var id = tr.dataset.id || '';
+        tr.style.display = (!allow || !id || allow.has(id)) ? '' : 'none';
+      });
+    }
+    tablist.addEventListener('click', function(){ setTimeout(applyMaterialsFilter, 0); });
+    tablist.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' ') setTimeout(applyMaterialsFilter,0); });
+    new MutationObserver(function(){ applyMaterialsFilter(); }).observe(tbody, {childList:true});
+    applyMaterialsFilter();
+  }catch(e){ console.warn('materials filter disabled:', e); }
+});
+</script>
+<script>
+// Hide Waste / Disposal ONLY when Concrete tab is active (safe, no math touched)
+document.addEventListener('DOMContentLoaded', function(){
+  function activeGroup(){
+    var t = document.querySelector('#sections-tablist [role="tab"][aria-selected="true"]');
+    return t ? (t.getAttribute('data-group') || 'all') : 'all';
+  }
+  function findWasteCard(){
+    var cards = Array.from(document.querySelectorAll('.wrap > .card'));
+    return cards.find(function(card){
+      var h3 = card.querySelector('h3');
+      return h3 && /waste\s*\/\s*disposal/i.test(h3.textContent);
+    });
+  }
+  function enforceConcreteHidesWaste(){
+    try{
+      var g = activeGroup();
+      var waste = findWasteCard();
+      if(!waste) return;
+      if(g === 'concrete'){
+        waste.classList.add('group-hidden');
+        waste.style.display = 'none';
+      }else{
+        waste.classList.remove('group-hidden');
+        waste.style.display = '';
+      }
+    }catch(e){ console.warn('concrete->hide waste patch:', e); }
+  }
+  var tablist = document.getElementById('sections-tablist');
+  if(tablist){
+    tablist.addEventListener('click', function(){ setTimeout(enforceConcreteHidesWaste, 0); });
+    tablist.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' ') setTimeout(enforceConcreteHidesWaste,0); });
+  }
+  // run once on load
+  enforceConcreteHidesWaste();
+});
+</script>
+<script>
+// Hide Waste / Disposal when Crew & Time tab is active (safe, isolated)
+document.addEventListener('DOMContentLoaded', function(){
+  function activeGroup(){
+    var t = document.querySelector('#sections-tablist [role="tab"][aria-selected="true"]');
+    return t ? (t.getAttribute('data-group') || 'all') : 'all';
+  }
+  function findWasteCard(){
+    var cards = Array.from(document.querySelectorAll('.wrap > .card'));
+    return cards.find(function(card){
+      var h3 = card.querySelector('h3');
+      return h3 && /waste\s*\/\s*disposal/i.test(h3.textContent);
+    });
+  }
+  function enforceCrewHidesWaste(){
+    try{
+      var g = activeGroup();
+      var waste = findWasteCard();
+      if(!waste) return;
+      if(g === 'crew'){
+        waste.classList.add('group-hidden');
+        waste.style.display = 'none';
+      }else{
+        // do not change visibility for other groups here—other patches handle them
+        if(g !== 'concrete'){ waste.classList.remove('group-hidden'); waste.style.display = ''; }
+      }
+    }catch(e){ console.warn('crew->hide waste patch:', e); }
+  }
+  var tablist = document.getElementById('sections-tablist');
+  if(tablist){
+    tablist.addEventListener('click', function(){ setTimeout(enforceCrewHidesWaste, 0); });
+    tablist.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' ') setTimeout(enforceCrewHidesWaste,0); });
+  }
+  enforceCrewHidesWaste();
+});
+</script>
+<script>
+// Central controller: hide Waste / Disposal on Concrete, Crew & Time, and Masonry tabs only
+document.addEventListener('DOMContentLoaded', function(){
+  function activeGroup(){
+    var t = document.querySelector('#sections-tablist [role="tab"][aria-selected="true"]');
+    return t ? (t.getAttribute('data-group') || 'all') : 'all';
+  }
+  function findWasteCard(){
+    var cards = Array.from(document.querySelectorAll('.wrap > .card'));
+    return cards.find(function(card){
+      var h3 = card.querySelector('h3');
+      return h3 && /waste\s*\/\s*disposal/i.test(h3.textContent);
+    });
+  }
+  function enforceWasteVisibility(){
+    try{
+      var g = activeGroup();
+      var waste = findWasteCard();
+      if(!waste) return;
+      var hideOn = new Set(['concrete','crew','masonry','pavers','fuel']);
+      if(hideOn.has(g)){
+        waste.classList.add('group-hidden');
+        waste.style.display = 'none';
+      }else{
+        waste.classList.remove('group-hidden');
+        waste.style.display = '';
+      }
+    }catch(e){ console.warn('waste visibility controller:', e); }
+  }
+  var tablist = document.getElementById('sections-tablist');
+  if(tablist){
+    tablist.addEventListener('click', function(){ setTimeout(enforceWasteVisibility, 0); });
+    tablist.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' ') setTimeout(enforceWasteVisibility,0); });
+  }
+  // run on load
+  enforceWasteVisibility();
+});
+</script>
+<script>
+// ID: fuel-hide-materials-v1 — Hide Materials only on the Fuel tab (safe & isolated)
+document.addEventListener('DOMContentLoaded', function(){
+  function activeGroup(){
+    var t = document.querySelector('#sections-tablist [role="tab"][aria-selected="true"]');
+    return t ? (t.getAttribute('data-group') || 'all') : 'all';
+  }
+  function findMaterialsCard(){
+    var t = document.querySelector('.wrap > .card #matTbody');
+    return t ? t.closest('.card') : null;
+  }
+  function enforceMaterialsOnFuel(){
+    try{
+      var g = activeGroup();
+      var mat = findMaterialsCard();
+      if(!mat) return;
+      if(g === 'fuel'){
+        mat.classList.add('group-hidden');
+        mat.style.display = 'none';
+      }else{
+        mat.classList.remove('group-hidden');
+        mat.style.display = '';
+      }
+    }catch(e){ console.warn('materials visibility on fuel tab:', e); }
+  }
+  var tablist = document.getElementById('sections-tablist');
+  if(tablist){
+    tablist.addEventListener('click', function(){ setTimeout(enforceMaterialsOnFuel, 0); });
+    tablist.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' ') setTimeout(enforceMaterialsOnFuel,0); });
+  }
+  enforceMaterialsOnFuel();
+});
+</script>
+<script>
+// ID: waste-hide-materials-v1 — Hide Materials ONLY on the Waste / Disposal tab (safe & isolated)
+document.addEventListener('DOMContentLoaded', function(){
+  function activeGroup(){
+    var t = document.querySelector('#sections-tablist [role="tab"][aria-selected="true"]');
+    return t ? (t.getAttribute('data-group') || 'all') : 'all';
+  }
+  function findMaterialsCard(){
+    var t = document.querySelector('.wrap > .card #matTbody');
+    return t ? t.closest('.card') : null;
+  }
+  function enforceMaterialsOnWaste(){
+    try{
+      var g = activeGroup();
+      var mat = findMaterialsCard();
+      if(!mat) return;
+      if(g === 'waste' || g === 'disposal'){
+        mat.classList.add('group-hidden');
+        mat.style.display = 'none';
+      }else{
+        mat.classList.remove('group-hidden');
+        mat.style.display = '';
+      }
+    }catch(e){ console.warn('materials visibility on waste tab:', e); }
+  }
+  var tablist = document.getElementById('sections-tablist');
+  if(tablist){
+    tablist.addEventListener('click', function(){ setTimeout(enforceMaterialsOnWaste, 0); });
+    tablist.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' ') setTimeout(enforceMaterialsOnWaste,0); });
+  }
+  enforceMaterialsOnWaste();
+});
+</script>
+<script>
+// ID: crew-hide-materials-v1 — Hide Materials ONLY on the Crew & Time tab (safe & isolated)
+document.addEventListener('DOMContentLoaded', function(){
+  function activeGroup(){
+    var t = document.querySelector('#sections-tablist [role="tab"][aria-selected="true"]');
+    return t ? (t.getAttribute('data-group') || 'all') : 'all';
+  }
+  function findMaterialsCard(){
+    var t = document.querySelector('.wrap > .card #matTbody');
+    return t ? t.closest('.card') : null;
+  }
+  function enforceMaterialsOnCrew(){
+    try{
+      var g = activeGroup();
+      var mat = findMaterialsCard();
+      if(!mat) return;
+      if(g === 'crew'){
+        mat.classList.add('group-hidden');
+        mat.style.display = 'none';
+      }else{
+        mat.classList.remove('group-hidden');
+        mat.style.display = '';
+      }
+    }catch(e){ console.warn('materials visibility on crew tab:', e); }
+  }
+  var tablist = document.getElementById('sections-tablist');
+  if(tablist){
+    tablist.addEventListener('click', function(){ setTimeout(enforceMaterialsOnCrew, 0); });
+    tablist.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' ') setTimeout(enforceMaterialsOnCrew,0); });
+  }
+  enforceMaterialsOnCrew();
+});
+</script>
+<script id="materials-hide-master-v1">
+// Ensures Materials is hidden on Waste / Disposal, Crew & Time, and Fuel tabs
+document.addEventListener('DOMContentLoaded', function(){
+  function activeGroup(){
+    var t = document.querySelector('#sections-tablist [role="tab"][aria-selected="true"]');
+    return t ? (t.getAttribute('data-group') || 'all') : 'all';
+  }
+  function findMaterialsCard(){
+    var t = document.querySelector('.wrap > .card #matTbody');
+    return t ? t.closest('.card') : null;
+  }
+  function applyOnce(){
+    try {
+      var g = activeGroup();
+      var mat = findMaterialsCard();
+      if(!mat) return;
+      var hideOn = new Set(['waste','disposal','crew','fuel']);
+      if(hideOn.has(g)){
+        mat.classList.add('group-hidden');
+        mat.style.display = 'none';
+      } else {
+        mat.classList.remove('group-hidden');
+        mat.style.display = '';
+      }
+    } catch(e){ console.warn('materials-hide-master error', e); }
+  }
+  function enforce(){
+    // run a few times to win over any other late scripts
+    applyOnce();
+    setTimeout(applyOnce, 10);
+    setTimeout(applyOnce, 60);
+    requestAnimationFrame(applyOnce);
+  }
+  var tablist = document.getElementById('sections-tablist');
+  if(tablist){
+    tablist.addEventListener('click', function(){ setTimeout(enforce, 0); });
+    tablist.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' ') setTimeout(enforce,0); });
+  }
+  enforce();
+});
+</script>
+<script id="mv-pump-delegate">
+document.addEventListener('DOMContentLoaded', function(){
+  function recalcPump(){
+    try{ if(window.mohicanValley) mohicanValley(); }catch(e){}
+    try{ if(window.totals) totals(); }catch(e){}
+    try{ if(window.updateAll) updateAll(); }catch(e){}
+  }
+  // Capture phase to catch dynamically inserted controls too
+  ['change','input'].forEach(function(type){
+    document.addEventListener(type, function(e){
+      var id = e.target && e.target.id;
+      if(id==='pump_use' || id==='pump_size' || id==='pump_hours' || id==='mv_apply_pump'){
+        recalcPump();
+      }
+    }, true);
+  });
+});
+</script>
