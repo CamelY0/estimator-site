@@ -13,6 +13,56 @@
   }
   #js-error-banner.ok { background:#f0fff0; border-color:#0a0; color:#064; }
   #js-error-banner .mono { font-family: ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+
+/* Cleanup tab: show only the Sections sidebar and Materials panel */
+body[data-active-group="cleanup"] .wrap .panel { display: none !important; }
+body[data-active-group="cleanup"] .wrap .panel:has(#sections-tablist),
+body[data-active-group="cleanup"] .wrap .panel:has(#matTbody) { display: block !important; }
+/* Hide Tax/Reimbursement card on Cleanup (presence of #taxPct input) */
+body[data-active-group="cleanup"] .wrap .card:has(#taxPct) { display: none !important; }
+/* Hide Crew & Time card on Cleanup: try common input IDs */
+body[data-active-group="cleanup"] .wrap .card:has(#crewCount),
+body[data-active-group="cleanup"] .wrap .card:has(#crewHours),
+body[data-active-group="cleanup"] .wrap .card:has(#crewRate) { display: none !important; }
+
+
+/* Cleanup: hide the Concrete tab in the Sections list */
+
+
+/* Cleanup: hide the Job Info card */
+body[data-active-group="cleanup"] .wrap .card:has(#job_date_header) { display: none !important; }
+
+
+/* Cleanup: hide Quick Groups card */
+body[data-active-group="cleanup"] .wrap .card:has(.groupbar) { display: none !important; }
+
+
+/* Cleanup: hide the Concrete card */
+body[data-active-group="cleanup"] .wrap .card:has(#ct_yards),
+body[data-active-group="cleanup"] .wrap .card:has(#mv_yards) { display: none !important; }
+
+
+/* Hide Waste/Disposal card on Cleanup and Veneer once tagged */
+body[data-active-group="cleanup"] .wrap .card[data-card-waste],
+body[data-active-group="veneer"]  .wrap .card[data-card-waste] { display: none !important; }
+
+
+/* Crew tab: ensure the Crew & Time card is visible */
+body[data-active-group="crew"] .wrap .card:has(#crewCount),
+body[data-active-group="crew"] .wrap .card:has(#crewHours),
+body[data-active-group="crew"] .wrap .card:has(#crewRate) { display: block !important; }
+
+
+/* Crew tab: force-show the Crew & Time card; also markable via data-card-crew */
+body[data-active-group="crew"] .wrap .card:has(#crewCount),
+body[data-active-group="crew"] .wrap .card:has(#crewHours),
+body[data-active-group="crew"] .wrap .card:has(#crewRate),
+body[data-active-group="crew"] .wrap .card[data-card-crew] {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
 </style>
 <script id="early-error-dash">
 (function(){
@@ -142,7 +192,21 @@ body[data-active-group="stucco"] #matTbody tr:not([data-cats*="stucco"]) { displ
 /* Hide rows that are NOT stone veneer nor bluestone when Stone Veneer tab is active */
 body[data-active-group="veneer"] #matTbody tr:not([data-cats*="stone veneer"]):not([data-cats*="bluestone"]) { display: none !important; }
 </style>
-<style>#quickGroups,#quick-groups,.quick-groups,[data-section='quick-groups']{display:none!important;}</style></head>
+<style>#quickGroups,#quick-groups,.quick-groups,[data-section='quick-groups']{display:none!important;}</style>
+<script>
+// Unified section config: show items by cats OR if pinned
+window.SECTION = {
+  all:       { cats: null,                         pins: null },
+  concrete:  { cats: ['concrete'],                 pins: new Set(['m6','m7','m10','mNH3','m2013','mTIL_DrivewayMix','mSO_KY_Bluegrass_Sod','mSO_TopSoil_Bulk','mNHM_Concrete_80lb','mLOW_ColdPatchAsphalt_50lb']) },
+  masonry:   { cats: ['masonry'],                  pins: new Set([]) },
+  pavers:    { cats: ['pavers'],                   pins: new Set([]) },
+  bluestone: { cats: ['bluestone'],                pins: new Set([]) },
+  veneer:    { cats: ['stone veneer','bluestone'], pins: new Set([]) },
+  stucco:    { cats: ['stucco'],                   pins: new Set([]) }
+  ,cleanup: { cats: ['cleanup'], pins: new Set(['mHDX_TerryTowels_20pk']) }};
+</script>
+
+</head>
 <body>
 <div class="wrap">
 <h2 style="margin:8px 0">Turcotte Masonry Estimator</h2>
@@ -430,17 +494,15 @@ let materials = [
   {id:'mLOW_SV_50',    use:false, item:"Sakrete Stone Veneer Mortar — 50 lb",     supplier:"Lowe's",           units:"bag", price:9.88,  qty:0, cats:["masonry","stone veneer","stucco"]},
   {id:'mCOL_DWV9402',  use:false, item:"DeWALT Fleece Dust Bags (DWV9402) — 5-pack", supplier:"Colony Hardware", units:"pack",price:45.00, qty:0, cats:["stucco","masonry","concrete","tools"]},
 
-  {id:'m1',  use:false, item:"8' Plastic paver edging",            supplier:'New Haven Masonry', units:'each',  price:12, qty:0, step:1,    roundUp:true},
-  {id:'m2',  use:false, item:"8' Aluminum paver edging",           supplier:'New Haven Masonry', units:'each',  price:18, qty:0, step:1,    roundUp:true},
-  {id:'m3',  use:false, item:"12\" paver spikes — 150/box",        supplier:'New Haven Masonry', units:'box',   price:72, qty:0, step:1,    roundUp:true, cats:["pavers", ]},
-  {id:'m4',  use:false, item:"SPEC MIX Type S — 80 lb",            supplier:'New Haven Masonry', units:'bag',   price:11, qty:0, cats:["stucco"]},
+  {id:'m1',  use:false, item:"8' Plastic paver edging",            supplier:'New Haven Masonry', units:'each',  price:12, qty:0, step:1,    roundUp:true, cats:['pavers']},
+  {id:'m2',  use:false, item:"8' Aluminum paver edging",           supplier:'New Haven Masonry', units:'each',  price:18, qty:0, step:1,    roundUp:true, cats:['pavers']},
+  {id:'m3',  use:false, item:"12\" paver spikes — 150/box",        supplier:'New Haven Masonry', units:'box',   price:72, qty:0, step:1,    roundUp:true, cats:["pavers"]},
+  {id:'m4',  use:false, item:"SPEC MIX Type S — 80 lb",            supplier:'New Haven Masonry', units:'bag',   price:11, qty:0, cats:['stucco', 'masonry']},
   {id:'m5',  use:false, item:"SPEC MIX Stone Veneer — 80 lb",      supplier:'New Haven Masonry', units:'bag',   price:18, qty:0, cats:["masonry","stone veneer","bluestone"]},
-  {id:'m6',  use:false, item:"Concrete wire mesh 5'×10'",          supplier:'New Haven Masonry', units:'sheet', price:11, qty:0, cats:["concrete", ]},
-  {id:'m7',  use:false, item:"6\"×10' expansion joint",            supplier:'New Haven Masonry', units:'each',  price:8,  qty:0, cats:["concrete", ]},
+  {id:'m6',  use:false, item:"Concrete wire mesh 5'×10'",          supplier:'New Haven Masonry', units:'sheet', price:11, qty:0, cats:["concrete"]},
+  {id:'m7',  use:false, item:"6\"×10' expansion joint",            supplier:'New Haven Masonry', units:'each',  price:8,  qty:0, cats:["concrete"]},
   {id:'m8',  use:false, item:"SPEC MIX Core Fill Grout 3k — 80 lb",supplier:'Homer C. Godfrey', units:'bag',    price:11, qty:0, cats:["masonry"]},
-  {id:'m9',  use:false, item:"12\" hollow concrete block",         supplier:'New Haven Masonry', units:'each',  price:5,  qty:0},
-  {id:'m10', use:false, item:"Bulk crushed rock 3/4\"",            supplier:'SiteOne',          units:'yard',  price:44, qty:0, step:0.25, roundUp:false},
-  {id:'m11', use:false, item:"Bluestone (enter price per sf)",     supplier:'New Haven Masonry', units:'sf',   price:0,  qty:0, step:1,    roundUp:false},
+  {id:'m10', use:false, item:"Bulk crushed rock 3/4\"",            supplier:'SiteOne',          units:'yard',  price:44, qty:0, step:0.25, roundUp:false, cats:['concrete', 'pavers']},
   {id:"mNH1", use:false, item:"12\" hollow concrete block", supplier:"New Haven Masonry", units:"each", price:4.8, qty:0, cats:["masonry"]},
   {id:"mNH2", use:false, item:"12\" Durawall — 10'", supplier:"New Haven Masonry", units:"each", price:7.85, qty:0, cats:["masonry"]},
   {id:"mNH3", use:false, item:"#5 rebar (5/8\") — 20'", supplier:"New Haven Masonry", units:"each", price:14.95, qty:0, cats:["masonry","concrete"]},
@@ -461,7 +523,7 @@ let materials = [
   {id:'m2010',use:false,item:"EPS EIFS Foam — 1.5\" (2'×4', 13 sheets) per bundle",supplier:'Local EIFS supplier',units:'bundle',price:45,qty:0,step:50,roundUp:false,cats:["stucco"],coverageSqft:104},
   {id:'m2011',use:false,item:"EPS EIFS Foam — 1\" (2'×4', 18 sheets) per bundle",supplier:'Local EIFS supplier',units:'bundle',price:45,qty:0,step:50,roundUp:false,cats:["stucco"],coverageSqft:144},
   {id:'m2012',use:false,item:"EPS EIFS Foam — 3/4\" (2'×4', 30 sheets) per bundle",supplier:'Local EIFS supplier',units:'bundle',price:45,qty:0,step:50,roundUp:false,cats:["stucco"],coverageSqft:240},
-  {id:'m2013',use:false,item:"Red Baron stucco masking tape — 2\" × 180' roll",supplier:'RMC Stucco Supply',units:'roll',price:7.50,qty:0,step:1,roundUp:true,cats:["stucco"]},
+  {id:'m2013',use:false,item:"Red Baron stucco masking tape — 2\" × 180' roll",supplier:'RMC Stucco Supply',units:'roll',price:7.50,qty:0,step:1,roundUp:true,cats:['stucco', 'concrete']},
   {id:'m2014',use:false,item:"Stucco knife",supplier:'Stucco Depot',units:'each',price:15,qty:0,step:1,roundUp:true,cats:["stucco"]},
   {id:'mCT_BBS_TREAD', use:false, item:"Bluestone Blue Select Tread", supplier:"Connecticut Stone", units:"sf", price:20.20, qty:0, cats:["masonry","stone veneer"]},
   {id:'mCT_HB_STRIP', use:false, item:"Hampton Blend Strip Cut Thinstone", supplier:"Connecticut Stone", units:"sf", price:8.00, qty:0, cats:["masonry","stone veneer"]},
@@ -475,6 +537,17 @@ let materials = [
   {id:'mNHM_Concrete_80lb', use:false, item:"Concrete 80lb Bag", supplier:"New Haven Masonry", units:"bag", price:6.36, qty:0, cats:["concrete"]},
   {id:'mLOW_ColdPatchAsphalt_50lb', use:false, item:"Cold Patch Asphalt 50 lb Bag", supplier:"Lowes", units:"bag", price:22.38, qty:0, cats:["concrete"]},
   {id:'mLOW_Sakrete_Play_Sand_50lb', use:false, item:"Sakrete Play Sand 50lb Bag", supplier:"Lowes", units:"bag", price:8.28, qty:0, cats:["pavers","concrete"]},
+  { id:'mHDX_TerryTowels_20pk', item:"HDX TERRY TOWELS 20PK", units:'pack', price:12.98, supplier:'Home Depot', cats:['cleanup'] }
+,
+  { id:'mWindex32oz_308534', item:"Windex 32 oz Commercial Line Trigger Bottle Original Glass Cleaner", units:'bottle', supplier:'Home Depot', price:4.78, cats:['cleanup'] }
+,
+  { id:'mQuikreteBondingAdhesive_1gal_990201', item:"Quikrete 1 Gal. Concrete Bonding Adhesive", units:'gal', supplier:'Home Depot', price:20.84, cats:['masonry','stone veneer'] }
+,
+  { id:'mGripRite_3in_DrywallScrews_1lb_3CDWS1', item:"#8 x 3 in. #2 Phillips Bugle Head Coarse Thread Drywall Screws (1 lb Box)", units:'box (1 lb)', supplier:'Home Depot', price:7.06, cats:['concrete'] }
+,
+  { id:"mDewalt_Chalk_Red_8oz_DWHT47048L", item:"DEWALT 8 oz. Chalk Reel in Red (DWHT47048L)", units:"bottle (8 oz)", supplier:"Home Depot", price:3.47, cats:["masonry"] }
+,
+  { id:"mMilwaukee_SDSPlus_5_8x18in_4C_48_20_8306", item:"Milwaukee 5/8 in. x 18 in. 4-Cutter SDS-PLUS Carbide Drill Bit (48-20-8306)", units:"each", supplier:"Home Depot", price:37.77, cats:["concrete"] }
 ];
 
 
@@ -701,8 +774,34 @@ function mohicanValley(){
   }
 
   // ===== Tools =====
-  let tools=[{id:'t1', use:false, name:'14\" demo saw', cost:1200, life:100000, frac:0.8, useHrs:0}];
-  function renderTools(){
+  let tools=[
+{id:'t1', use:false, name:'DEWALT 4400 PSI 4.0 GPM Pressure Washer (DXPW61377)', cost:949, life:475, frac:1.0, useHrs:0},
+  {id:'t2', use:false, name:'Bosch 11335K 35-lb Breaker Hammer Kit (1-1/8" Hex)', cost:1099, life:550, frac:1.0, useHrs:0},
+  {id:'t3', use:false, name:'STIHL TS 420 14\" Cut-Off Saw', cost:1399.99, life:700, frac:1.0, useHrs:0},
+  {id:'t4', use:false, name:'Bosch 11255VSR Bulldog Xtreme 1" SDS-Plus Rotary Hammer', cost:219.00, life:110, frac:1.0, useHrs:0},
+  {id:'t5', use:false, name:'Bosch 11316EVS SDS-max Demolition Hammer (14A, 12.4 ft-lb)', cost:729.00, life:365, frac:1.0, useHrs:0},
+  {id:'t6', use:false, name:'Bosch RH540M 1-9/16" SDS-max Combination Rotary Hammer', cost:469.00, life:235, frac:1.0, useHrs:0},
+  {id:'t7', use:false, name:'DEWALT 20V MAX XR Impact Driver (DCF860B) — Tool Only', cost:179.00, life:90, frac:1.0, useHrs:0},
+  {id:'t8', use:false, name:'DEWALT FLEXVOLT 20V/60V MAX 12.0Ah Battery (DCB612)', cost:319.00, life:160, frac:1.0, useHrs:0},
+  {id:'t9', use:false, name:'DEWALT 20V MAX XR Compact Reciprocating Saw (DCS367B) — Tool Only', cost:179.00, life:90, frac:1.0, useHrs:0},
+  {id:'t10', use:false, name:'DEWALT Tuckpointing Grinder (DWE46202)', cost:420.99, life:210, frac:1.0, useHrs:0},
+  {id:'t11', use:false, name:'DEWALT 8 Gallon HEPA/RRP Dust Extractor (DWV010)', cost:469.00, life:235, frac:1.0, useHrs:0}
+];
+
+  
+  // Default Tools item tweaked: DEWALT DXPW61377 @ $949, life 475 hrs, frac 1.0 ⇒ ~$2.00/hour reserve
+
+  // Added: Bosch 11335K breaker @ $1,099, life 550 hrs (≈$2.00/hr reserve)
+// Added: STIHL TS 420 @ $1,399.99, life 700 hrs (≈$2.00/hr reserve)
+// Added: Bosch 11255VSR @ $219.00, life 110 hrs (≈$2.00/hr reserve)
+// Added: Bosch 11316EVS @ $729.00, life 365 hrs (≈$2.00/hr reserve)
+// Added: Bosch RH540M @ $469.00, life 235 hrs (≈$2.00/hr reserve)
+// Added: DEWALT DCF860B @ $179.00, life 90 hrs (≈$2.00/hr reserve). Tool-only; battery/charger sold separately.
+// Added: DEWALT DCB612 @ $319.00, life 160 hrs (≈$2.00/hr reserve). Battery-pack depreciation only.
+// Added: DEWALT DCS367B @ $179.00, life 90 hrs (≈$2.00/hr reserve). Tool-only; blades & batteries separate.
+// Added: DEWALT DWE46202 @ $420.99, life 211 hrs (≈$2.00/hr reserve). Includes tuckpoint shroud & blade per kit.
+// Added: DEWALT DWV010 @ $469.00, life 235 hrs (≈$2.00/hr reserve). HEPA/RRP dust extractor.
+function renderTools(){
     const tb=byId('toolTbody'); tb.innerHTML='';
     tools.forEach(t=>{
       const tr=document.createElement('tr'); tr.dataset.id=t.id; tr.classList.toggle('fade', !t.use);
@@ -1289,6 +1388,8 @@ document.addEventListener('DOMContentLoaded', function(){
     <div class="row">
       <div id="sections-tablist" role="tablist" aria-labelledby="sections-label">
         <button role="tab" id="tab-all" aria-selected="true" aria-controls="main_content_wrap" tabindex="0" data-group="all">All</button>
+<button role="tab" id="tab-cleanup" aria-selected="false" aria-controls="main_content_wrap" tabindex="-1" data-group="cleanup">Cleanup</button>
+
         <button role="tab" id="tab-concrete" aria-selected="false" aria-controls="main_content_wrap" tabindex="-1" data-group="concrete">Concrete</button>
         <button role="tab" id="tab-masonry" aria-selected="false" aria-controls="main_content_wrap" tabindex="-1" data-group="masonry">Masonry</button>
   <button role="tab" id="tab-veneer" aria-selected="false" aria-controls="main_content_wrap" tabindex="-1" data-group="veneer">Stone Veneer</button>
@@ -1495,22 +1596,26 @@ document.addEventListener('DOMContentLoaded', function(){
   var tablist = document.getElementById('sections-tablist');
   var tbody = document.getElementById('matTbody');
   if(!tbody) return;
-  var GROUPS = {
-  all: null,
-  concrete: new Set(['m6','m7','m10']),
-  masonry:  new Set(['m4','m8','m9','m11']),
-  pavers:   new Set(['m1','m2','m3'])
-};
+  
+  var SECTION = {
+    all:       { cats: null,                   pins: null },
+    concrete:  { cats: ['concrete'],           pins: new Set(['m6','m7','m10','mNH3','m2013','mTIL_DrivewayMix','mSO_KY_Bluegrass_Sod','mSO_TopSoil_Bulk','mNHM_Concrete_80lb','mLOW_ColdPatchAsphalt_50lb']) },
+    masonry:   { cats: ['masonry'],            pins: new Set(['m4','m8','m9','m11']) },
+    pavers:    { cats: ['pavers'],             pins: new Set(['m1','m2','m3']) },
+    bluestone: { cats: ['bluestone'],          pins: new Set([]) },
+    veneer:    { cats: ['stone veneer','bluestone'], pins: new Set([]) },
+    stucco:    { cats: ['stucco'],             pins: new Set([]) }
+  };
   function currentGroup(){
     var active = tablist && tablist.querySelector('[role="tab"][aria-selected="true"]');
     return active ? (active.getAttribute('data-group')||'all') : 'all';
   }
   function applyDim(){
     var g = currentGroup();
-    var allow = GROUPS[g];
+    var allow = (SECTION[g]||{}).pins || null;
     tbody.querySelectorAll('tr').forEach(function(tr){
       var id = tr.dataset.id || '';
-      var dim = (!!allow && id && !allow.has(id));
+      var dim = ((allow && id && !allow.has(id)));
       tr.classList.toggle('dim', dim);
     });
   }
@@ -1546,23 +1651,19 @@ document.addEventListener('DOMContentLoaded', function(){
       // m8: SPEC MIX Core Fill Grout 3k — 80 lb
       // m9: 12" hollow concrete block
       // m10: 6"×10' expansion joint
-      var GROUPS = {
-        all: null,
-        concrete: new Set(['m6','m7','m10']),
-        masonry:  new Set(['m4','m8','m9']),
-        pavers:   new Set(['m1','m2','m3'])
-      };
+      /* legacy groups removed */
 
       function activeGroup(){
-        var active = tablist && tablist.querySelector('[role="tab"][aria-selected="true"]');
-        var g = active ? (active.getAttribute('data-group')||'all') : 'all';
-        if(!GROUPS.hasOwnProperty(g)) g = 'all';
-        return g;
-      }
+      var tablist = document.getElementById('sections-tablist');
+      var active = tablist && tablist.querySelector('[role="tab"][aria-selected="true"]');
+      var g = active ? (active.getAttribute('data-group')||'all') : 'all';
+      if(!(window.SECTION && Object.prototype.hasOwnProperty.call(SECTION, g))) g = 'all';
+      return g;
+    }
 
       function applyHide(){
         var g = activeGroup();
-        var allow = GROUPS[g];
+        var allow = (SECTION[g]||{}).pins || null;
         tbody.querySelectorAll('tr').forEach(function(tr){
           var id = tr.dataset.id || '';
           var show = (!allow) || !id || allow.has(id); // unknown/new rows always show
@@ -2144,6 +2245,603 @@ const TM_DEFAULT_RATES = {
   });
 })();
 </script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  function updatePanels(){
+    var isCleanup = document.body.getAttribute('data-active-group') === 'cleanup';
+    var panels = document.querySelectorAll('.wrap .panel');
+    panels.forEach(function(p){
+      var hasMat = !!p.querySelector('#matTbody');
+      var hasTabs = !!p.querySelector('#sections-tablist');
+      p.style.display = isCleanup ? ((hasMat||hasTabs)?'':'none') : '';
+    });
+    function hideCardBy(sel){
+      var el = document.querySelector(sel);
+      if (!el) return;
+      var card = el.closest('.card');
+      if (card) card.style.display = isCleanup ? 'none' : '';
+    }
+    hideCardBy('#taxPct');
+    hideCardBy('#crewCount'); hideCardBy('#crewHours'); hideCardBy('#crewRate');
+    if (isCleanup){
+      var headers = document.querySelectorAll('.wrap .card h2, .wrap .card h3, .wrap .card .card-title');
+      headers.forEach(function(h){
+        var t = (h.textContent||'').toLowerCase();
+        if (t.includes('crew') && t.includes('time')){
+          var c = h.closest('.card'); if (c) c.style.display = 'none';
+        }
+      });
+    }
+  }
+  var tablist = document.getElementById('sections-tablist');
+  if (tablist){
+    tablist.addEventListener('click', function(){ setTimeout(updatePanels, 0); });
+    tablist.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' ') setTimeout(updatePanels, 0); });
+  }
+  var mo = new MutationObserver(updatePanels);
+  mo.observe(document.body, { attributes:true, attributeFilter:['data-active-group'] });
+  updatePanels();
+});
+</script>
+
+
+<script>
+(function(){
+  function hideJobInfoOnCleanup(){
+    var isCleanup = document.body.getAttribute('data-active-group') === 'cleanup';
+    var el = document.getElementById('job_date_header');
+    if (!el) return; // job info card not created yet
+    var card = el.closest('.card');
+    if (card) card.style.display = isCleanup ? 'none' : '';
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    hideJobInfoOnCleanup();
+    // run again after Job Info builder runs; and when active-group changes
+    setTimeout(hideJobInfoOnCleanup, 100);
+    var mo = new MutationObserver(hideJobInfoOnCleanup);
+    mo.observe(document.body, { attributes:true, attributeFilter:['data-active-group'] });
+  });
+})();
+</script>
+
+
+<script>
+(function(){
+  function hideQuickGroupsOnCleanup(){
+    var isCleanup = document.body.getAttribute('data-active-group') === 'cleanup';
+    var gb = document.querySelector('.wrap .card .groupbar');
+    if (!gb) return;
+    var card = gb.closest('.card');
+    if (card) card.style.display = isCleanup ? 'none' : '';
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    hideQuickGroupsOnCleanup();
+    var mo = new MutationObserver(hideQuickGroupsOnCleanup);
+    mo.observe(document.body, { attributes:true, attributeFilter:['data-active-group'] });
+  });
+})();
+</script>
+
+
+<script>
+(function(){
+  // Remove the Concrete tab from the Sections list when Cleanup is active; restore it otherwise.
+  var removedConcreteBtn = null; /* disabled */
+  function toggleConcreteInCleanup(){
+    var isCleanup = document.body.getAttribute('data-active-group') === 'cleanup';
+    var tablist = document.getElementById('sections-tablist');
+    if (!tablist) return;
+    var concreteBtn = tablist.querySelector('[role="tab"][data-group="concrete"]');
+    if (isCleanup){
+      if (concreteBtn){
+        // cache and remove
+        removedConcreteBtn = concreteBtn;
+        concreteBtn.parentNode/* .removeChild(concreteBtn) -- disabled */;
+      }
+    } else {
+      // restore if missing and we have a cached copy
+      var exists = tablist.querySelector('[role="tab"][data-group="concrete"]');
+      if (!exists && removedConcreteBtn){
+        // Insert back to its original general position: before Masonry if present; else append at start
+        var masonryBtn = tablist.querySelector('[role="tab"][data-group="masonry"]');
+        if (masonryBtn && masonryBtn.parentNode){
+          masonryBtn.parentNode.insertBefore(removedConcreteBtn, masonryBtn);
+        } else {
+          tablist.insertBefore(removedConcreteBtn, tablist.firstChild);
+        }
+        removedConcreteBtn = null;
+      }
+    }
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    toggleConcreteInCleanup();
+    var mo = new MutationObserver(toggleConcreteInCleanup);
+    mo.observe(document.body, { attributes:true, attributeFilter:['data-active-group'] });
+  });
+})();
+</script>
+
+
+<script>
+(function(){
+  function hideVehicleFuelOnCleanup(){
+    var isCleanup = document.body.getAttribute('data-active-group') === 'cleanup';
+    var card = null;
+    // Try to locate by common IDs inside the card
+    var probeIds = ['vehicle_fuel','vehicleFuel','fuelCost','fuelQty','vehFuel','fuel_cost'];
+    for (var i=0;i<probeIds.length && !card;i++){
+      var el = document.getElementById(probeIds[i]);
+      if (el){ card = el.closest('.card'); }
+    }
+    // Fallback: find a card whose header contains "Vehicle Fuel"
+    if (!card){
+      var headers = document.querySelectorAll('.wrap .card h2, .wrap .card h3, .wrap .card .card-title');
+      headers.forEach(function(h){
+        var t = (h.textContent||'').toLowerCase();
+        if (!card && t.includes('vehicle') && t.includes('fuel')){
+          var c = h.closest('.card'); if (c) card = c;
+        }
+      });
+    }
+    if (card){ card.style.display = isCleanup ? 'none' : ''; }
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    hideVehicleFuelOnCleanup();
+    var mo = new MutationObserver(hideVehicleFuelOnCleanup);
+    mo.observe(document.body, { attributes:true, attributeFilter:['data-active-group'] });
+  });
+})();
+</script>
+
+
+<script>
+(function(){
+  function hideWasteDisposalOnCleanup(){
+    var isCleanup = document.body.getAttribute('data-active-group') === 'cleanup';
+    var card = null;
+    var ids = ["wasteCost", "wasteQty", "disposalCost", "disposalQty", "dumpsterCost", "dumpsterQty", "waste_fee", "disposal_fee", "dump_fee", "dumpster", "wasteDisposal", "waste_disposal"];
+    for (var i=0;i<ids.length && !card;i++){
+      var el = document.getElementById(ids[i]);
+      if (el) card = el.closest('.card');
+    }
+    if (!card){
+      var headers = document.querySelectorAll('.wrap .card h2, .wrap .card h3, .wrap .card .card-title');
+      headers.forEach(function(h){
+        var t = (h.textContent||'').toLowerCase();
+        if (!card && t.includes('waste') && t.includes('disposal')){
+          var c = h.closest('.card'); if (c) card = c;
+        }
+      });
+    }
+    if (card) card.style.display = isCleanup ? 'none' : '';
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    hideWasteDisposalOnCleanup();
+    var mo = new MutationObserver(hideWasteDisposalOnCleanup);
+    mo.observe(document.body, { attributes:true, attributeFilter:['data-active-group'] });
+  });
+})();
+</script>
+
+
+<script>
+(function(){
+  function hideToolsDeprOnCleanup(){
+    var isCleanup = document.body.getAttribute('data-active-group') === 'cleanup';
+    var card = null;
+    var ids = ["toolsDepreciation", "toolDepreciation", "depreciationReserve", "toolsReserve", "deprReserve", "tools_depreciation", "tool_depreciation", "depreciation_reserve", "tools_reserve", "deprRate", "deprCost", "deprAmount", "toolsDepr", "deprReservePct"];
+    for (var i=0;i<ids.length && !card;i++){ 
+      var el = document.getElementById(ids[i]); 
+      if (el) card = el.closest('.card'); 
+    }
+    if (!card){ 
+      var headers = document.querySelectorAll('.wrap .card h2, .wrap .card h3, .wrap .card .card-title');
+      headers.forEach(function(h){ 
+        var t = (h.textContent||'').toLowerCase();
+        if (!card && t.includes('tools') && (t.includes('depreciation') || t.includes('depreciation reserve'))){
+          var c = h.closest('.card'); if (c) card = c; 
+        }
+      });
+    }
+    if (card) card.style.display = isCleanup ? 'none' : '';
+  }
+  document.addEventListener('DOMContentLoaded', function(){ 
+    hideToolsDeprOnCleanup();
+    var mo = new MutationObserver(hideToolsDeprOnCleanup);
+    mo.observe(document.body, { attributes:true, attributeFilter:['data-active-group'] });
+  });
+})();
+</script>
+
+
+<script>
+(function(){
+  function hideTotalsOnCleanup(){
+    var isCleanup = document.body.getAttribute('data-active-group') === 'cleanup';
+    var cards = document.querySelectorAll('.wrap .card');
+    var needles = ['directs','overhead','profit','tax reimbursement','grand'];
+    cards.forEach(function(card){
+      var t = (card.textContent || '').toLowerCase();
+      var isTotals = needles.every(function(k){ return t.includes(k); });
+      if (isTotals){
+        card.style.display = isCleanup ? 'none' : '';
+      }
+    });
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    hideTotalsOnCleanup();
+    // run again if DOM mutates or tab changes
+    var mo = new MutationObserver(hideTotalsOnCleanup);
+    mo.observe(document.body, { attributes:true, attributeFilter:['data-active-group'] });
+    // also observe main content area for dynamic build
+    var main = document.querySelector('.wrap') || document.body;
+    var mo2 = new MutationObserver(function(){ hideTotalsOnCleanup(); });
+    mo2.observe(main, { childList:true, subtree:true });
+  });
+})();
+</script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  function hideConcreteOnCleanup(){
+    var isCleanup = document.body.getAttribute('data-active-group') === 'cleanup';
+    var el = document.getElementById('ct_yards') || document.getElementById('mv_yards');
+    if (!el) return;
+    var card = el.closest('.card');
+    if (card) card.style.display = isCleanup ? 'none' : '';
+  }
+  hideConcreteOnCleanup();
+  var mo = new MutationObserver(hideConcreteOnCleanup);
+  mo.observe(document.body, { attributes:true, attributeFilter:['data-active-group'] });
+});
+</script>
+
+
+<script>
+(function(){
+  function hideWasteDisposalOnCleanup(){
+    var isCleanup = document.body.getAttribute('data-active-group') === 'cleanup';
+    var cards = document.querySelectorAll('.wrap .card');
+    cards.forEach(function(card){
+      var txt = (card.textContent || '').toLowerCase();
+      // Header-focused match (stricter)
+      var header = card.querySelector('h1,h2,h3,.card-title');
+      var htxt = header ? (header.textContent||'').toLowerCase() : '';
+      var headerLooksRight = (htxt.includes('waste') && (htxt.includes('disposal') || htxt.includes('dump') || htxt.includes('dumpster')));
+      // Content token match (more tolerant)
+      var tokens = ['waste','disposal','dump','dumpster'];
+      var tokenHits = tokens.filter(t => txt.includes(t)).length;
+      var looksLikeWaste = headerLooksRight || tokenHits >= 2;
+      if (looksLikeWaste){
+        card.style.display = isCleanup ? 'none' : '';
+      }
+    });
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    hideWasteDisposalOnCleanup();
+    // re-run when tab changes or DOM mutates
+    var mo = new MutationObserver(hideWasteDisposalOnCleanup);
+    mo.observe(document.body, { attributes:true, attributeFilter:['data-active-group'] });
+    var main = document.querySelector('.wrap') || document.body;
+    var mo2 = new MutationObserver(function(){ hideWasteDisposalOnCleanup(); });
+    mo2.observe(main, { childList:true, subtree:true });
+  });
+})();
+</script>
+
+
+<script>
+(function(){
+  // Robust, sticky hide for "Waste / Disposal" while Cleanup is active.
+  function findWasteCard(){
+    // Try common IDs first
+    var ids = ['waste','disposal','dumpster','wasteCost','disposalCost','dumpsterCost','wasteDisposal','waste_disposal'];
+    for (var i=0;i<ids.length;i++){
+      var el = document.getElementById(ids[i]);
+      if (el){ var card = el.closest('.card'); if (card) return card; }
+    }
+    // Fallback: header text contains tokens
+    var tokens = ['waste','disposal','dump','dumpster'];
+    var cards = document.querySelectorAll('.wrap .card');
+    for (var j=0;j<cards.length;j++){
+      var c = cards[j];
+      var hdr = c.querySelector('h1,h2,h3,.card-title');
+      var htxt = hdr ? (hdr.textContent||'').toLowerCase() : '';
+      var txt  = (c.textContent||'').toLowerCase();
+      var tokenHits = tokens.filter(t => txt.includes(t)).length;
+      if ((htxt.includes('waste') && (htxt.includes('disposal') || htxt.includes('dump') || htxt.includes('dumpster'))) || tokenHits >= 2){
+        return c;
+      }
+    }
+    return null;
+  }
+  function hideWasteIfCleanup(){
+    var isCleanup = document.body.getAttribute('data-active-group') === 'cleanup';
+    var card = findWasteCard();
+    if (!card) return;
+    card.style.display = isCleanup ? 'none' : '';
+  }
+  function scheduleHideWaste(){
+    // Run now, then again on the next animation frame and a short timeout
+    try { hideWasteIfCleanup(); } catch(e){}
+    if (window.requestAnimationFrame){
+      requestAnimationFrame(function(){ try { hideWasteIfCleanup(); } catch(e){} });
+    }
+    setTimeout(function(){ try { hideWasteIfCleanup(); } catch(e){} }, 30);
+    setTimeout(function(){ try { hideWasteIfCleanup(); } catch(e){} }, 120);
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    scheduleHideWaste();
+    // Re-run when Cleanup is toggled or DOM is rebuilt
+    var bodyObs = new MutationObserver(scheduleHideWaste);
+    bodyObs.observe(document.body, { attributes:true, attributeFilter:['data-active-group'] });
+    // Observe the main content region for rebuilds (cards added/removed)
+    var main = document.querySelector('.wrap') || document.body;
+    var treeObs = new MutationObserver(function(muts){
+      // Only bother if we're currently in Cleanup
+      if (document.body.getAttribute('data-active-group') === 'cleanup'){
+        scheduleHideWaste();
+      }
+    });
+    treeObs.observe(main, { childList:true, subtree:true });
+
+    // Also hook the sections tablist interactions
+    var tabs = document.getElementById('sections-tablist');
+    if (tabs){
+      tabs.addEventListener('click', function(){ scheduleHideWaste(); }, true);
+      tabs.addEventListener('keydown', function(e){
+        if (e.key === 'Enter' || e.key === ' ') scheduleHideWaste();
+      }, true);
+    }
+  });
+})();
+</script>
+
+
+<script>
+(function(){
+  // Also hide "Waste / Disposal" for the Stone Veneer tab (active group 'veneer').
+  const HIDE_GROUPS = new Set(['cleanup','veneer']);
+  function findWasteCard_v2(){
+    // IDs first
+    var ids = ['waste','disposal','dumpster','wasteCost','disposalCost','dumpsterCost','wasteDisposal','waste_disposal'];
+    for (var i=0;i<ids.length;i++){
+      var el = document.getElementById(ids[i]);
+      if (el){ var card = el.closest('.card'); if (card) return card; }
+    }
+    // Fallback by header/text tokens
+    var tokens = ['waste','disposal','dump','dumpster'];
+    var cards = document.querySelectorAll('.wrap .card');
+    for (var j=0;j<cards.length;j++){
+      var c = cards[j];
+      var hdr = c.querySelector('h1,h2,h3,.card-title');
+      var htxt = hdr ? (hdr.textContent||'').toLowerCase() : '';
+      var txt  = (c.textContent||'').toLowerCase();
+      var tokenHits = tokens.filter(t => txt.includes(t)).length;
+      if ((htxt.includes('waste') && (htxt.includes('disposal') || htxt.includes('dump') || htxt.includes('dumpster'))) || tokenHits >= 2){
+        return c;
+      }
+    }
+    return null;
+  }
+  function hideWasteIfInGroups(){
+    var grp = document.body.getAttribute('data-active-group');
+    var isHide = HIDE_GROUPS.has(grp);
+    var card = findWasteCard_v2();
+    if (!card) return;
+    card.style.display = isHide ? 'none' : '';
+  }
+  function schedule(){
+    try { hideWasteIfInGroups(); } catch(e){}
+    if (window.requestAnimationFrame){
+      requestAnimationFrame(function(){ try { hideWasteIfInGroups(); } catch(e){} });
+    }
+    setTimeout(function(){ try { hideWasteIfInGroups(); } catch(e){} }, 30);
+    setTimeout(function(){ try { hideWasteIfInGroups(); } catch(e){} }, 120);
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    schedule();
+    var bodyObs = new MutationObserver(schedule);
+    bodyObs.observe(document.body, { attributes:true, attributeFilter:['data-active-group'] });
+    var main = document.querySelector('.wrap') || document.body;
+    var treeObs = new MutationObserver(function(){
+      if (HIDE_GROUPS.has(document.body.getAttribute('data-active-group'))) schedule();
+    });
+    treeObs.observe(main, { childList:true, subtree:true });
+    var tabs = document.getElementById('sections-tablist');
+    if (tabs){
+      tabs.addEventListener('click', schedule, true);
+      tabs.addEventListener('keydown', function(e){
+        if (e.key === 'Enter' || e.key === ' ') schedule();
+      }, true);
+    }
+  });
+})();
+</script>
+
+
+<script>
+(function(){
+  const HIDE_GROUPS = new Set(['cleanup','veneer']);
+  const TOKENS = ['waste','disposal','dump','dumpster'];
+
+  function markWasteCards(root){
+    root = root || document;
+    const cards = root.querySelectorAll('.wrap .card');
+    cards.forEach((c)=>{
+      if (c.hasAttribute('data-card-waste')) return; // already marked
+      const hdr = c.querySelector('h1,h2,h3,.card-title');
+      const htxt = (hdr ? hdr.textContent : '').toLowerCase();
+      const txt  = (c.textContent || '').toLowerCase();
+      const tokenHits = TOKENS.filter(t => txt.includes(t)).length;
+      const headerLooksRight = (htxt.includes('waste') && (htxt.includes('disposal') || htxt.includes('dump') || htxt.includes('dumpster')));
+      if (headerLooksRight || tokenHits >= 2){
+        c.setAttribute('data-card-waste','1');
+      }
+    });
+  }
+
+  function applyWasteHide(){
+    const grp = document.body.getAttribute('data-active-group');
+    const shouldHide = HIDE_GROUPS.has(grp);
+    document.querySelectorAll('.wrap .card[data-card-waste]').forEach((c)=>{
+      c.style.display = shouldHide ? 'none' : '';
+    });
+  }
+
+  function schedule(){
+    try { markWasteCards(); applyWasteHide(); } catch(e){}
+    if (window.requestAnimationFrame){
+      requestAnimationFrame(()=>{ try { markWasteCards(); applyWasteHide(); } catch(e){} });
+    }
+    setTimeout(()=>{ try { markWasteCards(); applyWasteHide(); } catch(e){} }, 30);
+    setTimeout(()=>{ try { markWasteCards(); applyWasteHide(); } catch(e){} }, 120);
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    schedule();
+    const main = document.querySelector('.wrap') || document.body;
+    // Observe subtree changes (cards rebuilt) and re-tag/re-hide
+    const treeObs = new MutationObserver((muts)=>{
+      let needs = false;
+      for (const m of muts){
+        if (m.addedNodes && m.addedNodes.length){
+          needs = true; break;
+        }
+      }
+      if (needs) schedule();
+    });
+    treeObs.observe(main, { childList:true, subtree:true });
+
+    // Observe tab (active-group) changes
+    const attrObs = new MutationObserver(schedule);
+    attrObs.observe(document.body, { attributes:true, attributeFilter:['data-active-group'] });
+
+    // Run on tab clicks/keys as well
+    const tabs = document.getElementById('sections-tablist');
+    if (tabs){
+      tabs.addEventListener('click', schedule, true);
+      tabs.addEventListener('keydown', (e)=>{ if (e.key==='Enter' || e.key===' ') schedule(); }, true);
+    }
+  });
+})();
+</script>
+
+
+<script>
+(function(){
+  function forceShowCrewOnCrewTab(){
+    var grp = document.body.getAttribute('data-active-group');
+    var isCrewTab = (grp === 'crew');
+    var ids = ['crewCount','crewHours','crewRate'];
+    var card = null;
+    for (var i=0;i<ids.length && !card;i++){
+      var el = document.getElementById(ids[i]);
+      if (el) card = el.closest('.card');
+    }
+    if (card){
+      card.style.display = isCrewTab ? '' : card.style.display;
+    }
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    forceShowCrewOnCrewTab();
+    var mo = new MutationObserver(forceShowCrewOnCrewTab);
+    mo.observe(document.body, { attributes:true, attributeFilter:['data-active-group'] });
+    var tabs = document.getElementById('sections-tablist');
+    if (tabs){
+      tabs.addEventListener('click', forceShowCrewOnCrewTab, true);
+      tabs.addEventListener('keydown', function(e){ if (e.key==='Enter' || e.key===' ') forceShowCrewOnCrewTab(); }, true);
+    }
+  });
+})();
+</script>
+
+
+<script>
+(function(){
+  // Make the Crew & Time card resilient to tab hops and DOM rebuilds.
+  const CREW_IDS = ['crewCount','crewHours','crewRate'];
+
+  function findCrewCard(){
+    // Prefer known inputs
+    for (const id of CREW_IDS){
+      const el = document.getElementById(id);
+      if (el){
+        const card = el.closest('.card');
+        if (card) return card;
+      }
+    }
+    // Fallback by header text
+    const cards = document.querySelectorAll('.wrap .card');
+    for (const c of cards){
+      const hdr = c.querySelector('h1,h2,h3,.card-title');
+      const t = (hdr ? hdr.textContent : c.textContent || '').toLowerCase();
+      if (t.includes('crew') && t.includes('time')) return c;
+    }
+    return null;
+  }
+
+  function ensureCrewCardVisible(){
+    const grp = document.body.getAttribute('data-active-group');
+    const isCrewTab = (grp === 'crew');
+    const card = findCrewCard();
+    if (!card) return;
+
+    // Mark it for CSS overrides too
+    card.setAttribute('data-card-crew','1');
+
+    if (isCrewTab){
+      // Remove inline and attribute-based hides on card and ancestors
+      const chain = [card, card.parentElement, card.parentElement && card.parentElement.parentElement].filter(Boolean);
+      for (const el of chain){
+        if (!el) continue;
+        // Clear inline display/visibility/opacity
+        if (el.style){
+          el.style.removeProperty('display');
+          el.style.removeProperty('visibility');
+          el.style.removeProperty('opacity');
+        }
+        // Remove 'hidden' attribute if present
+        if (el.hasAttribute && el.hasAttribute('hidden')) el.removeAttribute('hidden');
+      }
+    }
+  }
+
+  function scheduleCrewFix(){
+    try { ensureCrewCardVisible(); } catch(e){}
+    if (window.requestAnimationFrame){
+      requestAnimationFrame(()=>{ try { ensureCrewCardVisible(); } catch(e){} });
+    }
+    setTimeout(()=>{ try { ensureCrewCardVisible(); } catch(e){} }, 30);
+    setTimeout(()=>{ try { ensureCrewCardVisible(); } catch(e){} }, 120);
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    scheduleCrewFix();
+    // Watch for active-group changes and subtree rebuilds
+    const attrObs = new MutationObserver(scheduleCrewFix);
+    attrObs.observe(document.body, { attributes:true, attributeFilter:['data-active-group'] });
+    const main = document.querySelector('.wrap') || document.body;
+    const treeObs = new MutationObserver(()=>{
+      if (document.body.getAttribute('data-active-group') === 'crew'){
+        scheduleCrewFix();
+      }
+    });
+    treeObs.observe(main, { childList:true, subtree:true });
+
+    // Also respond to tab interactions
+    const tabs = document.getElementById('sections-tablist');
+    if (tabs){
+      tabs.addEventListener('click', scheduleCrewFix, true);
+      tabs.addEventListener('keydown', (e)=>{ if (e.key==='Enter' || e.key===' ') scheduleCrewFix(); }, true);
+    }
+  });
+})();
+</script>
+
 </body>
 </html>
 <script>
@@ -2167,22 +2865,26 @@ document.addEventListener('DOMContentLoaded', function(){
     var tbody = document.getElementById('matTbody');
     var tablist = document.getElementById('sections-tablist');
     if(!tbody || !tablist) return;
-    var GROUPS = {
-      all: null,
-      concrete: new Set(['m6','m7','m10']),
-      masonry:  new Set(['m4','m8','m9','m11']),
-      pavers:   new Set(['m1','m2','m3'])
-    };
+    /* legacy groups removed */
     function activeGroup(){
-      var t = tablist.querySelector('[role="tab"][aria-selected="true"]');
-      return t ? (t.getAttribute('data-group') || 'all') : 'all';
+      var tablist = document.getElementById('sections-tablist');
+      var active = tablist && tablist.querySelector('[role="tab"][aria-selected="true"]');
+      var g = active ? (active.getAttribute('data-group')||'all') : 'all';
+      if(!(window.SECTION && Object.prototype.hasOwnProperty.call(SECTION, g))) g = 'all';
+      return g;
     }
+    
     function applyMaterialsFilter(){
       var g = activeGroup();
-      var allow = GROUPS[g];
+      var cfg = SECTION[g] || {};
+      var cats = cfg.cats || null;
+      var pins = cfg.pins || null;
       tbody.querySelectorAll('tr').forEach(function(tr){
         var id = tr.dataset.id || '';
-        tr.style.display = (!allow || !id || allow.has(id)) ? '' : 'none';
+        var rowCats = (tr.getAttribute('data-cats')||'').split(',').map(function(s){return s.trim();});
+        var matchCats = !cats || rowCats.some(function(c){ return cats.indexOf(c) !== -1; });
+        var matchPins = !!(pins && pins.has(id));
+        tr.style.display = (matchCats || matchPins) ? '' : 'none';
       });
     }
     tablist.addEventListener('click', function(){ setTimeout(applyMaterialsFilter, 0); });
