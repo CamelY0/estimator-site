@@ -273,6 +273,210 @@ window.SECTION = {
 <div class="card">
 <div class="row">
 <h3 style="margin:0">Concrete</h3>
+<!-- Turcotte: Concrete Yards Helper v1 (2025-09-02) -->
+<div class="subcard" id="tm-concrete-yards-helper" style="border:1px dashed #ccc; padding:10px; margin:10px 0;">
+  <div class="row" style="flex-wrap:wrap; gap:10px;">
+    <b>Concrete Yards Calculator</b>
+    <label>L (ft) <input type="number" id="tm_len_ft" step="0.1" placeholder="e.g., 11"></label>
+    <label>W (ft) <input type="number" id="tm_wid_ft" step="0.1" placeholder="e.g., 11"></label>
+    <label>T (in) <input type="number" id="tm_thk_in" step="0.25" placeholder="e.g., 6"></label>
+    <label class="pill"><input type="checkbox" id="tm_waste_on" checked> +5% waste</label>
+    <label>Round to <select id="tm_round"><option value="0.25">¼ yd</option><option value="0.5">½ yd</option><option value="1">1 yd</option><option value="0">exact</option></select></label>
+    
+  </div>
+  <div class="row small muted" style="margin-top:6px;">
+    Formula: L × W × (T&nbsp;in ÷ 12) ÷ 27 = yd³. (Adds optional 5% waste. Auto-fills supplier by rule: &lt; 3 yd → Concrete Connections; ≥ 3 yd → Mohican Valley.)
+  </div>
+  <div class="row" style="gap:10px; margin-top:8px;">
+    <div>Yards (computed): <span id="tm_yards_out" class="pill" style="min-width:80px; text-align:center;">—</span></div>
+    <div>Selected source: <span id="tm_supplier_out" class="pill" style="min-width:160px; text-align:center;">—</span></div>
+  </div>
+  <div class="subcard" style="margin-top:8px;">
+    <div class="row"><b>Bags Equivalent (approx.)</b><span class="spacer"></span><span class="muted small">Uses Quikrete/Sakrete published yields</span></div>
+    <div id="tm_bags_rows" style="display:flex;flex-direction:column;gap:4px;margin-top:6px;"></div>
+  </div>
+</div>
+
+
+
+
+
+<script>
+(function(){
+  const whenReady = (fn)=>{
+    if (document.readyState === 'complete' || document.readyState === 'interactive'){
+      setTimeout(fn, 0);
+    } else {
+      document.addEventListener('DOMContentLoaded', fn);
+    }
+  };
+
+  whenReady(function(){
+    const $ = (s, c=document)=>c.querySelector(s);
+    const byId = id => document.getElementById(id);
+    const num = v => {
+      if (v===null || v===undefined) return 0;
+      const s = String(v).trim().replace(/[,$]/g,'');
+      if (!s) return 0;
+      const n = parseFloat(s); return Number.isFinite(n)?n:0;
+    };
+    function roundTo(n, step){
+      if (!step || step<=0) return n;
+      return Math.round(n/step)*step;
+    }
+    function computeYards(L, W, T_in, wasteOn){
+      let y = (L * W * (T_in/12)) / 27;
+      if (wasteOn) y *= 1.05;
+      return y;
+    }
+
+    // Bag math (80-lb)
+    const BAG_YIELD_FT3_80 = 0.60; // industry published yield
+    function bagCount80FromRawYards(yardsRaw){
+      const cf = yardsRaw * 27;
+      if (cf <= 0) return 0;
+      const cnt = Math.ceil(cf / BAG_YIELD_FT3_80);
+      return Math.max(1, cnt); // min 1 for any positive volume
+    }
+
+    // Materials helpers: find a row that looks like 80-lb concrete mix (Quikrete/Sakrete)
+    function findConcreteBagRow(){
+      const rows = Array.from(document.querySelectorAll('#matTbody tr'));
+      for (const tr of rows){
+        const t = (tr.textContent || '').toLowerCase();
+        if (/(80\s*lb|80lb)/.test(t) && /(concrete|quikrete|sakrete)/.test(t)){
+          return tr;
+        }
+      }
+      return null;
+    }
+    function matSetQtyAndUse(tr, qty){
+      if (!tr) return false;
+      const useCb  = tr.querySelector('.mat_use');
+      const qtyInp = tr.querySelector('.mat_qty');
+      if (useCb && !useCb.checked){ useCb.click(); }
+      if (qtyInp){
+        qtyInp.value = qty;
+        qtyInp.dispatchEvent(new Event('input', {bubbles:true}));
+      }
+      return true;
+    }
+    function matClearUse(tr){
+      if (!tr) return;
+      const useCb  = tr.querySelector('.mat_use');
+      const qtyInp = tr.querySelector('.mat_qty');
+      if (qtyInp){
+        qtyInp.value = '';
+        qtyInp.dispatchEvent(new Event('input', {bubbles:true}));
+      }
+      if (useCb && useCb.checked){ useCb.click(); }
+    }
+
+    // Yards targets
+    let ctInput=null, mvInput=null, targetsReady=false;
+    function tryFindTargets(){
+      ctInput = byId('ct_yards');
+      mvInput = byId('mv_yards');
+      targetsReady = !!(ctInput && mvInput);
+      return targetsReady;
+    }
+    const mo = new MutationObserver(()=>{
+      if (!targetsReady && tryFindTargets()){
+        recalc();
+      }
+    });
+    mo.observe(document.documentElement || document.body, {childList:true, subtree:true});
+
+    function applyRouting(yRaw, yRounded){
+      const out = byId('tm_supplier_out'); // now "source"
+      const bagRow = findConcreteBagRow();
+      const bagCount = bagCount80FromRawYards(yRaw);
+
+      // Rule 1: If bags < 30 -> use bags pricing
+      if (bagCount > 0 && bagCount < 30){
+        // Clear yard suppliers
+        if (ctInput) { ctInput.value = ''; ctInput.dispatchEvent(new Event('input', {bubbles:true})); }
+        if (mvInput) { mvInput.value = ''; mvInput.dispatchEvent(new Event('input', {bubbles:true})); }
+        // Set bags
+        const ok = matSetQtyAndUse(bagRow, bagCount);
+        if (out) out.textContent = ok ? `Bags (80‑lb) — ${bagCount} bags` : 'Bags (80‑lb) — row not found';
+        return;
+      }
+
+      // Otherwise: yards-based
+      // Clear bag line if present
+      matClearUse(bagRow);
+
+      if (!targetsReady && !tryFindTargets()){
+        if (out) out.textContent = 'Waiting for yard inputs…';
+        return;
+      }
+
+      // Rule 2: Under 3 yards -> Concrete Connections
+      // Rule 3: 3 yards or more -> Mohican Valley (last company)
+      if (yRounded < 3){
+        if (mvInput) { mvInput.value = ''; mvInput.dispatchEvent(new Event('input', {bubbles:true})); }
+        if (ctInput) { ctInput.value = yRounded; ctInput.dispatchEvent(new Event('input', {bubbles:true})); }
+        if (out) out.textContent = 'Concrete Connections';
+      } else {
+        if (ctInput) { ctInput.value = ''; ctInput.dispatchEvent(new Event('input', {bubbles:true})); }
+        if (mvInput) { mvInput.value = yRounded; mvInput.dispatchEvent(new Event('input', {bubbles:true})); }
+        if (out) out.textContent = 'Mohican Valley';
+      }
+    }
+
+    function recalc(){
+      const L = num(byId('tm_len_ft')?.value);
+      const W = num(byId('tm_wid_ft')?.value);
+      const T = num(byId('tm_thk_in')?.value);
+      const waste = !!byId('tm_waste_on')?.checked;
+      const step = parseFloat(byId('tm_round')?.value || '0.25');
+
+      if (!L || !W || !T){
+        const yOut = byId('tm_yards_out'); if (yOut) yOut.textContent = '—';
+        const br = byId('tm_bags_rows'); if (br) br.innerHTML = '';
+        if (byId('tm_supplier_out')) byId('tm_supplier_out').textContent = '—';
+        return;
+      }
+
+      // Compute raw and rounded yards
+      const yRaw = computeYards(L, W, T, waste);
+      const yRounded = Math.round(((step>0) ? roundTo(yRaw, step) : yRaw)*100)/100;
+
+      // Display yards
+      const yOut = byId('tm_yards_out');
+      if (yOut) yOut.textContent = yRounded.toFixed(2);
+
+      // Update bags display (from raw yards)
+      const outB = byId('tm_bags_rows');
+      if (outB){
+        const cnt = bagCount80FromRawYards(yRaw);
+        outB.innerHTML = '';
+        if (cnt > 0){
+          const row = document.createElement('div');
+          row.className = 'row'; row.style.gap='8px';
+          row.innerHTML = `<div class="pill">80 lb bags</div><div>=</div><div class="pill" style="min-width:80px;text-align:center;">${cnt}</div>`;
+          outB.appendChild(row);
+        }
+      }
+
+      // Route to source
+      applyRouting(yRaw, yRounded);
+    }
+
+    // Wire events
+    ['tm_len_ft','tm_wid_ft','tm_thk_in'].forEach(id=> byId(id)?.addEventListener('input', recalc));
+    byId('tm_waste_on')?.addEventListener('change', recalc);
+    byId('tm_round')?.addEventListener('change', recalc);
+
+    // Init
+    setTimeout(()=>{ tryFindTargets(); recalc(); }, 150);
+  });
+})();
+</script>
+
+<!-- /Turcotte helper -->
+
 <span class="pill">Concrete Connections (≤ 3 yd/trip)</span>
 <span class="pill">Mohican Valley (10‑yd trucks)</span>
 <span class="spacer"></span>
