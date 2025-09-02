@@ -247,7 +247,7 @@ window.SECTION = {
 <div class="row" style="margin-bottom:6px">
 <label class="pill"><input checked="" id="crewWideToggle" type="checkbox"/> Use CREW‑WIDE time</label>
 <label class="pill"><input checked="" id="timeUnitsDays" type="checkbox"/> Time in Days (8 hr/day)</label>
-<label>Crew‑wide time <input id="crewWideQty" placeholder="e.g., 1" step="1" type="number"/></label>
+<label>Crew‑wide time <input id="crewWideQty" placeholder="e.g., 1" step="1" type="number"/></label>  <label style="margin-left:.5rem">Crew <input id="crewManual" type="number" step="1" value="3" placeholder="3" style="width:5rem"></label>  <label style="margin-left:.5rem">Days <input id="daysManual" type="number" step="1" value="1" placeholder="1" style="width:5rem"></label>
 </div>
 <table>
 <thead><tr><th>Use</th><th>Name</th><th>Role</th><th>Rate ($/hr)</th><th>Hours</th><th>Cost</th><th></th></tr></thead>
@@ -3521,5 +3521,93 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 });
 </script>
+
+<script>
+// Manual Crew & Days boxes: store simple numbers you type (no auto-counting)
+(function(){
+  function bindPersist(id, key, defVal){
+    var el = document.getElementById(id);
+    if(!el) return;
+    try{
+      var saved = sessionStorage.getItem(key);
+      if(saved !== null && saved !== ''){
+        el.value = saved;
+      }else if(!el.value){
+        el.value = String(defVal);
+      }
+    }catch(e){
+      if(!el.value) el.value = String(defVal);
+    }
+    el.addEventListener('input', function(){
+      try{ sessionStorage.setItem(key, el.value || ''); }catch(e){}
+    }, false);
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', function(){
+      bindPersist('crewManual','tm_manual_crew',3);
+      bindPersist('daysManual','tm_manual_days',1);
+    }, {once:true});
+  } else {
+    bindPersist('crewManual','tm_manual_crew',3);
+    bindPersist('daysManual','tm_manual_days',1);
+  }
+})();
+</script>
+
+
+<script>
+// === Turcotte: Crew × Days → 3M 8511 Qty (only when silica tasks are checked) ===
+(function(){
+  function byId(id){ return document.getElementById(id); }
+  function silicaOn(){
+    var t = byId('sil_task_tuck'), g = byId('sil_task_grind');
+    return !!((t && t.checked) || (g && g.checked));
+  }
+  function getCrew(){ var v = Number(byId('crewManual')?.value || 0); return Math.max(0, Math.floor(v)); }
+  function getDays(){ var v = Number(byId('daysManual')?.value || 0); return Math.max(0, Math.floor(v)); }
+
+  function set8511Qty(qty){
+    // Ensure materials are rendered (in case silica auto-add just ran)
+    try{ if(typeof renderMaterials==='function') renderMaterials(); }catch(e){}
+    var row = document.querySelector('#matTbody tr[data-id="mHD_3M_8511"]');
+    if(!row){ return; } // bail if row truly doesn't exist
+    var useEl = row.querySelector('.mat_use');
+    if(useEl && !useEl.checked){ try{ useEl.checked = true; useEl.dispatchEvent(new Event('change',{bubbles:true})); }catch(e){} }
+    var qtyEl = row.querySelector('.mat_qty');
+    if(!qtyEl) return;
+    qtyEl.value = String(qty);
+    try{ qtyEl.setAttribute('title','Auto: Crew('+getCrew()+') × Days('+getDays()+') = '+qty); }catch(e){}
+    try{ qtyEl.dispatchEvent(new Event('input', {bubbles:true})); }catch(e){}
+    try{ qtyEl.dispatchEvent(new Event('change', {bubbles:true})); }catch(e){}
+    try{ if(typeof totals==='function') totals(); }catch(e){}
+  }
+
+  function updateMaskQty(){
+    if(!silicaOn()) return; // only act when silica tasks are checked
+    var crew = getCrew(), days = getDays();
+    var qty = (crew||0) * (days||0);
+    if(qty>0){
+      // two rAF ticks to let silica auto-add finish, then set
+      requestAnimationFrame(function(){ requestAnimationFrame(function(){ set8511Qty(qty); }); });
+    }
+  }
+
+  // Wire events
+  ['crewManual','daysManual','sil_task_tuck','sil_task_grind'].forEach(function(id){
+    var el = byId(id);
+    if(!el) return;
+    var ev = (id==='crewManual' || id==='daysManual') ? 'input' : 'change';
+    el.addEventListener(ev, updateMaskQty, false);
+  });
+
+  // Initial pass in case silica already on
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', updateMaskQty, {once:true});
+  } else {
+    updateMaskQty();
+  }
+})();
+</script>
+
 </body>
 </html>
