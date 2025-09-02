@@ -64,7 +64,7 @@ body[data-active-group="crew"] .wrap .card[data-card-crew] {
 }
 
 </style>
-<script id="early-error-dash">
+<script 
 (function(){
   if (window.__errdash) return; window.__errdash = true;
   function base(p){ try{ return (p||'').split('/').pop(); }catch(e){ return p; } }
@@ -208,6 +208,7 @@ window.SECTION = {
 
 </head>
 <body>
+
 <div class="wrap">
 <h2 style="margin:8px 0">Turcotte Masonry Estimator</h2>
 <div class="status bad" id="jsStatus">❌ JS not loaded</div>
@@ -354,13 +355,31 @@ window.SECTION = {
 </div>
 </div>
 <!-- WASTE -->
-<div class="card">
+<div class="card" data-card-waste>
 <div class="row"><h3 style="margin:0">Waste / Disposal</h3><span class="spacer"></span><button class="ghost" id="wasteAdd">+ Add Disposal item</button><span class="muted">Modern Materials — Clean asphalt disposal</span></div>
 <table>
 <thead><tr><th>Use</th><th>Material</th><th>Facility</th><th>Units</th><th>Rate</th><th>Qty</th><th>Ext.</th><th></th></tr></thead>
 <tbody id="wasteTbody"></tbody>
 <tfoot><tr><td class="right" colspan="6">Disposal Subtotal</td><td class="right mono" id="wasteSubtotal">$0.00</td><td></td></tr></tfoot>
 </table>
+</div>
+<!-- SILICA CONTROLS -->
+<div class="card" id="silicaCard">
+  <div class="row">
+    <h3 style="margin:0">Silica Controls (OSHA 29 CFR 1926.1153 Table 1)</h3>
+  </div>
+  <div class="row small muted">
+    Tuckpointing & handheld grinder controls. Use these toggles to add ECP notes and auto‑include DWV9402 HEPA fleece bags.
+  </div>
+  <div class="row" style="gap:1rem; flex-wrap:wrap">
+    <label class="pill"><input type="checkbox" id="sil_task_tuck"> Tuckpointing (mortar removal)</label>
+    <label class="pill"><input type="checkbox" id="sil_task_grind"> Handheld grinder (non‑mortar)</label>
+    <label class="pill"><input type="checkbox" id="sil_enclosed"> Indoors / enclosed</label>
+  </div>
+  <div class="row" style="gap:.75rem; flex-wrap:wrap">
+    <button class="ghost" id="sil_copy_notes" type="button">Copy ECP Notes</button>
+    <textarea id="sil_ecp_notes" rows="6" style="width:100%" placeholder="Silica ECP notes will appear here when you toggle tasks."></textarea>
+  </div>
 </div>
 <!-- TOOLS -->
 <div class="card">
@@ -493,6 +512,7 @@ let materials = [
   {id:'mLOW_S_TypeS60',use:false, item:"Sakrete Type S Mortar Mix — 60 lb",       supplier:"Lowe's",           units:"bag", price:8.28,  qty:0, cats:["masonry","stucco"]},
   {id:'mLOW_SV_50',    use:false, item:"Sakrete Stone Veneer Mortar — 50 lb",     supplier:"Lowe's",           units:"bag", price:9.88,  qty:0, cats:["masonry","stone veneer","stucco"]},
   {id:'mCOL_DWV9402',  use:false, item:"DeWALT Fleece Dust Bags (DWV9402) — 5-pack", supplier:"Colony Hardware", units:"pack",price:45.00, qty:0, cats:["stucco","masonry","concrete","tools"]},
+  {id:'mHD_3M_8511', use:false, item:"3M 8511 N95 respirator — 1 pack", supplier:'Home Depot', units:'each', price:2.35, qty:0, cats:['tools','safety','masonry','stucco','concrete']},
 
   {id:'m1',  use:false, item:"8' Plastic paver edging",            supplier:'New Haven Masonry', units:'each',  price:12, qty:0, step:1,    roundUp:true, cats:['pavers']},
   {id:'m2',  use:false, item:"8' Aluminum paver edging",           supplier:'New Haven Masonry', units:'each',  price:18, qty:0, step:1,    roundUp:true, cats:['pavers']},
@@ -547,7 +567,8 @@ let materials = [
 ,
   { id:"mDewalt_Chalk_Red_8oz_DWHT47048L", item:"DEWALT 8 oz. Chalk Reel in Red (DWHT47048L)", units:"bottle (8 oz)", supplier:"Home Depot", price:3.47, cats:["masonry"] }
 ,
-  { id:"mMilwaukee_SDSPlus_5_8x18in_4C_48_20_8306", item:"Milwaukee 5/8 in. x 18 in. 4-Cutter SDS-PLUS Carbide Drill Bit (48-20-8306)", units:"each", supplier:"Home Depot", price:37.77, cats:["concrete"] }
+  { id:"mMilwaukee_SDSPlus_5_8x18in_4C_48_20_8306", item:"Milwaukee 5/8 in. x 18 in. 4-Cutter SDS-PLUS Carbide Drill Bit (48-20-8306)", units:"each", supplier:"Home Depot", price:37.77, cats:["concrete"] },
+  {id:'mCOL_DT5_TP_4_5', use:false, item:'4 1/2" Tuckpoint Diamond Blade', supplier:'Colony Hardware', units:'each', price:54, qty:0, cats:['masonry','tools']}
 ];
 
 
@@ -568,13 +589,13 @@ let materials = [
         // Map group->cats focus; for Stucco we only want stucco
         if (g === 'stucco') cats = ['stucco'];
       }
-    }catch(e){}
+    } catch(e){}
     // If Stucco tab is active, force a stucco-only category filter
     try{
       const activeTab = document.querySelector('#sections-tablist [role="tab"][aria-selected="true"]');
       const activeGroup = activeTab ? activeTab.getAttribute('data-group') : null;
       if(activeGroup==='stucco'){ cats = ['stucco']; }
-    }catch(e){}
+    } catch(e){}
     
 
     materials.filter(m=> !cats || (m.cats && m.cats.some(c=>cats.includes(c)))).forEach(m=>{
@@ -916,8 +937,8 @@ function renderTools(){
   // When pump-related controls (inserted later) change, force a full recalc so GRAND updates.
   (function(){
     const pumpIds = new Set(['pump_use','pump_size','pump_hours','mv_apply_pump','mv_apply_time','mv_discharge']);
-    document.addEventListener('input', (ev) => { if (pumpIds.has(ev.target && ev.target.id)) { try{ updateAll(); }catch(e){} } }, true);
-    document.addEventListener('change', (ev) => { if (pumpIds.has(ev.target && ev.target.id)) { try{ updateAll(); }catch(e){} } }, true);
+    document.addEventListener('input', (ev) => { if (pumpIds.has(ev.target && ev.target.id)) { try{ updateAll(); } catch(e){} } }, true);
+    document.addEventListener('change', (ev) => { if (pumpIds.has(ev.target && ev.target.id)) { try{ updateAll(); } catch(e){} } }, true);
   })();
   // --- end patch ---
 
@@ -1000,7 +1021,7 @@ document.addEventListener('DOMContentLoaded', function(){
     var found = mixes.find(function(m){ return Math.abs(m.price - current) < 0.001; });
     sel.value = String(found ? found.price : mixes[0].price);
 
-    function fireInput(el){ try{ el.dispatchEvent(new Event('input',{bubbles:true})); }catch(e){} }
+    function fireInput(el){ try{ el.dispatchEvent(new Event('input',{bubbles:true})); } catch(e){} }
     // Keep price in sync unless Manual is checked
     sel.addEventListener('change', function(){
       if(!manualChk.checked){ priceInput.value=this.value; fireInput(priceInput); }
@@ -1154,13 +1175,13 @@ document.addEventListener('DOMContentLoaded', function(){
       var el = document.getElementById(id);
       if(!el) return;
       el.addEventListener('input', function(){
-        if (window.mohicanValley) try{ mohicanValley(); }catch(e){}
-        if (window.totals) try{ totals(); }catch(e){}
+        if (window.mohicanValley) try{ mohicanValley(); } catch(e){}
+        if (window.totals) try{ totals(); } catch(e){}
         if (window.updateAll) updateAll();
       });
       el.addEventListener('change', function(){
-        if (window.mohicanValley) try{ mohicanValley(); }catch(e){}
-        if (window.totals) try{ totals(); }catch(e){}
+        if (window.mohicanValley) try{ mohicanValley(); } catch(e){}
+        if (window.totals) try{ totals(); } catch(e){}
         if (window.updateAll) updateAll();
       });
     });
@@ -1205,7 +1226,7 @@ document.addEventListener('DOMContentLoaded', function(){
     // Only auto-write if user hasn't touched it recently; use an "auto" flag
     var lock = byId('mv_short_manual_lock');
     if(lock && lock.checked) return;
-    if (typeof updateAll==='function'){ try{ updateAll(); }catch(e){} }}
+    if (typeof updateAll==='function'){ try{ updateAll(); } catch(e){} }}
 
   // Add a small "Auto calc" toggle near mv_short if possible
   var mvShort = byId('mv_short');
@@ -1239,7 +1260,7 @@ document.addEventListener('DOMContentLoaded', function(){
     if(taxRes.checked){
       taxDisposal.checked = true;
       if (!taxDisposal.disabled) { /* leave disabled state as-is */ }
-      if (typeof updateAll==='function'){ try{ updateAll(); }catch(e){} }
+      if (typeof updateAll==='function'){ try{ updateAll(); } catch(e){} }
     }
   }
   if(taxRes){
@@ -1322,7 +1343,7 @@ document.addEventListener('DOMContentLoaded', function(){
     else if(group==='stucco') window.__matCats=['stucco'];
     else window.__matCats=null;
     if(typeof renderMaterials==='function') renderMaterials();
-  }catch(e){}
+  } catch(e){}
 const cards = Array.from(document.querySelectorAll('.wrap > .card'));
   // Filter
   cards.forEach(card => {
@@ -1436,7 +1457,7 @@ document.addEventListener('DOMContentLoaded', function(){
     else if(group==='stucco') window.__matCats=['stucco'];
     else window.__matCats=null;
     if(typeof renderMaterials==='function') renderMaterials();
-  }catch(e){}
+  } catch(e){}
 cards.forEach(card => {
       if(card.querySelector('#matTbody')){ card.classList.remove('group-hidden'); return;
 }
@@ -1516,20 +1537,51 @@ document.addEventListener('DOMContentLoaded', function(){
     var btn = document.getElementById('addMatBtn');
     if (!btn) return;
     btn.addEventListener('click', function(){
-      try {
-        if (!window.materials || !Array.isArray(window.materials)) return;
+      // Clean add-material handler without try/catch
+      var mat = (typeof getMaterialsRef==='function') ? getMaterialsRef() : (Array.isArray(window.materials) ? window.materials : null);
+      if (Array.isArray(mat)) {
         var id = 'u' + Date.now();
-        window.materials.push({
-          id: id,
-          use: true,
-          item: '',
-          supplier: '',
-          units: 'each',
-          price: 0,
-          qty: 1,
-          step: 1,
-          roundUp: false
-        });
+        mat.push({ id:id, use:true, item:'', supplier:'', units:'each', price:0, qty:1, step:1, roundUp:false });
+        if (typeof renderMaterials === 'function') { renderMaterials(); }
+        setTimeout(function(){
+          var rows = document.querySelectorAll('#matTbody tr');
+          if (rows.length){
+            var last = rows[rows.length-1];
+            var input = last.querySelector('.mat_item');
+            if (input) input.focus();
+          }
+        }, 0);
+        if (typeof updateAll === 'function') { updateAll(); }
+        return;
+      }
+      // Fallback: append a DOM-only row (in case data structure is unavailable)
+      var tb = document.getElementById('matTbody'); if(!tb) return;
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td><input type="checkbox" class="mat_use" checked></td>' +
+                     '<td><input class="mat_item" placeholder="Item"></td>' +
+                     '<td><input class="mat_sup" placeholder="Supplier"></td>' +
+                     '<td><input class="mat_units" value="each"></td>' +
+                     '<td><input type="number" class="mat_price" min="0" step="0.01" value="0"></td>' +
+                     '<td><input type="number" class="mat_qty" min="0" step="1" value="1"></td>' +
+                     '<td class="right mono mat_ext">$0.00</td>' +
+                     '<td><button class="ghost mat_del">✕</button></td>';
+      tb.appendChild(tr);
+      tr.querySelectorAll('input').forEach(function(el){
+        el.addEventListener('input', function(){ if (typeof updateAll === 'function') updateAll(); });
+      });
+});
+        if (typeof renderMaterials === 'function') renderMaterials();
+        setTimeout(function(){
+          var rows = document.querySelectorAll('#matTbody tr');
+          if (!rows.length) return;
+          var last = rows[rows.length - 1];
+          var input = last.querySelector('.mat_item');
+          if (input) input.focus();
+        }, 0);
+      }catch(e){
+        console.error('Add Material failed', e);
+      }
+});
         if (typeof renderMaterials === 'function') renderMaterials();
         // Focus the newly added item's name field
         setTimeout(function(){
@@ -1555,11 +1607,40 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 
   btn.addEventListener('click', function(){
-    var mat = getMaterialsRef();
-    if (Array.isArray(mat)) {
-      var id = 'u' + Date.now();
-      mat.push({ id:id, use:true, item:'', supplier:'', units:'each', price:0, qty:1, step:1, roundUp:false });
-      if (typeof renderMaterials === 'function') { try { renderMaterials(); } catch(e){} }
+      // Clean add-material handler without try/catch
+      var mat = (typeof getMaterialsRef==='function') ? getMaterialsRef() : (Array.isArray(window.materials) ? window.materials : null);
+      if (Array.isArray(mat)) {
+        var id = 'u' + Date.now();
+        mat.push({ id:id, use:true, item:'', supplier:'', units:'each', price:0, qty:1, step:1, roundUp:false });
+        if (typeof renderMaterials === 'function') { renderMaterials(); }
+        setTimeout(function(){
+          var rows = document.querySelectorAll('#matTbody tr');
+          if (rows.length){
+            var last = rows[rows.length-1];
+            var input = last.querySelector('.mat_item');
+            if (input) input.focus();
+          }
+        }, 0);
+        if (typeof updateAll === 'function') { updateAll(); }
+        return;
+      }
+      // Fallback: append a DOM-only row (in case data structure is unavailable)
+      var tb = document.getElementById('matTbody'); if(!tb) return;
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td><input type="checkbox" class="mat_use" checked></td>' +
+                     '<td><input class="mat_item" placeholder="Item"></td>' +
+                     '<td><input class="mat_sup" placeholder="Supplier"></td>' +
+                     '<td><input class="mat_units" value="each"></td>' +
+                     '<td><input type="number" class="mat_price" min="0" step="0.01" value="0"></td>' +
+                     '<td><input type="number" class="mat_qty" min="0" step="1" value="1"></td>' +
+                     '<td class="right mono mat_ext">$0.00</td>' +
+                     '<td><button class="ghost mat_del">✕</button></td>';
+      tb.appendChild(tr);
+      tr.querySelectorAll('input').forEach(function(el){
+        el.addEventListener('input', function(){ if (typeof updateAll === 'function') updateAll(); });
+      });
+});
+      if (typeof renderMaterials === 'function') { renderMaterials(); }
       setTimeout(function(){
         var rows = document.querySelectorAll('#matTbody tr');
         if (rows.length){
@@ -1568,7 +1649,7 @@ document.addEventListener('DOMContentLoaded', function(){
           if (input) input.focus();
         }
       }, 0);
-      if (typeof updateAll === 'function') { try { updateAll(); } catch(e){} }
+      if (typeof updateAll === 'function') { updateAll(); }
       return;
     }
     // Fallback: append a DOM-only row (in case data structure is unavailable)
@@ -1587,7 +1668,7 @@ document.addEventListener('DOMContentLoaded', function(){
       el.addEventListener('input', function(){ if (typeof updateAll === 'function') updateAll(); });
     });
     setTimeout(function(){ tr.querySelector('.mat_item') && tr.querySelector('.mat_item').focus(); }, 0);
-    if (typeof updateAll === 'function') { try { updateAll(); } catch(e){} }
+    if (typeof updateAll === 'function') { updateAll(); }
   });
 });
 </script>
@@ -1708,7 +1789,7 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 });
 </script>
-<script id="currency-formatter-safe">
+<script 
 document.addEventListener('DOMContentLoaded', function(){
   try{
     if(!window.USD){ window.USD = new Intl.NumberFormat('en-US', {style:'currency', currency:'USD', maximumFractionDigits:2}); }
@@ -1717,7 +1798,7 @@ document.addEventListener('DOMContentLoaded', function(){
   }catch(e){ console.warn('currency formatter patch:', e); }
 });
 </script>
-<script id="updateall-raf-safe">
+<script 
 document.addEventListener('DOMContentLoaded', function(){
   try{
     if(typeof window.updateAll === 'function' && !window.__updateAllWrapped){
@@ -1732,14 +1813,14 @@ document.addEventListener('DOMContentLoaded', function(){
   }catch(e){ console.warn('updateAll raf patch:', e); }
 });
 </script>
-<script id="updateall-posthook">
+<script 
 document.addEventListener('DOMContentLoaded', function(){
   try{
     if(typeof window.updateAll === 'function' && !window.__updateAllPost){
       var raw = window.updateAll;
       window.updateAll = (function(orig){
         return function(){
-          return orig.apply(this, arguments), (function(){ try{ if(window.totals) totals(); }catch(e){} })();
+          return orig.apply(this, arguments), (function(){ try{ if(window.totals) totals(); } catch(e){} })();
         };
       })(raw);
       window.__updateAllPost = true;
@@ -1747,12 +1828,12 @@ document.addEventListener('DOMContentLoaded', function(){
   }catch(e){ console.warn('updateAll posthook error', e); }
 });
 </script>
-<script id="mv-any-change">
+<script 
 document.addEventListener('DOMContentLoaded', function(){
   function recalcMV(){
-    try{ if(window.mohicanValley) mohicanValley(); }catch(e){}
-    try{ if(window.totals) totals(); }catch(e){}
-    try{ if(window.updateAll) updateAll(); }catch(e){}
+    try{ if(window.mohicanValley) mohicanValley(); } catch(e){}
+    try{ if(window.totals) totals(); } catch(e){}
+    try{ if(window.updateAll) updateAll(); } catch(e){}
   }
   ['input','change'].forEach(function(type){
     document.addEventListener(type, function(e){
@@ -1764,13 +1845,13 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 });
 </script>
-<script id="any-change-controller">
+<script 
 document.addEventListener('DOMContentLoaded', function(){
   function needsTotals(id){
     return /^mv_/.test(id) || /^pump_/.test(id) || /^fuel_/.test(id);
   }
   function recalc(){
-    try{ if(window.totals) totals(); }catch(e){}
+    try{ if(window.totals) totals(); } catch(e){}
   }
   ['input','change'].forEach(function(type){
     document.addEventListener(type, function(e){
@@ -1781,10 +1862,10 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 });
 </script>
-<script id="global-delegate">
+<script 
 document.addEventListener('DOMContentLoaded', function(){
   function recalc(){
-    try{ updateAll(); }catch(e){}
+    try{ updateAll(); } catch(e){}
   }
   ['input','change'].forEach(function(type){
     document.addEventListener(type, function(e){
@@ -1796,21 +1877,21 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 });
 </script>
-<script id="pump-autocheck">
+<script 
 document.addEventListener('DOMContentLoaded', function(){
   var use = document.getElementById('pump_use');
   var ap  = document.getElementById('mv_apply_pump');
   if(use && ap){
-    function sync(){ ap.checked = !!use.checked; try{ updateAll(); }catch(e){} }
+    function sync(){ ap.checked = !!use.checked; try{ updateAll(); } catch(e){} }
     use.addEventListener('input', sync);
     use.addEventListener('change', sync);
   }
 });
 </script>
 <!-- Global live-totals delegate: keeps every input/select/checkbox in sync -->
-<script id="global-live-totals-v1">
+<script 
 document.addEventListener('DOMContentLoaded', function(){
-  function recalc(){ try{ if (typeof updateAll==='function') updateAll(); }catch(e){} }
+  function recalc(){ try{ if (typeof updateAll==='function') updateAll(); } catch(e){} }
   // Recalc on any input/change across the app (capture = catches dynamic rows too)
   document.addEventListener('input',  function(e){
     try{
@@ -1833,7 +1914,7 @@ document.addEventListener('DOMContentLoaded', function(){
   document.addEventListener('change', function(){ recalc(); }, true);
 });
 </script>
-<script id="mat-cat-filters">
+<script 
 document.addEventListener('DOMContentLoaded', function(){
   function setCats(c){ window.__matCats = c; if (typeof renderMaterials==='function') renderMaterials(); }
   function pick(group){
@@ -1845,14 +1926,80 @@ document.addEventListener('DOMContentLoaded', function(){
     if(matCard){ matCard.scrollIntoView({behavior:'smooth', block:'start'}); }
   }
   document.querySelectorAll('.groupbar .tag[data-group="bluestone"]').forEach(btn=>{
-    btn.addEventListener('click', function(){ pick('bluestone'); });
+    btn.addEventListener('click', function(){
+      // Clean add-material handler without try/catch
+      var mat = (typeof getMaterialsRef==='function') ? getMaterialsRef() : (Array.isArray(window.materials) ? window.materials : null);
+      if (Array.isArray(mat)) {
+        var id = 'u' + Date.now();
+        mat.push({ id:id, use:true, item:'', supplier:'', units:'each', price:0, qty:1, step:1, roundUp:false });
+        if (typeof renderMaterials === 'function') { renderMaterials(); }
+        setTimeout(function(){
+          var rows = document.querySelectorAll('#matTbody tr');
+          if (rows.length){
+            var last = rows[rows.length-1];
+            var input = last.querySelector('.mat_item');
+            if (input) input.focus();
+          }
+        }, 0);
+        if (typeof updateAll === 'function') { updateAll(); }
+        return;
+      }
+      // Fallback: append a DOM-only row (in case data structure is unavailable)
+      var tb = document.getElementById('matTbody'); if(!tb) return;
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td><input type="checkbox" class="mat_use" checked></td>' +
+                     '<td><input class="mat_item" placeholder="Item"></td>' +
+                     '<td><input class="mat_sup" placeholder="Supplier"></td>' +
+                     '<td><input class="mat_units" value="each"></td>' +
+                     '<td><input type="number" class="mat_price" min="0" step="0.01" value="0"></td>' +
+                     '<td><input type="number" class="mat_qty" min="0" step="1" value="1"></td>' +
+                     '<td class="right mono mat_ext">$0.00</td>' +
+                     '<td><button class="ghost mat_del">✕</button></td>';
+      tb.appendChild(tr);
+      tr.querySelectorAll('input').forEach(function(el){
+        el.addEventListener('input', function(){ if (typeof updateAll === 'function') updateAll(); });
+      });
+});
   });
   document.querySelectorAll('.groupbar .tag[data-group="veneer"]').forEach(btn=>{
-    btn.addEventListener('click', function(){ pick('veneer'); });
+    btn.addEventListener('click', function(){
+      // Clean add-material handler without try/catch
+      var mat = (typeof getMaterialsRef==='function') ? getMaterialsRef() : (Array.isArray(window.materials) ? window.materials : null);
+      if (Array.isArray(mat)) {
+        var id = 'u' + Date.now();
+        mat.push({ id:id, use:true, item:'', supplier:'', units:'each', price:0, qty:1, step:1, roundUp:false });
+        if (typeof renderMaterials === 'function') { renderMaterials(); }
+        setTimeout(function(){
+          var rows = document.querySelectorAll('#matTbody tr');
+          if (rows.length){
+            var last = rows[rows.length-1];
+            var input = last.querySelector('.mat_item');
+            if (input) input.focus();
+          }
+        }, 0);
+        if (typeof updateAll === 'function') { updateAll(); }
+        return;
+      }
+      // Fallback: append a DOM-only row (in case data structure is unavailable)
+      var tb = document.getElementById('matTbody'); if(!tb) return;
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td><input type="checkbox" class="mat_use" checked></td>' +
+                     '<td><input class="mat_item" placeholder="Item"></td>' +
+                     '<td><input class="mat_sup" placeholder="Supplier"></td>' +
+                     '<td><input class="mat_units" value="each"></td>' +
+                     '<td><input type="number" class="mat_price" min="0" step="0.01" value="0"></td>' +
+                     '<td><input type="number" class="mat_qty" min="0" step="1" value="1"></td>' +
+                     '<td class="right mono mat_ext">$0.00</td>' +
+                     '<td><button class="ghost mat_del">✕</button></td>';
+      tb.appendChild(tr);
+      tr.querySelectorAll('input').forEach(function(el){
+        el.addEventListener('input', function(){ if (typeof updateAll === 'function') updateAll(); });
+      });
+});
   });
 });
 </script>
-<script id="auto-cov-sq">
+<script 
 (function(){
   if (window.__autoCovSq) return; window.__autoCovSq = true;
   function markSqCoverage(){
@@ -1879,12 +2026,12 @@ document.addEventListener('DOMContentLoaded', function(){
   document.addEventListener('DOMContentLoaded', function(){
     markSqCoverage();
     // Re-render so Area (sf) placeholder appears for these items, then recompute totals
-    try{ if (typeof renderMaterials==='function') renderMaterials(); }catch(e){}
-    try{ if (typeof updateAll==='function') updateAll(); }catch(e){}
+    try{ if (typeof renderMaterials==='function') renderMaterials(); } catch(e){}
+    try{ if (typeof updateAll==='function') updateAll(); } catch(e){}
   });
 })();
 </script>
-<script id="stucco-hard-filter">
+<script 
 (function(){
   if (window.__stuccoHardFilter) return; window.__stuccoHardFilter = true;
   function hardHideWasteForStucco(group){
@@ -1919,7 +2066,7 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 })();
 </script>
-<script id="stucco-hide-waste-js">
+<script 
 // Minimal, robust: label the Waste/Disposal card, track active tab, and let CSS do the hiding.
 (function(){
   if (window.__stuccoHideWasteApplied) return; window.__stuccoHideWasteApplied = true;
@@ -1989,7 +2136,7 @@ document.addEventListener('DOMContentLoaded', function(){
 })();
 </script>
 <!-- FIX: Ensure Materials re-filters when the Stucco tab is active; also sync data-active-group for CSS -->
-<script id="tab-sync-robust">
+<script 
 (function(){
   var TABLIST_SEL = '#sections-tablist';
   var lastClickedGroup = null;
@@ -2047,14 +2194,14 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 })();
 </script>
-<script id="ct_out_of_area_default">
+<script 
 document.addEventListener('DOMContentLoaded', function(){
   var o = document.getElementById('ct_out_of_area');
-  if(o){ o.checked = false; try{ updateAll(); }catch(e){} }
+  if(o){ o.checked = false; try{ updateAll(); } catch(e){} }
 }, true);
 </script>
 
-<script id="autorate_rob_patch">
+<script 
 (function(){
   function findOwnerRow(){
     var tr = document.querySelector("#crewTbody tr[data-id='owner']");
@@ -2088,7 +2235,7 @@ document.addEventListener('DOMContentLoaded', function(){
             crew[idx].role = role;
           }
         }
-        if (typeof updateAll === "function") { try{ updateAll(); }catch(e){} }
+        if (typeof updateAll === "function") { try{ updateAll(); } catch(e){} }
       }
     }catch(e){/* noop */}
   }
@@ -2118,7 +2265,7 @@ document.addEventListener('DOMContentLoaded', function(){
 })();
 </script>
 
-<script id="autorate_all_roles_patch">
+<script 
 // Default hourly rates by role (extend/adjust here if needed)
 const TM_DEFAULT_RATES = {
   owner: 50,
@@ -2150,7 +2297,7 @@ const TM_DEFAULT_RATES = {
           crew[idx].rate = Number(val)||0;
         }
       }
-    }catch(e){}
+    } catch(e){}
   }
   function isOwnerRow(tr){
     if(!tr) return false;
@@ -2177,7 +2324,7 @@ const TM_DEFAULT_RATES = {
         var idx = crew.findIndex(c=>c && c.id===id);
         if(idx>=0 && crew[idx]) crew[idx].manualRate = true;
       }
-    }catch(e){}
+    } catch(e){}
   }
   function applyDefaultForRow(tr){
     if(!tr) return;
@@ -2192,7 +2339,7 @@ const TM_DEFAULT_RATES = {
     if(isOwner || !manual || anyDefaultValue(cur)){
       setRate(tr, def);
       // If we just applied a default due to role change, keep manual flag as-is (do not set).
-      try{ if(typeof updateAll==="function") updateAll(); }catch(e){}
+      try{ if(typeof updateAll==="function") updateAll(); } catch(e){}
     }
   }
   function bindRow(tr){
@@ -2223,7 +2370,7 @@ const TM_DEFAULT_RATES = {
           if(typeof updateAll==="function") updateAll();
         }
       }
-    }catch(e){}
+    } catch(e){}
   }
   function onReady(fn){ if(document.readyState!=="loading") fn(); else document.addEventListener("DOMContentLoaded", fn, {once:true}); }
   onReady(function(){
@@ -2238,10 +2385,10 @@ const TM_DEFAULT_RATES = {
     try{
       if(typeof window.updateAll === "function" && !window.updateAll.__tmWrapped){
         var _u = window.updateAll;
-        window.updateAll = function(){ var r = _u.apply(this, arguments); try{ attachAll(); }catch(e){} return r; };
+        window.updateAll = function(){ var r = _u.apply(this, arguments); try{ attachAll(); } catch(e){} return r; };
         window.updateAll.__tmWrapped = true;
       }
-    }catch(e){}
+    } catch(e){}
   });
 })();
 </script>
@@ -2842,24 +2989,243 @@ document.addEventListener('DOMContentLoaded', function(){
 })();
 </script>
 
-</body>
-</html>
+
+<script>
+// === Silica Controls logic (clean version) ===
+(function(){
+  function byId(id){ return document.getElementById(id); }
+
+  // --- Helpers ---
+  function ensureDWVInModel(){
+    if(!byId('sil_task_tuck') || !byId('sil_task_tuck').checked) return;
+    if(!Array.isArray(window.materials)) return;
+    var bag = materials.find(function(m){ return m.id==='mCOL_DWV9402'; });
+    if(!bag) return;
+    bag.use = true;
+    if(!(Number(bag.qty)>0)) bag.qty = 1;
+  }
+  function ensureDWVInUI(){
+    var row = document.querySelector('#matTbody tr[data-id="mCOL_DWV9402"]');
+    if(!row) return;
+    var cb = row.querySelector('.mat_use');
+    var qty = row.querySelector('.mat_qty');
+    if(cb && !cb.checked){ cb.checked = true; cb.dispatchEvent(new Event('change', {bubbles:true})); }
+    if(qty && (Number(qty.value)||0) <= 0){
+      qty.value = '1';
+      qty.dispatchEvent(new Event('input', {bubbles:true}));
+      qty.dispatchEvent(new Event('change', {bubbles:true}));
+    }
+  }
+  function removeDWVFromModel(){
+    if(!Array.isArray(window.materials)) return;
+    var bag = materials.find(function(m){ return m.id==='mCOL_DWV9402'; });
+    if(!bag) return;
+    bag.use = false; bag.qty = 0;
+  }
+  function removeDWVFromUI(){
+    var row = document.querySelector('#matTbody tr[data-id="mCOL_DWV9402"]');
+    if(!row) return;
+    var cb = row.querySelector('.mat_use');
+    var qty = row.querySelector('.mat_qty');
+    if(cb && cb.checked){ cb.checked = false; cb.dispatchEvent(new Event('change', {bubbles:true})); }
+    if(qty && (Number(qty.value)||0) > 0){
+      qty.value = '0';
+      qty.dispatchEvent(new Event('input', {bubbles:true}));
+      qty.dispatchEvent(new Event('change', {bubbles:true}));
+    }
+  }
+
+  function ensureBladeInModel(){
+    if(!byId('sil_task_grind') || !byId('sil_task_grind').checked) return;
+    if(!Array.isArray(window.materials)) return;
+    var blade = materials.find(function(m){ return m.id==='mCOL_DT5_TP_4_5'; });
+    if(!blade) return;
+    blade.use = true;
+    if(!(Number(blade.qty)>0)) blade.qty = 1;
+  }
+  function ensureBladeInUI(){
+    var row = document.querySelector('#matTbody tr[data-id="mCOL_DT5_TP_4_5"]');
+    if(!row) return;
+    var cb = row.querySelector('.mat_use');
+    var qty = row.querySelector('.mat_qty');
+    if(cb && !cb.checked){ cb.checked = true; cb.dispatchEvent(new Event('change', {bubbles:true})); }
+    if(qty && (Number(qty.value)||0) <= 0){
+      qty.value = '1';
+      qty.dispatchEvent(new Event('input', {bubbles:true}));
+      qty.dispatchEvent(new Event('change', {bubbles:true}));
+    }
+  }
+  function removeBladeFromModel(){
+    if(!Array.isArray(window.materials)) return;
+    var blade = materials.find(function(m){ return m.id==='mCOL_DT5_TP_4_5'; });
+    if(!blade) return;
+    blade.use = false; blade.qty = 0;
+  }
+  function removeBladeFromUI(){
+    var row = document.querySelector('#matTbody tr[data-id="mCOL_DT5_TP_4_5"]');
+    if(!row) return;
+    var cb = row.querySelector('.mat_use');
+    var qty = row.querySelector('.mat_qty');
+    if(cb && cb.checked){ cb.checked = false; cb.dispatchEvent(new Event('change', {bubbles:true})); }
+    if(qty && (Number(qty.value)||0) > 0){
+      qty.value = '0';
+      qty.dispatchEvent(new Event('input', {bubbles:true}));
+      qty.dispatchEvent(new Event('change', {bubbles:true}));
+    }
+  }
+
+  // Tools Depreciation toggles
+  function ensureDWV010InModel(){ if(byId('sil_task_tuck') && byId('sil_task_tuck').checked && Array.isArray(window.tools)){ var t=tools.find(function(x){return x.id==='t11';}); if(t) t.use=true; } }
+  function ensureDWV010InUI(){ var r=document.querySelector('#toolTbody tr[data-id="t11"]'); if(!r) return; var cb=r.querySelector('.t_use'); if(cb && !cb.checked){ cb.checked=true; cb.dispatchEvent(new Event('change',{bubbles:true})); } r.classList.remove('fade'); }
+  function removeDWV010FromModel(){ if(Array.isArray(window.tools)){ var t=tools.find(function(x){return x.id==='t11';}); if(t) t.use=false; } }
+  function removeDWV010FromUI(){ var r=document.querySelector('#toolTbody tr[data-id="t11"]'); if(!r) return; var cb=r.querySelector('.t_use'); if(cb && cb.checked){ cb.checked=false; cb.dispatchEvent(new Event('change',{bubbles:true})); } r.classList.add('fade'); }
+
+  function ensureDWE46202InModel(){ if(byId('sil_task_grind') && byId('sil_task_grind').checked && Array.isArray(window.tools)){ var t=tools.find(function(x){return x.id==='t10';}); if(t) t.use=true; } }
+  function ensureDWE46202InUI(){ var r=document.querySelector('#toolTbody tr[data-id="t10"]'); if(!r) return; var cb=r.querySelector('.t_use'); if(cb && !cb.checked){ cb.checked=true; cb.dispatchEvent(new Event('change',{bubbles:true})); } r.classList.remove('fade'); }
+  function removeDWE46202FromModel(){ if(Array.isArray(window.tools)){ var t=tools.find(function(x){return x.id==='t10';}); if(t) t.use=false; } }
+  function removeDWE46202FromUI(){ var r=document.querySelector('#toolTbody tr[data-id="t10"]'); if(!r) return; var cb=r.querySelector('.t_use'); if(cb && cb.checked){ cb.checked=false; cb.dispatchEvent(new Event('change',{bubbles:true})); } r.classList.add('fade'); }
+
+  // Masks (3M 8511)
+  function silicaAnyOn(){ var t=byId('sil_task_tuck'), g=byId('sil_task_grind'); return !!((t&&t.checked)||(g&&g.checked)); }
+  function calcMaskQty(){
+    if(!silicaAnyOn()) return 0;
+    var HOURS = (typeof HOURS_PER_DAY!=='undefined' && HOURS_PER_DAY) ? HOURS_PER_DAY : 8;
+    var daysMode = (typeof crewDaysMode!=='undefined') ? crewDaysMode : !!(byId('timeUnitsDays') && byId('timeUnitsDays').checked);
+    var crewWide = (typeof crewWideOn!=='undefined') ? crewWideOn : !!(byId('crewWideToggle') && byId('crewWideToggle').checked);
+    var qEl = byId('crewWideQty'); var q = Number(qEl && qEl.value || 0) || 0;
+    var used = Array.isArray(window.crew) ? crew.filter(function(w){ return w && w.use && w.role!=='company' && w.role!=='owner'; }) : [];
+    if(crewWide){
+      var hours = daysMode ? q*HOURS : q;
+      var days = Math.ceil((Number(hours)||0)/HOURS);
+      return (used.length||0) * (days||0);
+    }else{
+      var total=0;
+      used.forEach(function(w){ var hours=Number(w.hrs)||0; var days=Math.ceil(hours/HOURS); total+=days; });
+      return total;
+    }
+  }
+  function ensureMaskInModel(){
+    try{
+      if(typeof materials==='undefined') return;
+      var m = materials.find(function(x){ return x.id==='mHD_3M_8511'; });
+      if(!m) return;
+      var qty = calcMaskQty();
+      if(!(qty>0)) qty = 1; // default to 1 like bags/blade
+      m.use = true;
+      m.qty = qty;
+    }catch(e){}
+  }
+  function ensureMaskInUI(){
+    try{
+      var row = document.querySelector('#matTbody tr[data-id="mHD_3M_8511"]');
+      if(!row) return;
+      var cb = row.querySelector('.mat_use');
+      var qtyEl = row.querySelector('.mat_qty');
+      var qty = calcMaskQty();
+      if(!(qty>0)) qty = 1; // default to 1 like bags/blade
+      if(cb && !cb.checked){ cb.checked = true; try{ cb.dispatchEvent(new Event('change', {bubbles:true})); }catch(e){} }
+      if(qtyEl){
+        qtyEl.value = String(qty);
+        try{ qtyEl.dispatchEvent(new Event('input', {bubbles:true})); }catch(e){}
+        try{ qtyEl.dispatchEvent(new Event('change', {bubbles:true})); }catch(e){}
+      }
+    }catch(e){}
+  }
+  function removeMaskFromModel(){
+    if(!Array.isArray(window.materials)) return;
+    var m = materials.find(function(x){ return x.id==='mHD_3M_8511'; });
+    if(!m) return;
+    m.use = false; m.qty = 0;
+  }
+  function removeMaskFromUI(){
+    var row = document.querySelector('#matTbody tr[data-id="mHD_3M_8511"]');
+    if(!row) return;
+    var cb = row.querySelector('.mat_use');
+    var qtyEl = row.querySelector('.mat_qty');
+    if(cb && cb.checked){ cb.checked = false; cb.dispatchEvent(new Event('change', {bubbles:true})); }
+    if(qtyEl && (Number(qtyEl.value)||0) > 0){
+      qtyEl.value = '0';
+      qtyEl.dispatchEvent(new Event('input', {bubbles:true}));
+      qtyEl.dispatchEvent(new Event('change', {bubbles:true}));
+    }
+  }
+
+  function applySilicaLinks(){
+    var tuckOn = byId('sil_task_tuck') && byId('sil_task_tuck').checked;
+    var grindOn = byId('sil_task_grind') && byId('sil_task_grind').checked;
+
+    // Model
+    if(tuckOn){ ensureDWVInModel(); ensureDWV010InModel(); } else { removeDWVFromModel(); removeDWV010FromModel(); }
+    if(grindOn){ ensureBladeInModel(); ensureDWE46202InModel(); } else { removeBladeFromModel(); removeDWE46202FromModel(); }
+    if(!tuckOn && !grindOn){ removeMaskFromModel(); } else { ensureMaskInModel(); }
+
+    if(typeof renderMaterials==='function'){ renderMaterials(); }
+    requestAnimationFrame(function(){
+      if(tuckOn){ ensureDWVInUI(); ensureDWV010InUI(); } else { removeDWVFromUI(); removeDWV010FromUI(); }
+      if(grindOn){ ensureBladeInUI(); ensureDWE46202InUI(); } else { removeBladeFromUI(); removeDWE46202FromUI(); }
+      if(!tuckOn && !grindOn){ removeMaskFromUI(); } else { ensureMaskInUI(); }
+      if(typeof totals==='function'){ totals(); }
+    });
+  }
+
+  // Listeners
+  document.addEventListener('change', function(ev){
+    var id = ev && ev.target && ev.target.id;
+    if(id==='sil_task_tuck' || id==='sil_task_grind' || id==='crewWideToggle' || id==='timeUnitsDays'){ applySilicaLinks(); }
+  }, true);
+  document.addEventListener('input', function(ev){
+    if(ev.target && (ev.target.closest && ev.target.closest('#crewTbody'))) applySilicaLinks();
+    if(ev.target && ev.target.id==='crewWideQty') applySilicaLinks();
+  }, true);
+
+  // Initial
+  applySilicaLinks();
+})();
+</script>
 <script>
 document.addEventListener('DOMContentLoaded', function(){
   var btn = document.getElementById('wasteAdd');
   if(!btn) return;
   btn.addEventListener('click', function(){
-    try{
-      if (!Array.isArray(window.waste)) window.waste = [];
-      var nid = 'w' + (Date.now()%100000);
-      window.waste.push({id:nid, use:false, item:"Custom disposal item", facility:"", units:"ton", rate:0, qty:0});
+      // Clean add-material handler without try/catch
+      var mat = (typeof getMaterialsRef==='function') ? getMaterialsRef() : (Array.isArray(window.materials) ? window.materials : null);
+      if (Array.isArray(mat)) {
+        var id = 'u' + Date.now();
+        mat.push({ id:id, use:true, item:'', supplier:'', units:'each', price:0, qty:1, step:1, roundUp:false });
+        if (typeof renderMaterials === 'function') { renderMaterials(); }
+        setTimeout(function(){
+          var rows = document.querySelectorAll('#matTbody tr');
+          if (rows.length){
+            var last = rows[rows.length-1];
+            var input = last.querySelector('.mat_item');
+            if (input) input.focus();
+          }
+        }, 0);
+        if (typeof updateAll === 'function') { updateAll(); }
+        return;
+      }
+      // Fallback: append a DOM-only row (in case data structure is unavailable)
+      var tb = document.getElementById('matTbody'); if(!tb) return;
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td><input type="checkbox" class="mat_use" checked></td>' +
+                     '<td><input class="mat_item" placeholder="Item"></td>' +
+                     '<td><input class="mat_sup" placeholder="Supplier"></td>' +
+                     '<td><input class="mat_units" value="each"></td>' +
+                     '<td><input type="number" class="mat_price" min="0" step="0.01" value="0"></td>' +
+                     '<td><input type="number" class="mat_qty" min="0" step="1" value="1"></td>' +
+                     '<td class="right mono mat_ext">$0.00</td>' +
+                     '<td><button class="ghost mat_del">✕</button></td>';
+      tb.appendChild(tr);
+      tr.querySelectorAll('input').forEach(function(el){
+        el.addEventListener('input', function(){ if (typeof updateAll === 'function') updateAll(); });
+      });
+});
       if (typeof renderWaste === 'function') renderWaste();
       else if (typeof updateAll === 'function') updateAll();
     }catch(e){ console.warn(e); }
   });
 });
-</script>
-<script>
+</script><script>
 document.addEventListener('DOMContentLoaded', function(){
   try{
     var tbody = document.getElementById('matTbody');
@@ -2893,8 +3259,7 @@ document.addEventListener('DOMContentLoaded', function(){
     applyMaterialsFilter();
   }catch(e){ console.warn('materials filter disabled:', e); }
 });
-</script>
-<script>
+</script><script>
 // Hide Waste / Disposal ONLY when Concrete tab is active (safe, no math touched)
 document.addEventListener('DOMContentLoaded', function(){
   function activeGroup(){
@@ -2930,8 +3295,7 @@ document.addEventListener('DOMContentLoaded', function(){
   // run once on load
   enforceConcreteHidesWaste();
 });
-</script>
-<script>
+</script><script>
 // Hide Waste / Disposal when Crew & Time tab is active (safe, isolated)
 document.addEventListener('DOMContentLoaded', function(){
   function activeGroup(){
@@ -2966,8 +3330,7 @@ document.addEventListener('DOMContentLoaded', function(){
   }
   enforceCrewHidesWaste();
 });
-</script>
-<script>
+</script><script>
 // Central controller: hide Waste / Disposal on Concrete, Crew & Time, and Masonry tabs only
 document.addEventListener('DOMContentLoaded', function(){
   function activeGroup(){
@@ -3004,8 +3367,7 @@ document.addEventListener('DOMContentLoaded', function(){
   // run on load
   enforceWasteVisibility();
 });
-</script>
-<script>
+</script><script>
 // ID: fuel-hide-materials-v1 — Hide Materials only on the Fuel tab (safe & isolated)
 document.addEventListener('DOMContentLoaded', function(){
   function activeGroup(){
@@ -3037,8 +3399,7 @@ document.addEventListener('DOMContentLoaded', function(){
   }
   enforceMaterialsOnFuel();
 });
-</script>
-<script>
+</script><script>
 // ID: waste-hide-materials-v1 — Hide Materials ONLY on the Waste / Disposal tab (safe & isolated)
 document.addEventListener('DOMContentLoaded', function(){
   function activeGroup(){
@@ -3070,8 +3431,7 @@ document.addEventListener('DOMContentLoaded', function(){
   }
   enforceMaterialsOnWaste();
 });
-</script>
-<script>
+</script><script>
 // ID: crew-hide-materials-v1 — Hide Materials ONLY on the Crew & Time tab (safe & isolated)
 document.addEventListener('DOMContentLoaded', function(){
   function activeGroup(){
@@ -3103,8 +3463,7 @@ document.addEventListener('DOMContentLoaded', function(){
   }
   enforceMaterialsOnCrew();
 });
-</script>
-<script id="materials-hide-master-v1">
+</script><script 
 // Ensures Materials is hidden on Waste / Disposal, Crew & Time, and Fuel tabs
 document.addEventListener('DOMContentLoaded', function(){
   function activeGroup(){
@@ -3144,13 +3503,12 @@ document.addEventListener('DOMContentLoaded', function(){
   }
   enforce();
 });
-</script>
-<script id="mv-pump-delegate">
+</script><script 
 document.addEventListener('DOMContentLoaded', function(){
   function recalcPump(){
-    try{ if(window.mohicanValley) mohicanValley(); }catch(e){}
-    try{ if(window.totals) totals(); }catch(e){}
-    try{ if(window.updateAll) updateAll(); }catch(e){}
+    try{ if(window.mohicanValley) mohicanValley(); } catch(e){}
+    try{ if(window.totals) totals(); } catch(e){}
+    try{ if(window.updateAll) updateAll(); } catch(e){}
   }
   // Capture phase to catch dynamically inserted controls too
   ['change','input'].forEach(function(type){
@@ -3163,3 +3521,5 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 });
 </script>
+</body>
+</html>
