@@ -324,7 +324,10 @@ window.SECTION = {
 
   // Data tables (sources in References panel)
   // Units per square foot (face) by course height
-  const UNITS_PER_SF = { "8": 1.125, "4": 2.25 }; // 8x16 vs half-high 4x16
+  const UNITS_PER_SF = { "8": 1.125, "4": 2.25 };
+// Bags per block (Spec Mix Type‑S), keyed by CMU thickness (inches)
+const BLOCKS_PER_BAG_BY_THICKNESS = { "4": 20, "6": 15, "8": 15, "10": 12, "12": 10 };
+ // 8x16 vs half-high 4x16
 
   // Grout yd^3 per 100 sf by thickness + pattern (Fairbanks/Knife River table)
   const GROUT_YD3_100 = {
@@ -437,10 +440,13 @@ window.SECTION = {
     var groutFt3 = groutYd3 * 27;
 
     // Mortar (keep simple rule-of-thumb tied to units)
-    var mortar_bags = blocks_waste * 3.0 / 100.0;
-    var sand_yd3 = mortar_bags / 7.0;
+    // Mortar bags based on Spec Mix Type‑S blocks-per-bag by thickness
+var bpb = (typeof BLOCKS_PER_BAG_BY_THICKNESS !== 'undefined' && BLOCKS_PER_BAG_BY_THICKNESS[thickness]) ? BLOCKS_PER_BAG_BY_THICKNESS[thickness] : 15;
+var mortar_bags = blocks_waste / bpb;
+var rUpEl = document.getElementById('bw_round_up_bags');
+if (rUpEl && rUpEl.checked){ mortar_bags = Math.ceil(mortar_bags); }
 
-    // Specials
+// Specials
     var useOpenEnd = document.getElementById('bw_open_end').checked;
     var bondCourses = parseInt(document.getElementById('bw_bondbeam_courses').value || '0', 10);
     if (!isFinite(bondCourses) || bondCourses < 0) bondCourses = 0;
@@ -455,7 +461,7 @@ window.SECTION = {
     scope.push('Furnish & lay ≈ ' + blocks_waste + ' units (' + fmt(unitsPerSf,3) + '/sf @ ' + courseHeightIn() + '\" course; includes ' + fmt(wastePct,1) + '% waste).');
     scope.push('Vertical #4 @ ' + (pattern==='full' ? '≈ every third cell' : (spacingIn + '\" o.c.')) + (includeEnds ? ' + end bars' : '') + ' — ' + vert_bars + ' bars @ ' + fmt(bar_len_ft,2) + ' ft ea (' + fmt(rebar_lf,1) + ' LF total).');
     scope.push('Grout (' + thickness + '\" wall, ' + (pattern==='full' ? 'fully grouted' : (spacingIn + '\" o.c.')) + '): ≈ ' + fmt(groutYd3,3) + ' yd³.');
-    scope.push('Mortar ≈ ' + fmt(mortar_bags,2) + ' bags; masonry sand ≈ ' + fmt(sand_yd3,3) + ' yd³.');
+    scope.push('Mortar ≈ ' + fmt(mortar_bags,2) + ' bags (Spec Mix Type-S, ~' + bpb + ' blocks/bag).');
     if (open_end_units>0) scope.push('Open‑End units allowance: ≈ ' + open_end_units + ' (at reinforced cells).');
     if (bond_beam_units>0) scope.push('Bond‑beam units allowance: ≈ ' + bond_beam_units + ' (spread across ' + bondCourses + ' course' + (bondCourses>1?'s':'') + ').');
 
@@ -468,7 +474,7 @@ window.SECTION = {
     html += '<div><strong>Blocks (calc):</strong> ' + fmt(blocks,2) + ' → <strong>Order:</strong> ' + blocks_waste + '</div>';
     html += '<div><strong>Vertical #4 bars:</strong> ' + vert_bars + ' @ ' + fmt(bar_len_ft,2) + ' ft (' + fmt(rebar_lf,1) + ' LF)</div>';
     html += '<div><strong>Grout (table):</strong> ' + fmt(groutFt3,2) + ' ft³ (' + fmt(groutYd3,3) + ' yd³) — ' + thickness + '\" / ' + (pattern==='full' ? 'Full' : (spacingIn + '\" o.c.')) + '</div>';
-    html += '<div><strong>Mortar:</strong> ~' + fmt(mortar_bags,2) + ' bags; <strong>Sand:</strong> ' + fmt(sand_yd3,3) + ' yd³</div>';
+    html += '<div><strong>Mortar:</strong> ~' + fmt(mortar_bags,2) + ' bags</div>';
     if (open_end_units>0) html += '<div><strong>Open‑End units:</strong> ' + open_end_units + '</div>';
     if (bond_beam_units>0) html += '<div><strong>Bond‑beam units:</strong> ' + bond_beam_units + ' (courses: ' + bondCourses + ')</div>';
     document.getElementById('bw_results').innerHTML = html;
