@@ -211,6 +211,311 @@ window.SECTION = {
 
 <div class="wrap">
 <h2 style="margin:8px 0">Turcotte Masonry Estimator</h2>
+<!-- BLOCK WALL HELPER CARD -->
+<div class="card" id="blockWallCard" data-card="blockwall">
+  <div class="row">
+    <h3 style="margin:0">Block Wall Helper</h3>
+    <span class="spacer"></span>
+    <div class="group">
+      <label class="pill"><input type="checkbox" id="bw_include_end_bars" /> Include end bars</label>
+      <label class="pill"><input type="checkbox" id="bw_use_20ft" checked /> Use 20' rebar lengths</label>
+    </div>
+  </div>
+  
+  <div class="row" style="margin-top:8px">
+    <div class="group">
+      <h4 style="margin:6px 0">CMU Type</h4>
+      <label>Thickness (select one)
+        <select id="bw_thickness">
+          <option value="6">6&quot; (6x8x16)</option>
+          <option value="8" selected>8&quot; (8x8x16)</option>
+          <option value="10">10&quot; (10x8x16)</option>
+          <option value="12">12&quot; (12x8x16)</option>
+        </select>
+      </label>
+      <div class="pill">
+        <label><input type="radio" name="bw_height" value="8" checked> Standard 8&quot; course</label>
+      </div>
+      <div class="pill">
+        <label><input type="radio" name="bw_height" value="4"> Half‑High 4&quot; course</label>
+      </div>
+    
+    </div>
+    <div class="group">
+      <h4 style="margin:6px 0">Grout & Rebar</h4>
+      <label>Grout Pattern
+        <select id="groutPattern">
+          <option value="full" selected>Fully Grouted</option>
+          <option value="16oc">Cells @ 16&quot; o.c.</option>
+          <option value="24oc">Cells @ 24&quot; o.c.</option>
+          <option value="32oc">Cells @ 32&quot; o.c.</option>
+        </select>
+      </label>
+    
+    <div class="group">
+      <h4 style="margin:6px 0">Special Shapes (allowances)</h4>
+      <label class="pill"><input type="checkbox" id="bw_open_end"> Use Open‑End units at reinforced cells</label>
+      <label>Bond Beam courses (enter 0 if none)
+        <input type="number" id="bw_bondbeam_courses" min="0" step="1" value="0">
+      </label>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="group">
+      <label>Wall Length — ft <input type="number" id="bw_len_ft" step="1" min="0" value="0"></label>
+      <label>in <input type="number" id="bw_len_in" step="1" min="0" max="11" value="0"></label>
+      <label>Wall Height — ft <input type="number" id="bw_h_ft" step="1" min="0" value="0"></label>
+      <label>in <input type="number" id="bw_h_in" step="1" min="0" max="11" value="0"></label>
+      <label>Waste % <input type="number" id="bw_waste" step="0.5" min="0" value="5"></label>
+    </div>
+  </div>
+  <div class="row small muted">Assumptions: 8×8×16 CMU (nominal), 3/8&quot; joints, every third cell has a vertical #4 rebar, all cells filled with grout.</div>
+  <div class="row">
+    <div class="group">
+      <label class="pill"><input type="checkbox" id="bw_round_up_blocks" checked> Round blocks up</label>
+      <label class="pill"><input type="checkbox" id="bw_round_up_bars" checked> Round bars up</label>
+      <label class="pill"><input type="checkbox" id="bw_round_up_bags" checked> Round bags up</label>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col">
+      <h4>Quantities</h4>
+      <div id="bw_results" class="small"></div>
+    </div>
+    <div class="col">
+      <h4>Scope Lines</h4>
+      <textarea id="bw_scope" rows="8" style="width:100%;font-family:monospace"></textarea>
+      <button id="bw_copy" class="ghost">Copy to clipboard</button>
+    </div>
+  </div>
+</div>
+<style>
+  /* Block Wall tab: no global hide; rely on applyGroup filtering */
+</style>
+
+<script>
+(function(){
+
+  // Helper: check a materials row's "Use" checkbox by id or item text and dispatch change
+  function ensureMaterialChecked(id, textPattern){
+    try{
+      var tbody = document.getElementById('matTbody');
+      if(!tbody) return false;
+      var row = null;
+      if(id){
+        row = tbody.querySelector('tr[data-id="'+id+'"]');
+      }
+      if(!row && textPattern){
+        var re = new RegExp(textPattern, 'i');
+        var rows = Array.from(tbody.querySelectorAll('tr'));
+        row = rows.find(function(tr){ return re.test((tr.textContent||'').replace(/\s+/g,' ')); });
+      }
+      if(!row) return false;
+      var cb = row.querySelector('.mat_use');
+      if(!cb) return false;
+      if(!cb.checked){
+        cb.checked = true;
+        cb.dispatchEvent(new Event('change', { bubbles:true, cancelable:true }));
+      }
+      return true;
+    }catch(e){ return false; }
+  }
+
+  // Data tables (sources in References panel)
+  // Units per square foot (face) by course height
+  const UNITS_PER_SF = { "8": 1.125, "4": 2.25 }; // 8x16 vs half-high 4x16
+
+  // Grout yd^3 per 100 sf by thickness + pattern (Fairbanks/Knife River table)
+  const GROUT_YD3_100 = {
+    "6":   { full: 0.93, "16oc": 0.55, "24oc": 0.42, "32oc": 0.35 },
+    "8":   { full: 1.12, "16oc": 0.65, "24oc": 0.50, "32oc": 0.43 },
+    "10":  { full: 1.30, "16oc": 0.82, "24oc": 0.63, "32oc": 0.53 },
+    "12":  { full: 1.73, "16oc": 1.01, "24oc": 0.76, "32oc": 0.64 }
+  };
+
+  function feetInToInches(ft, inch){ 
+    var f = parseFloat(ft||0), i = parseFloat(inch||0);
+    if (!isFinite(f)) f = 0; if (!isFinite(i)) i = 0;
+    return f*12 + i;
+  }
+  function fmt(n, d){ return (Math.round(n*Math.pow(10,d))/Math.pow(10,d)).toFixed(d); }
+
+  function courseHeightIn(){
+    const hSel = document.querySelector('input[name="bw_height"]:checked');
+    return (hSel && hSel.value === '4') ? 4 : 8;
+  }
+
+  function calc(){
+    var L_in = feetInToInches(document.getElementById('bw_len_ft').value, document.getElementById('bw_len_in').value);
+    var H_in = feetInToInches(document.getElementById('bw_h_ft').value, document.getElementById('bw_h_in').value);
+    var wastePct = parseFloat(document.getElementById('bw_waste').value||0);
+    if (!isFinite(wastePct)) wastePct = 0;
+    var area_sf = (L_in/12) * (H_in/12);
+
+    // CMU type
+    var thickness = document.getElementById('bw_thickness').value; // '6','8','10','12'
+    var heightKey = (courseHeightIn() === 4) ? "4" : "8";
+
+    // Units per SF (face) per course height
+    var unitsPerSf = UNITS_PER_SF[heightKey] || 1.125;
+
+    // Blocks calc
+    var blocks = area_sf * unitsPerSf;
+    var blocks_waste = blocks * (1 + wastePct/100);
+    if (document.getElementById('bw_round_up_blocks').checked){ blocks_waste = Math.ceil(blocks_waste); }
+
+    
+    
+    /*__BW_TO_MAT_MAPPING__*/
+    try{
+      // When CMU Type is 12x8x16 (12" thick, 8" course), select the 12" block row and write Qty = blocks_waste
+      var thicknessSel = document.getElementById('bw_thickness');
+      var heightRadio = document.querySelector('input[name="bw_height"]:checked');
+      var htCourse = heightRadio ? heightRadio.value : '8';
+      if (thicknessSel && thicknessSel.value==='12' && htCourse==='8' && L_in>0 && H_in>0){
+        if (!document.querySelector('#matTbody tr') && typeof renderMaterials==='function'){ renderMaterials(); }
+        var tbody = document.getElementById('matTbody');
+        if (tbody){
+          // Find the row by stable id or text match
+          var row = tbody.querySelector('tr[data-id="mNH1"]');
+          if(!row){
+            var rows = Array.from(tbody.querySelectorAll('tr'));
+            row = rows.find(function(tr){ return /12"\s*hollow\s*concrete\s*block/i.test((tr.textContent||'')); });
+          }
+          if (row){
+            // 1) Ensure Use is checked (UI event)
+            var cb = row.querySelector('.mat_use');
+            if (cb && !cb.checked){
+              cb.checked = true;
+              cb.dispatchEvent(new Event('change', { bubbles:true, cancelable:true }));
+            }
+            // 2) Write Qty via the qty input and fire input+change
+            var q = row.querySelector('.mat_qty');
+            if (q){
+              q.value = (typeof blocks_waste==='number') ? blocks_waste : (Number(blocks_waste)||0);
+              q.dispatchEvent(new Event('input',  { bubbles:true, cancelable:true }));
+              q.dispatchEvent(new Event('change', { bubbles:true, cancelable:true }));
+            }
+          }
+        }
+      }
+    }catch(e){ /* keep calc resilient */ }
+    /*__/BW_TO_MAT_MAPPING__*/
+    
+
+
+// Course count (for openings/specials)
+    var courses = Math.ceil(H_in / courseHeightIn());
+
+    // Rebar: based on 16" modules along length (approx columns)
+    var columns = Math.max(1, Math.round(L_in / 16));
+    var gpEl = document.getElementById('groutPattern');
+    var pattern = gpEl ? gpEl.value : 'full';
+    var includeEnds = document.getElementById('bw_include_end_bars').checked;
+    var bars_every_third = Math.ceil(columns / 3); // default legacy calc
+    // If user picked 16/24/32 o.c., honor the spacing exactly:
+    var spacingIn = 24; // default for legacy
+    if (pattern==='16oc') spacingIn = 16;
+    else if (pattern==='24oc') spacingIn = 24;
+    else if (pattern==='32oc') spacingIn = 32;
+    var bars_spacing = Math.max(1, Math.floor(L_in / spacingIn)) + (includeEnds ? 2 : 0);
+    var vert_bars = (pattern==='full') ? bars_every_third + (includeEnds ? 2 : 0) : bars_spacing;
+
+    // Bar length per vertical: wall height + 12" top + 12" bottom (quick rule)
+    var embed_each_in = 12;
+    var bar_len_ft = (H_in + 2*embed_each_in) / 12;
+    var use20 = document.getElementById('bw_use_20ft').checked;
+    var stock = use20 ? 20 : 10;
+    var bars_needed = vert_bars;
+    if (bar_len_ft > stock) { bars_needed = vert_bars * 2; }
+    var rebar_lf = vert_bars * bar_len_ft;
+
+    // Grout from table (thickness + pattern)
+    var yd3_100 = (GROUT_YD3_100[thickness] && GROUT_YD3_100[thickness][pattern]) ? GROUT_YD3_100[thickness][pattern] : GROUT_YD3_100['8']['full'];
+    var groutYd3 = area_sf * (yd3_100 / 100) * (1 + wastePct/100);
+    var groutFt3 = groutYd3 * 27;
+
+    // Mortar (keep simple rule-of-thumb tied to units)
+    var mortar_bags = blocks_waste * 3.0 / 100.0;
+    var sand_yd3 = mortar_bags / 7.0;
+
+    // Specials
+    var useOpenEnd = document.getElementById('bw_open_end').checked;
+    var bondCourses = parseInt(document.getElementById('bw_bondbeam_courses').value || '0', 10);
+    if (!isFinite(bondCourses) || bondCourses < 0) bondCourses = 0;
+    // Open-end allowance: one per reinforced cell per course (approx.)
+    var open_end_units = useOpenEnd ? (vert_bars * courses) : 0;
+    // Bond beam units: approx columns count per course × bondCourses
+    var bond_beam_units = bondCourses > 0 ? (columns * bondCourses) : 0;
+
+    // Scope text
+    var scope = [];
+    scope.push('Build CMU wall ' + fmt(L_in/12,2) + ' LF × ' + fmt(H_in/12,2) + ' H ('+thickness+'x'+(courseHeightIn())+'x16 face).');
+    scope.push('Furnish & lay ≈ ' + blocks_waste + ' units (' + fmt(unitsPerSf,3) + '/sf @ ' + courseHeightIn() + '\" course; includes ' + fmt(wastePct,1) + '% waste).');
+    scope.push('Vertical #4 @ ' + (pattern==='full' ? '≈ every third cell' : (spacingIn + '\" o.c.')) + (includeEnds ? ' + end bars' : '') + ' — ' + vert_bars + ' bars @ ' + fmt(bar_len_ft,2) + ' ft ea (' + fmt(rebar_lf,1) + ' LF total).');
+    scope.push('Grout (' + thickness + '\" wall, ' + (pattern==='full' ? 'fully grouted' : (spacingIn + '\" o.c.')) + '): ≈ ' + fmt(groutYd3,3) + ' yd³.');
+    scope.push('Mortar ≈ ' + fmt(mortar_bags,2) + ' bags; masonry sand ≈ ' + fmt(sand_yd3,3) + ' yd³.');
+    if (open_end_units>0) scope.push('Open‑End units allowance: ≈ ' + open_end_units + ' (at reinforced cells).');
+    if (bond_beam_units>0) scope.push('Bond‑beam units allowance: ≈ ' + bond_beam_units + ' (spread across ' + bondCourses + ' course' + (bondCourses>1?'s':'') + ').');
+
+    document.getElementById('bw_scope').value = scope.join('\n');
+
+    // Results panel
+    var html = '';
+    html += '<div><strong>Area:</strong> ' + fmt(area_sf,2) + ' sf</div>';
+    html += '<div><strong>CMU Type:</strong> ' + thickness + 'x' + courseHeightIn() + 'x16</div>';
+    html += '<div><strong>Blocks (calc):</strong> ' + fmt(blocks,2) + ' → <strong>Order:</strong> ' + blocks_waste + '</div>';
+    html += '<div><strong>Vertical #4 bars:</strong> ' + vert_bars + ' @ ' + fmt(bar_len_ft,2) + ' ft (' + fmt(rebar_lf,1) + ' LF)</div>';
+    html += '<div><strong>Grout (table):</strong> ' + fmt(groutFt3,2) + ' ft³ (' + fmt(groutYd3,3) + ' yd³) — ' + thickness + '\" / ' + (pattern==='full' ? 'Full' : (spacingIn + '\" o.c.')) + '</div>';
+    html += '<div><strong>Mortar:</strong> ~' + fmt(mortar_bags,2) + ' bags; <strong>Sand:</strong> ' + fmt(sand_yd3,3) + ' yd³</div>';
+    if (open_end_units>0) html += '<div><strong>Open‑End units:</strong> ' + open_end_units + '</div>';
+    if (bond_beam_units>0) html += '<div><strong>Bond‑beam units:</strong> ' + bond_beam_units + ' (courses: ' + bondCourses + ')</div>';
+    document.getElementById('bw_results').innerHTML = html;
+  }
+
+  function bind(){
+    ['bw_len_ft','bw_len_in','bw_h_ft','bw_h_in','bw_waste',
+     'bw_round_up_blocks','bw_round_up_bars','bw_round_up_bags',
+     'bw_include_end_bars','bw_use_20ft','bw_thickness','bw_bondbeam_courses','groutPattern','bw_open_end']
+      .forEach(function(id){ var el = document.getElementById(id); if(el){ el.addEventListener('input', calc); el.addEventListener('change', calc); }});
+    document.querySelectorAll('input[name="bw_height"]').forEach(function(el){ el.addEventListener('change', calc); });
+    var c = document.getElementById('bw_copy');
+    if (c) c.addEventListener('click', function(){
+      var ta = document.getElementById('bw_scope'); ta.select(); try{ document.execCommand('copy'); }catch(e){}
+    });
+    calc();
+  }
+
+  if (document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', bind, {once:true}); }
+  else { bind(); }
+
+  /*__BW_LISTENERS__*/
+  try {
+    var thick = document.getElementById('bw_thickness');
+    if (thick) thick.addEventListener('change', function(){
+      var r = document.querySelector('input[name="bw_height"]:checked');
+      if (thick.value==='12' && (r ? r.value : '8')==='8'){
+        if (!document.querySelector('#matTbody tr') && typeof renderMaterials==='function'){ renderMaterials(); }
+        ensureMaterialChecked('mNH1', '12\"\s*hollow\s*concrete\s*block');
+      }
+    });
+    document.querySelectorAll('input[name="bw_height"]').forEach(function(el){
+      el.addEventListener('change', function(){
+        var thickVal = document.getElementById('bw_thickness') ? document.getElementById('bw_thickness').value : '';
+        if (thickVal==='12' && el.value==='8'){
+          if (!document.querySelector('#matTbody tr') && typeof renderMaterials==='function'){ renderMaterials(); }
+          ensureMaterialChecked('mNH1', '12\"\s*hollow\s*concrete\s*block');
+        }
+      });
+    });
+  } catch(e){}
+  /*__/BW_LISTENERS__*/
+
+})();
+</script>
+
+
 <div class="status bad" id="jsStatus">❌ JS not loaded</div>
 <!-- TAX -->
 <div class="card">
@@ -285,7 +590,7 @@ window.SECTION = {
     
   </div>
   <div class="row small muted" style="margin-top:6px;">
-    Formula: L × W × (T&nbsp;in ÷ 12) ÷ 27 = yd³. (Adds optional 5% waste. Auto-fills supplier by rule: &lt; 3 yd → Concrete Connections; ≥ 3 yd → Mohican Valley.)
+    Formula: L × W × (T in ÷ 12) ÷ 27 = yd³. (Adds optional 5% waste. Auto-fills supplier by rule: < 3 yd → Concrete Connections; ≥ 3 yd → Mohican Valley.) 30-bag cap: ≤ 30 bags stays as 80-lb bags; ≥ 31 bags routes to Concrete Connections.
   </div>
   <div class="row" style="gap:10px; margin-top:8px;">
     <div>Yards (computed): <span id="tm_yards_out" class="pill" style="min-width:80px; text-align:center;">—</span></div>
@@ -387,13 +692,35 @@ window.SECTION = {
     });
     mo.observe(document.documentElement || document.body, {childList:true, subtree:true});
 
+    
     function applyRouting(yRaw, yRounded){
+      // Manual override: if Rob types a bag count, sync that directly to Materials and skip yards routing
+      const manualInp = byId('tm_bags_80_qty');
+const manualQty = manualInp ? num(manualInp.value) : 0;
+if (manualInp && manualQty > 0){
+  if (manualQty <= 30) {
+    if (ctInput) { ctInput.value = ''; ctInput.dispatchEvent(new Event('input', {bubbles:true})); }
+    if (mvInput) { mvInput.value = ''; mvInput.dispatchEvent(new Event('input', {bubbles:true})); }
+    const trMan = getOrCreateConcrete80Row();
+    if (trMan) { matSetQtyAndUse(trMan, Math.floor(manualQty)); }
+    const out0 = byId('tm_supplier_out'); if (out0) out0.textContent = `Bags (80-lb) — ${Math.floor(manualQty)} bags`;
+    return;
+  } else {
+    // > 30 bags — clear manual entry and any existing 80-lb bag line; switch to yards routing
+    manualInp.value = '';
+    manualInp.dispatchEvent(new Event('input', {bubbles:true}));
+    const trMan = getOrCreateConcrete80Row();
+    if (trMan) { matClearUse(trMan); }
+    // do not return; fall through to yards-based routing below
+  }
+}
+
       const out = byId('tm_supplier_out'); // now "source"
       const bagRow = findConcreteBagRow();
       const bagCount = bagCount80FromRawYards(yRaw);
 
       // Rule 1: If bags < 30 -> use bags pricing
-      if (bagCount > 0 && bagCount < 30){
+      if (bagCount > 0 && bagCount <= 30){
         // Clear yard suppliers
         if (ctInput) { ctInput.value = ''; ctInput.dispatchEvent(new Event('input', {bubbles:true})); }
         if (mvInput) { mvInput.value = ''; mvInput.dispatchEvent(new Event('input', {bubbles:true})); }
@@ -449,14 +776,14 @@ window.SECTION = {
 
       // Update bags display (from raw yards)
       const outB = byId('tm_bags_rows');
-      if (outB){
-        const cnt = bagCount80FromRawYards(yRaw);
-        outB.innerHTML = '';
-        if (cnt > 0){
-          const row = document.createElement('div');
-          row.className = 'row'; row.style.gap='8px';
-          row.innerHTML = `<div class="pill">80 lb bags</div><div>=</div><div class="pill" style="min-width:80px;text-align:center;">${cnt}</div>`;
-          outB.appendChild(row);
+      if (outB) outB.style.display = 'none'; // hide the old computed box
+      const cnt = bagCount80FromRawYards(yRaw);
+      const man = byId('tm_bags_80_qty');
+      if (man){
+        // mirror computed → manual, but don't fight the user while typing
+        if (document.activeElement !== man){
+          man.value = (cnt > 0 ? String(cnt) : '');
+          man.dispatchEvent(new Event('input', {bubbles:true}));
         }
       }
 
@@ -471,6 +798,64 @@ window.SECTION = {
 
     // Init
     setTimeout(()=>{ tryFindTargets(); recalc(); }, 150);
+    // === Manual 80‑lb bags → Materials sync (Turcotte) ===
+    function findConcreteBagRowExact(){
+      return document.querySelector('#matTbody tr[data-id="mNHM_Concrete_80lb"]') || findConcreteBagRow();
+    }
+    function ensureConcrete80Defaults(tr){
+      if (!tr) return;
+      const setVal = (sel,val)=>{ const el=tr.querySelector(sel); if(el){ el.value=val; el.dispatchEvent(new Event('input',{bubbles:true})); } };
+      setVal('.mat_item','Concrete 80lb Bag');
+      setVal('.mat_sup','New Haven Masonry');
+      setVal('.mat_units','bag');
+      setVal('.mat_price','6.36');
+      const useCb = tr.querySelector('.mat_use'); if(useCb && !useCb.checked){ useCb.click(); }
+    }
+    function getOrCreateConcrete80Row(){
+      let tr = findConcreteBagRowExact();
+      if (!tr) {
+        const addBtn = document.getElementById('addMatBtn');
+        if (addBtn) { addBtn.click(); }
+        const rows = document.querySelectorAll('#matTbody tr');
+        tr = rows[rows.length-1] || null;
+      }
+      if (tr) ensureConcrete80Defaults(tr);
+      return tr;
+    }
+    function syncBagsToMaterials(){
+      const inp = byId('tm_bags_80_qty'); if (!inp) return;
+      const qty = Math.max(0, Math.floor(num(inp.value||0)));
+      // Allow clearing to zero without forcing a material line
+      const tr = getOrCreateConcrete80Row();
+      if (tr) {
+        if (qty > 0) {
+          matSetQtyAndUse(tr, qty);
+        } else {
+          // qty 0: clear qty and uncheck Use
+          const qtyInp = tr.querySelector('.mat_qty');
+          if (qtyInp){ qtyInp.value = ''; qtyInp.dispatchEvent(new Event('input',{bubbles:true})); }
+          const useCb = tr.querySelector('.mat_use'); if(useCb && useCb.checked){ useCb.click(); }
+        }
+      }
+    }
+    // Build manual input UI once (placed next to the computed "Bags Equivalent" area)
+    (function makeManualBagsUI(){
+      const _br = byId('tm_bags_rows'); if (_br) { _br.style.display = 'none'; }
+      const rowsWrap = byId('tm_bags_rows');
+      const container = rowsWrap && rowsWrap.parentElement;
+      if (container && !byId('tm_bags_80_qty')) {
+        const row = document.createElement('div');
+        row.className = 'row';
+        row.style.gap='8px';
+        row.style.marginTop = '6px';
+        row.innerHTML = '<div class="pill">80 lb bags</div><div>=</div>' +
+                        '<input id="tm_bags_80_qty" type="number" step="1" min="0" placeholder="0" style="width:100px">' +
+                        '<span class="muted small">(syncs “Concrete 80lb Bag” in Materials)</span>';
+        container.appendChild(row);
+        byId('tm_bags_80_qty').addEventListener('input', function(){ syncBagsToMaterials(); });
+      }
+    })();
+
   });
 })();
 </script>
@@ -647,6 +1032,9 @@ window.SECTION = {
     {id:'jorge', name:'Jorge (Mason)', role:'mason', rate:30, use:true, hrs:0},
     {id:'labor', name:'Laborer', role:'laborer', rate:25, use:true, hrs:0},
   ];
+  // === Auto-rate mapping (role -> $/hr) ===
+  const ROLE_RATES = { owner:50, company:50, foreman:43.75, mason:30, laborer:25 };
+
   let crewWideOn = true, crewDaysMode = true;
   const HOURS_PER_DAY = 8;
 
@@ -680,7 +1068,23 @@ window.SECTION = {
       const id = tr.dataset.id; const idx = crew.findIndex(c=>c.id===id);
       tr.querySelector('.crew_use').addEventListener('change', e=>{ crew[idx].use=e.target.checked; updateAll(); });
       tr.querySelector('.crew_name').addEventListener('input', e=>{ crew[idx].name=e.target.value; });
-      tr.querySelector('.crew_role').addEventListener('change', e=>{ crew[idx].role=e.target.value; updateAll(); });
+      
+      tr.querySelector('.crew_role').addEventListener('change', e=>{
+        const newRole = e.target.value;
+        crew[idx].role = newRole;
+        // Auto-sync rate to role, if mapping exists
+        if (Object.prototype.hasOwnProperty.call(ROLE_RATES, newRole)) {
+          crew[idx].rate = ROLE_RATES[newRole];
+          const rateInp = tr.querySelector('.crew_rate');
+          if (rateInp) {
+            rateInp.value = ROLE_RATES[newRole];
+            // Fire input event so any downstream listeners recalc immediately
+            rateInp.dispatchEvent(new Event('input', { bubbles: true }));
+          }
+        }
+        updateAll();
+      });
+
       tr.querySelector('.crew_rate').addEventListener('input', e=>{ crew[idx].rate=num(e.target.value); updateAll(); });
       const hrs=tr.querySelector('.crew_hrs'); if(hrs){ hrs.addEventListener('input', e=>{ crew[idx].hrs=num(e.target.value); updateAll(); }); }
       tr.querySelector('.crew_del').addEventListener('click', ()=>{ crew.splice(idx,1); renderCrew(); });
@@ -1529,6 +1933,7 @@ document.addEventListener('DOMContentLoaded', function(){
   if(group==='masonry' || group==='pavers' || group==='bluestone' || group==='veneer' || group==='stucco') return /materials/i.test(h);
   if(group==='disposal') return /(waste|disposal)/i.test(h);
   if(group==='crew') return /(crew|time|overhead|profit)/i.test(h);
+  if(group==='blockwall') return /(block\s*wall)/i.test(h);
   if(group==='fuel') return /(fuel|vehicle|gas)/i.test(h);
   return true;
 }
@@ -1545,6 +1950,7 @@ document.addEventListener('DOMContentLoaded', function(){
     else if(group==='bluestone') window.__matCats=['bluestone'];
     else if(group==='veneer') window.__matCats=['stone veneer'];
     else if(group==='stucco') window.__matCats=['stucco'];
+    else if(group==='blockwall') window.__matCats=['masonry','concrete'];
     else window.__matCats=null;
     if(typeof renderMaterials==='function') renderMaterials();
   } catch(e){}
@@ -1617,6 +2023,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
         <button role="tab" id="tab-concrete" aria-selected="false" aria-controls="main_content_wrap" tabindex="-1" data-group="concrete">Concrete</button>
         <button role="tab" id="tab-masonry" aria-selected="false" aria-controls="main_content_wrap" tabindex="-1" data-group="masonry">Masonry</button>
+<button role="tab" id="tab-blockwall" aria-selected="false" aria-controls="main_content_wrap" tabindex="-1" data-group="blockwall">Block Wall</button>
   <button role="tab" id="tab-veneer" aria-selected="false" aria-controls="main_content_wrap" tabindex="-1" data-group="veneer">Stone Veneer</button>
         <button role="tab" id="tab-pavers" aria-selected="false" aria-controls="main_content_wrap" tabindex="-1" data-group="pavers">Pavers</button>
 <button role="tab" id="tab-stucco" aria-selected="false" aria-controls="main_content_wrap" tabindex="-1" data-group="stucco">Stucco</button>
@@ -1643,6 +2050,7 @@ document.addEventListener('DOMContentLoaded', function(){
   if(group==='masonry' || group==='pavers' || group==='bluestone' || group==='veneer' || group==='stucco') return /materials/i.test(h);
   if(group==='disposal') return /(waste|disposal)/i.test(h);
   if(group==='crew') return /(crew|time|overhead|profit)/i.test(h);
+  if(group==='blockwall') return /(block\s*wall)/i.test(h);
   if(group==='fuel') return /(fuel|vehicle|gas)/i.test(h);
   return true;
 }
@@ -1659,6 +2067,7 @@ document.addEventListener('DOMContentLoaded', function(){
     else if(group==='bluestone') window.__matCats=['bluestone'];
     else if(group==='veneer') window.__matCats=['stone veneer'];
     else if(group==='stucco') window.__matCats=['stucco'];
+    else if(group==='blockwall') window.__matCats=['masonry','concrete'];
     else window.__matCats=null;
     if(typeof renderMaterials==='function') renderMaterials();
   } catch(e){}
@@ -3810,6 +4219,45 @@ document.addEventListener('DOMContentLoaded', function(){
   } else {
     updateMaskQty();
   }
+})();
+</script>
+
+
+<script>
+// Seed common Block Wall materials if missing (id check-safe)
+(function(){
+  try{
+    if(!Array.isArray(materials)) return;
+    const addIfMissing = (row)=>{
+      if(!materials.some(m=>m.id===row.id)) materials.push(row);
+    };
+    // Core CMU sizes
+    addIfMissing({id:'bw_cmu6_std', use:false, item:'CMU 6x8x16 (Std)', supplier:'', units:'each', price:0, qty:0, step:1, cats:['masonry']});
+    addIfMissing({id:'bw_cmu8_std', use:false, item:'CMU 8x8x16 (Std)', supplier:'', units:'each', price:0, qty:0, step:1, cats:['masonry']});
+    addIfMissing({id:'bw_cmu10_std',use:false, item:'CMU 10x8x16 (Std)', supplier:'', units:'each', price:0, qty:0, step:1, cats:['masonry']});
+    addIfMissing({id:'bw_cmu12_std',use:false, item:'CMU 12x8x16 (Std)', supplier:'', units:'each', price:0, qty:0, step:1, cats:['masonry']});
+    // Specials
+    addIfMissing({id:'bw_cmu8_open', use:false, item:'CMU 8x8x16 Open-End', supplier:'', units:'each', price:0, qty:0, step:1, cats:['masonry']});
+    addIfMissing({id:'bw_cmu8_bond', use:false, item:'CMU 8x8x16 Bond Beam', supplier:'', units:'each', price:0, qty:0, step:1, cats:['masonry']});
+    addIfMissing({id:'bw_cmu4_half', use:false, item:'CMU 4x8x16 Half-High', supplier:'', units:'each', price:0, qty:0, step:1, cats:['masonry']});
+    // Brick cap option
+    addIfMissing({id:'bw_brick_mod', use:false, item:'Brick (Modular) — cap/soldier', supplier:'', units:'each', price:0, qty:0, step:1, cats:['masonry']});
+    // Mortar & grout
+    addIfMissing({id:'bw_specmix_s_80', use:false, item:'SPEC MIX Type S — 80 lb', supplier:'', units:'bag', price:0, qty:0, cats:['masonry','stucco']});
+    addIfMissing({id:'bw_grout_fine_80', use:false, item:'Core-Fill Grout Fine — 80 lb', supplier:'QUIKRETE', units:'bag', price:0, qty:0, cats:['masonry']});
+    addIfMissing({id:'bw_grout_coarse_80', use:false, item:'Core-Fill Grout Coarse — 80 lb', supplier:'QUIKRETE', units:'bag', price:0, qty:0, cats:['masonry']});
+    // Reinforcement & ties
+    addIfMissing({id:'bw_durawall_9x10', use:false, item:'Dur-O-Wall 9" — 10\' (joint reinforcement)', supplier:'', units:'each', price:0, qty:0, cats:['masonry']});
+    addIfMissing({id:'bw_wall_ties', use:false, item:'Wall ties (box)', supplier:'', units:'box', price:0, qty:0, cats:['masonry']});
+    addIfMissing({id:'bw_rebar4_20', use:false, item:'#4 rebar — 20\'', supplier:'', units:'each', price:0, qty:0, cats:['masonry','concrete']});
+    addIfMissing({id:'bw_rebar5_20', use:false, item:'#5 rebar — 20\'', supplier:'', units:'each', price:0, qty:0, cats:['masonry','concrete']});
+    // Concrete for footing
+    addIfMissing({id:'bw_conc_yd', use:false, item:'Concrete (footing) — yd³', supplier:'', units:'yd³', price:0, qty:0, step:0.1, cats:['concrete']});
+    // Cleanouts & misc
+    addIfMissing({id:'bw_cleanout', use:false, item:'Cleanout ties/plugs (allowance)', supplier:'', units:'each', price:0, qty:0, cats:['masonry']});
+    // Re-render to show newly seeded rows if Materials card is visible
+    if(typeof renderMaterials==='function') renderMaterials();
+  }catch(e){}
 })();
 </script>
 
