@@ -337,6 +337,15 @@ const BLOCKS_PER_BAG_BY_THICKNESS = { "4": 20, "6": 15, "8": 15, "10": 12, "12":
     "12":  { full: 1.73, "16oc": 1.01, "24oc": 0.76, "32oc": 0.64 }
   };
 
+  // SPEC MIX Core Fill 80‑lb bag yields (worst‑case / lower end of manufacturer range)
+  // Source (user-specified): 6"=3.4 blocks/6.8 cores; 8"=2.5/5.0; 10"=2.1/4.2; 12"=1.7/3.4
+  const SPEC_MIX_CORE_FILL_PER_BAG = {
+    "6":  { blocks: 3.4, cores: 6.8 },
+    "8":  { blocks: 2.5, cores: 5.0 },
+    "10": { blocks: 2.1, cores: 4.2 },
+    "12": { blocks: 1.7, cores: 3.4 }
+  };
+
   function feetInToInches(ft, inch){ 
     var f = parseFloat(ft||0), i = parseFloat(inch||0);
     if (!isFinite(f)) f = 0; if (!isFinite(i)) i = 0;
@@ -438,6 +447,22 @@ const BLOCKS_PER_BAG_BY_THICKNESS = { "4": 20, "6": 15, "8": 15, "10": 12, "12":
     var yd3_100 = (GROUT_YD3_100[thickness] && GROUT_YD3_100[thickness][pattern]) ? GROUT_YD3_100[thickness][pattern] : GROUT_YD3_100['8']['full'];
     var groutYd3 = area_sf * (yd3_100 / 100) * (1 + wastePct/100);
     var groutFt3 = groutYd3 * 27;
+    // === SPEC MIX Core Fill 80‑lb bag calc ===
+    var sm = (typeof SPEC_MIX_CORE_FILL_PER_BAG!=='undefined') ? SPEC_MIX_CORE_FILL_PER_BAG[thickness] : null;
+    var grout_bags = 0;
+    if (sm){
+      if (pattern==='full'){
+        grout_bags = (blocks_waste>0 ? (blocks_waste / sm.blocks) : 0);
+      } else {
+        var cores_to_fill = Math.max(0, vert_bars) * Math.max(0, courses);
+        grout_bags = (cores_to_fill>0 ? (cores_to_fill / sm.cores) : 0);
+      }
+      grout_bags = grout_bags * (1 + wastePct/100);
+      if (document.getElementById('bw_round_up_bags') && document.getElementById('bw_round_up_bags').checked){
+        grout_bags = Math.ceil(grout_bags);
+      }
+    }
+
 
     // Mortar (keep simple rule-of-thumb tied to units)
     // Mortar bags based on Spec Mix Type‑S blocks-per-bag by thickness
@@ -465,6 +490,29 @@ if (rUpEl && rUpEl.checked){ mortar_bags = Math.ceil(mortar_bags); }
     if (open_end_units>0) scope.push('Open‑End units allowance: ≈ ' + open_end_units + ' (at reinforced cells).');
     if (bond_beam_units>0) scope.push('Bond‑beam units allowance: ≈ ' + bond_beam_units + ' (spread across ' + bondCourses + ' course' + (bondCourses>1?'s':'') + ').');
 
+    
+    // === Sync SPEC MIX Core Fill bags to Materials ===
+    try {
+      var bagsToMat = sm ? Math.max(0, Math.ceil(grout_bags||0)) : 0;
+      if (!document.querySelector('#matTbody tr') && typeof renderMaterials==='function'){ renderMaterials(); }
+      var tbodyCF = document.getElementById('matTbody');
+      if (tbodyCF) {
+        var rowsCF = Array.from(tbodyCF.querySelectorAll('tr'));
+        var groutRow = rowsCF.find(function(tr){ return /spec\s*mix\s*core\s*fill.*80/i.test((tr.textContent||'')); });
+        if (groutRow) {
+          var useCb = groutRow.querySelector('.mat_use');
+          var qtyInp = groutRow.querySelector('.mat_qty');
+          if (bagsToMat > 0) {
+            if (useCb && !useCb.checked){ useCb.checked = true; useCb.dispatchEvent(new Event('change', {bubbles:true, cancelable:true})); }
+            if (qtyInp){ qtyInp.value = bagsToMat; qtyInp.dispatchEvent(new Event('input', {bubbles:true})); qtyInp.dispatchEvent(new Event('change', {bubbles:true})); }
+          } else {
+            if (qtyInp){ qtyInp.value = ''; qtyInp.dispatchEvent(new Event('input', {bubbles:true})); }
+            if (useCb && useCb.checked){ useCb.checked = false; useCb.dispatchEvent(new Event('change', {bubbles:true, cancelable:true})); }
+          }
+        }
+      }
+    } catch(e) { /* non-fatal */ }
+
     document.getElementById('bw_scope').value = scope.join('\n');
 
     // Results panel
@@ -474,6 +522,8 @@ if (rUpEl && rUpEl.checked){ mortar_bags = Math.ceil(mortar_bags); }
     html += '<div><strong>Blocks (calc):</strong> ' + fmt(blocks,2) + ' → <strong>Order:</strong> ' + blocks_waste + '</div>';
     html += '<div><strong>Vertical #4 bars:</strong> ' + vert_bars + ' @ ' + fmt(bar_len_ft,2) + ' ft (' + fmt(rebar_lf,1) + ' LF)</div>';
     html += '<div><strong>Grout (table):</strong> ' + fmt(groutFt3,2) + ' ft³ (' + fmt(groutYd3,3) + ' yd³) — ' + thickness + '\" / ' + (pattern==='full' ? 'Full' : (spacingIn + '\" o.c.')) + '</div>';
+    html += '<div><strong>Grout Bags (SPEC MIX Core Fill 80 lb):</strong> ' + (sm ? ( (document.getElementById('bw_round_up_bags') && document.getElementById('bw_round_up_bags').checked) ? (grout_bags + ' bags') : (fmt(grout_bags,2) + ' bags') ) : '—') + '</div>';
+
     html += '<div><strong>Mortar:</strong> ~' + fmt(mortar_bags,2) + ' bags</div>';
     if (open_end_units>0) html += '<div><strong>Open‑End units:</strong> ' + open_end_units + '</div>';
     if (bond_beam_units>0) html += '<div><strong>Bond‑beam units:</strong> ' + bond_beam_units + ' (courses: ' + bondCourses + ')</div>';
