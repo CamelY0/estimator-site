@@ -243,6 +243,164 @@ body:not([data-active-group]) .wrap .card[data-card-stucco]{ display:block !impo
 }
 </style>
 <style>#stu_foam_sel{position:relative;z-index:10}</style>
+
+<style id="per-card-bubble-v2">
+/* Make each major group look like its own bubble */
+.card{
+  border-radius:16px !important;
+  box-shadow: 0 10px 24px rgba(0,0,0,.28);
+  margin:16px 0 !important;
+}
+.card > .row:first-child{
+  border-bottom:1px dashed var(--line);
+  padding-bottom:8px;
+  margin-bottom:10px;
+}
+/* Make sticky show only GRAND (already simplified in HTML), keep it centered on small screens */
+.sticky .pill{ display:inline-flex; }
+.sticky .pill:not(#stickyGrandPill):not(#stickyStatusPill){ display:none !important; }
+.sticky .group{ display:none !important; }
+</style>
+
+
+<style id="rings-safe-css">
+/* Colored rings for cards that are not the nested Block Wall container */
+.card[data-cat]{ position: relative; border-radius:16px; box-shadow: 0 6px 18px rgba(0,0,0,.2); }
+.card[data-cat]::before{
+  content:""; position:absolute; inset:0; border-radius:16px; pointer-events:none;
+  box-shadow: 0 0 0 2px var(--ring, rgba(255,255,255,0.06)) inset;
+}
+/* Do NOT draw a full ring for the Block Wall (masonry) card because the DOM nests other cards inside it. */
+.card#blockWallCard{ border-left: 3px solid var(--ring, #3b82f6); }
+.card#blockWallCard::before{ display:none !important; }
+/* Header accent for Block Wall */
+#blockWallCard > .row:first-child{ background: rgba(59,130,246,0.08); border-bottom:1px dashed var(--line); }
+.card[data-cat="masonry"]{ --ring:#3b82f6; }     /* blue */
+.card[data-cat="stucco"]{ --ring:#60a5fa; }      /* light blue */
+.card[data-cat="concrete"]{ --ring:#9ca3af; }    /* gray */
+.card[data-cat="materials"]{ --ring:#10b981; }   /* green */
+.card[data-cat="crew"]{ --ring:#f59e0b; }        /* amber */
+.card[data-cat="tax"]{ --ring:#a78bfa; }         /* violet */
+.card[data-cat="fuel"]{ --ring:#f97316; }        /* orange */
+.card[data-cat="waste"]{ --ring:#ef4444; }       /* red */
+.card[data-cat="silica"]{ --ring:#14b8a6; }      /* teal */
+.card[data-cat="tools"]{ --ring:#8b5cf6; }       /* purple */
+.card[data-cat="totals"]{ --ring:#22d3ee; }      /* cyan */
+</style>
+
+
+<style id="bw-shell-css">
+#bwShell{
+  position: relative;
+  border: 2px solid #3b82f6; /* blue */
+  border-radius: 14px;
+  padding: 10px;
+  margin-top: 8px;
+  background: rgba(59,130,246,0.04); /* faint tint so the boundary reads clearly */
+}
+#blockWallCard > .row:first-child{
+  background: transparent; /* remove previous tint */
+  border-bottom: none;      /* the shell has its own edge */
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+/* Keep other card rings intact (from rings-safe-css) */
+</style>
+
+
+<style id="materials-shell-css">
+#materialsShell{
+  position: relative;
+  border: 2px solid #10b981; /* green */
+  border-radius: 14px;
+  padding: 10px;
+  margin-top: 8px;
+  background: rgba(16,185,129,0.05);
+}
+/* Clean up Materials header edge (shell handles boundary) */
+#materialsCard > .row:first-child{
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+</style>
+
+
+<style id="materials-ring-off">
+/* Turn off the older card ring for Materials so only the shell border remains */
+#materialsCard::before { display:none !important; }
+</style>
+
+
+<style id="materials-border-off">
+/* Remove the default 1px gray card border for Materials so only the green shell shows */
+#materialsCard{ border: none !important; }
+</style>
+
+
+<style id="materials-flush-fix">
+/* Make Materials green border flush with the card edges (like Crew) */
+#materialsCard{ padding:0 !important; }
+#materialsShell{ margin:0 !important; border-radius:16px; padding:14px !important; }
+</style>
+
+
+<style id="flush-borders-fix">
+/* Delete the big blue border that wraps everything (card-level border-left) */
+#blockWallCard{ border: none !important; padding: 0 !important; }
+#blockWallCard::before{ display:none !important; } /* double safety */
+
+/* Align smaller shells flush with the card edge */
+#bwShell{ margin: 0 !important; border-radius:16px; padding:14px !important; }
+
+/* Materials was already flush, but keep symmetry */
+#materialsCard{ padding: 0 !important; border: none !important; }
+#materialsCard::before{ display:none !important; }
+#materialsShell{ margin: 0 !important; border-radius:16px; padding:14px !important; }
+</style>
+
+
+<style id="bubble-tints">
+/* Soft fill tints to match each bubble's ring color */
+/* Use card backgrounds for all except Block Wall & Materials (they use inner shells) */
+#bwShell{ background: rgba(59,130,246,0.06) !important; }            /* masonry blue */
+#materialsShell{ background: rgba(16,185,129,0.06) !important; }      /* materials green */
+
+.card[data-cat="crew"]{ background: rgba(245,158,11,0.06) !important; }       /* amber */
+.card[data-cat="tax"]{ background: rgba(167,139,250,0.06) !important; }       /* violet */
+.card[data-cat="concrete"]{ background: rgba(156,163,175,0.06) !important; }  /* gray */
+.card[data-cat="fuel"]{ background: rgba(249,115,22,0.06) !important; }       /* orange */
+.card[data-cat="waste"]{ background: rgba(239,68,68,0.06) !important; }       /* red */
+.card[data-cat="silica"]{ background: rgba(20,184,166,0.06) !important; }     /* teal */
+.card[data-cat="tools"]{ background: rgba(139,92,246,0.06) !important; }      /* purple */
+.card[data-cat="stucco"]{ background: rgba(96,165,250,0.06) !important; }     /* light blue */
+.card[data-cat="totals"]{ background: rgba(34,211,238,0.06) !important; }     /* cyan */
+</style>
+
+
+<style id="concrete-shell-css">
+/* Concrete bubble: dedicated shell so the entire Concrete section has its own ring and tint */
+#concreteCard{ padding:0 !important; border:none !important; }
+#concreteCard::before{ display:none !important; } /* avoid double ring */
+#concreteShell{
+  position: relative;
+  border: 2px solid #9ca3af;   /* gray ring */
+  border-radius: 16px;
+  padding: 14px;
+  margin: 0;                    /* flush with card edges */
+  background: rgba(156,163,175,0.06); /* soft gray tint */
+}
+/* Remove header divider in Concrete; shell provides boundary */
+#concreteCard > .row:first-child{
+  border-bottom: none !important;
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+</style>
+
+
+<style id="sticky-split-align">.sticky-inner{ justify-content: space-between !important; }</style>
+
 </head>
 <body>
 <div style="position:sticky; top:0; z-index:1000; background:inherit; padding:6px 12px; font:600 12px system-ui; color:#0a6c2f;">✅ JS loaded and running</div>
@@ -251,7 +409,9 @@ body:not([data-active-group]) .wrap .card[data-card-stucco]{ display:block !impo
 <div class="wrap">
 <h2 style="margin:8px 0">Turcotte Masonry Estimator</h2>
 <!-- BLOCK WALL HELPER CARD -->
-<div class="card" id="blockWallCard" data-card="blockwall">
+<div class="card" id="blockWallCard" data-card="blockwall" data-cat="masonry">
+<div id="bwShell" class="bw-shell">
+
   <div class="row">
     <h3 style="margin:0">Block Wall Helper</h3>
     <span class="spacer"></span>
@@ -736,9 +896,11 @@ if (rUpEl && rUpEl.checked){ mortar_bags = Math.ceil(mortar_bags); }
 </script>
 
 
-<div class="status bad" id="jsStatus">❌ JS not loaded</div>
+<div id="jsStatus" style="display:none"></div>
 <!-- TAX -->
-<div class="card">
+
+</div><!-- /bw-shell -->
+<div class="card" id="taxCard" data-cat="tax">
 <div class="row">
 <h3 style="margin:0">Tax / Reimbursement (CT default 6.35%)</h3>
 <span class="spacer"></span>
@@ -763,7 +925,7 @@ if (rUpEl && rUpEl.checked){ mortar_bags = Math.ceil(mortar_bags); }
 <div class="row small muted">CT rate is 6.35% with no local add-ons. Motor vehicle fuel is sales-tax-exempt. Use overrides as your policy requires.</div>
 </div>
 <!-- CREW -->
-<div class="card">
+<div class="card" id="crewCard" data-cat="crew">
 <div class="row">
 <h3 style="margin:0">Crew &amp; Time</h3>
 <span class="spacer"></span>
@@ -782,7 +944,9 @@ if (rUpEl && rUpEl.checked){ mortar_bags = Math.ceil(mortar_bags); }
 <div class="muted small">Set role = <b>Company</b> to flow those hours into <b>Profit</b> (not Crew).</div>
 </div>
 <!-- MATERIALS -->
-<div class="card">
+<div class="card" id="materialsCard" data-cat="materials">
+<div id="materialsShell" class="materials-shell">
+
 <div class="row">
 <h3 style="margin:0">Materials</h3>
 <span class="spacer"></span>
@@ -800,7 +964,9 @@ if (rUpEl && rUpEl.checked){ mortar_bags = Math.ceil(mortar_bags); }
 
 <!-- === Turcotte: Stucco Helper (Area-based) — v15 SAFE === -->
 <!-- === Turcotte: Stucco Helper (Area-based) — v18 CLEAN === -->
-<div class="card" data-card-stucco id="stuccoCard">
+
+</div><!-- /materials-shell -->
+<div class="card" data-card-stucco id="stuccoCard" data-cat="stucco">
   <div class="row">
     <h3 style="margin:0">Stucco Helper (Area‑based)</h3>
     <span class="spacer"></span>
@@ -1052,20 +1218,30 @@ if (rUpEl && rUpEl.checked){ mortar_bags = Math.ceil(mortar_bags); }
     const roundUp  = !!$('#stu_round')?.checked;
     const isEIFS   = $('#stu_sys_eifs')?.checked;
     const areaEff = area * (1 + (wastePct/100));
-    const res = { lines: [], html: [], debug: [] };
+    const res = { lines: [], html: [], debug: [] }
+
+
+
+;
 
     if(!area || area <= 0){
       $('#stu_results').innerHTML = '<div class="muted">Enter an area in square feet to begin.</div>';
       $('#stu_scope').value = '';
+      
+      try{
+        // Clear EIFS/Traditional stucco materials if area is cleared
+        matClearKeys(['basecoat','mesh']);
+        matClearKeys(FINISH_KEYS_EIFS);
+        matClearKeys(FINISH_KEYS_TRAD);
+        matClearKeys(FOAM_KEYS);
+      }catch(e){}
       return;
-    }
-
-    if(isEIFS){
+    }if(isEIFS){
       // Basecoat
       let base_bags = areaEff / YIELD.eifs_base;
       base_bags = roundRule(base_bags, roundUp);
       const base_tr = matGetRowByKey('basecoat');
-      if(base_tr && base_bags>0) matSetQtyAndUse(base_tr, base_bags);
+      if(base_tr && base_bags>0) matSetQtyAndUse(base_tr, areaEff);
       res.html.push('<div><strong>Basecoat (Decoplast 50 lb):</strong> '+base_bags+' bags</div>');
       res.lines.push('EIFS basecoat (Decoplast Premium, 50 lb): ≈ '+base_bags+' bags ('+YIELD.eifs_base+' sf/bag).');
       res.debug.push('basecoat_bags='+base_bags);
@@ -1074,7 +1250,7 @@ if (rUpEl && rUpEl.checked){ mortar_bags = Math.ceil(mortar_bags); }
       let mesh_rolls = areaEff / YIELD.eifs_mesh;
       mesh_rolls = roundRule(mesh_rolls, roundUp);
       const mesh_tr = matFindRow(MATCH.mesh);
-      if(mesh_tr && mesh_rolls>0) matSetQtyAndUse(mesh_tr, mesh_rolls);
+      if(mesh_tr && mesh_rolls>0) matSetQtyAndUse(mesh_tr, areaEff);
       res.html.push('<div><strong>EIFS Mesh (38&quot;×150&quot;):</strong> '+mesh_rolls+' rolls</div>');
       res.lines.push('Embed Standard EIFS fiberglass mesh: ≈ '+mesh_rolls+' rolls (38&quot;×150&quot;, '+YIELD.eifs_mesh+' sf/roll).');
       res.debug.push('mesh_rolls='+mesh_rolls);
@@ -1088,7 +1264,7 @@ if (rUpEl && rUpEl.checked){ mortar_bags = Math.ceil(mortar_bags); }
       let fin_units = areaEff / fin_sf; fin_units = roundRule(fin_units, roundUp);
       matClearGroupExcept(FINISH_KEYS_EIFS, finChoice.id);
       const fin_tr = matGetRowByKey(finChoice.id);
-      if(fin_tr && fin_units>0) matSetQtyAndUse(fin_tr, fin_units);
+      if(fin_tr && fin_units>0) matSetQtyAndUse(fin_tr, areaEff);
       res.html.push('<div><strong>'+esc(finChoice.label)+':</strong> '+fin_units+' '+(finChoice.unit==='bag'?'bags':'buckets')+'</div>');
       res.lines.push('Finish ('+finChoice.label+'): ≈ '+fin_units+' '+(finChoice.unit==='bag'?'bags':'buckets')+' ('+fin_sf+' sf per unit).');
       res.debug.push('finish_units='+fin_units+', fin_sf='+fin_sf);
@@ -1108,7 +1284,7 @@ if (rUpEl && rUpEl.checked){ mortar_bags = Math.ceil(mortar_bags); }
         if(foam_tr){
           const text = (foam_tr.textContent||'').toLowerCase();
           const wantsBundles = /bundle/.test(text);
-          matSetQtyAndUse(foam_tr, wantsBundles ? bundles : boards);
+          matSetQtyAndUse(foam_tr, areaEff);
         }
         res.debug.push('foam_bundles='+bundles+', perBundle='+perBundle);
       } else {
@@ -1166,6 +1342,33 @@ if (rUpEl && rUpEl.checked){ mortar_bags = Math.ceil(mortar_bags); }
     $('#stu_scope').value = [header].concat(res.lines).join('\n');
     const pre = $('#stu_diag_pre'); if(pre) pre.textContent = 'areaEff='+areaEff+'\n'+res.debug.join('\n');
   }
+/* __STUCCO_BINDINGS__ */
+try { window.stuccoCalc = stuccoCalc; } catch(e){}
+
+document.addEventListener('DOMContentLoaded', function(){
+  function bind(sel, ev){
+    var el = document.querySelector(sel);
+    if(!el) return;
+    el.addEventListener(ev, function(){ try{ stuccoCalc(); }catch(e){} }, true);
+  }
+  // Core drivers
+  bind('#stu_area','input');
+  bind('#stu_waste','input');
+  bind('#stu_round','change');
+  bind('#stu_sys_eifs','change');
+  bind('#stu_sys_trad','change');
+  // Finishes + foam
+  bind('#stu_finish_sel','change');
+  bind('#stu_finish_yield','input');
+  bind('#stu_finish_use_mat','change');
+  bind('#stu_foam_sel','change');
+  bind('#stu_use_foam','change');
+
+  // Kick once on load
+  try{ stuccoCalc(); }catch(e){}
+});
+/* __/STUCCO_BINDINGS__ */
+
 
   function bind(){
     ['stu_area','stu_waste','stu_round','stu_finish_yield','stu_trad_net_sfb','stu_trad_bead_lf','stu_trad_lath_lf']
@@ -1226,7 +1429,9 @@ if (rUpEl && rUpEl.checked){ mortar_bags = Math.ceil(mortar_bags); }
 
 </div>
 <!-- CONCRETE -->
-<div class="card">
+<div class="card" id="concreteCard" data-cat="concrete">
+<div id="concreteShell" class="concrete-shell">
+
 <div class="row">
 <h3 style="margin:0">Concrete</h3>
 <!-- Turcotte: Concrete Yards Helper v1 (2025-09-02) -->
@@ -1235,7 +1440,7 @@ if (rUpEl && rUpEl.checked){ mortar_bags = Math.ceil(mortar_bags); }
     <b>Concrete Yards Calculator</b>
     <label>L (ft) <input type="number" id="tm_len_ft" step="0.1" placeholder="e.g., 11"></label>
     <label>W (ft) <input type="number" id="tm_wid_ft" step="0.1" placeholder="e.g., 11"></label>
-    <label>T (in) <input type="number" id="tm_thk_in" step="0.25" placeholder="e.g., 6"></label>
+    <label>H (in) <input type="number" id="tm_thk_in" step="0.25" placeholder="e.g., 6"></label>
     <label class="pill"><input type="checkbox" id="tm_waste_on" checked> +5% waste</label>
     <label>Round to <select id="tm_round"><option value="0.25">¼ yd</option><option value="0.5">½ yd</option><option value="1">1 yd</option><option value="0">exact</option></select></label>
     
@@ -1414,7 +1619,37 @@ if (manualInp && manualQty > 0){
         const yOut = byId('tm_yards_out'); if (yOut) yOut.textContent = '—';
         const br = byId('tm_bags_rows'); if (br) br.innerHTML = '';
         if (byId('tm_supplier_out')) byId('tm_supplier_out').textContent = '—';
-        return;
+        const man = byId('tm_bags_80_qty');
+if (man){
+  man.value = '';
+  man.dispatchEvent(new Event('input', {bubbles:true}));
+}
+// Also clear existing Materials row if present (without creating a new one)
+try{
+  const tr = (typeof findConcreteBagRowExact==='function') ? findConcreteBagRowExact() : null;
+  if (tr){
+    const q = tr.querySelector('.mat_qty'); if (q){ q.value=''; q.dispatchEvent(new Event('input',{bubbles:true})); }
+    const cb = tr.querySelector('.mat_use'); if (cb && cb.checked){ cb.click(); cb.dispatchEvent(new Event('change',{bubbles:true})); }
+  }
+}catch(e){}
+try{
+  // Clear manual 80‑lb bags (and thus Materials) if present
+  const man = byId('tm_bags_80_qty');
+  if (man){
+    man.value = '';
+    man.dispatchEvent(new Event('input', {bubbles:true}));
+  }
+  // Clear supplier yard inputs and trigger their own recalcs
+  const ct = byId('ct_yards');
+  if (ct){ ct.value = ''; ct.dispatchEvent(new Event('input', {bubbles:true})); }
+  const mv = byId('mv_yards');
+  if (mv){ mv.value = ''; mv.dispatchEvent(new Event('input', {bubbles:true})); }
+  // Attempt a full totals refresh
+  if (typeof window.updateAll === 'function') { window.updateAll(); }
+  else if (typeof window.totals === 'function') { window.totals(); }
+}catch(e){}
+
+return;
       }
 
       // Compute raw and rounded yards
@@ -1477,7 +1712,7 @@ if (manualInp && manualQty > 0){
       const inp = byId('tm_bags_80_qty'); if (!inp) return;
       const qty = Math.max(0, Math.floor(num(inp.value||0)));
       // Allow clearing to zero without forcing a material line
-      const tr = getOrCreateConcrete80Row();
+      const tr = (qty>0) ? getOrCreateConcrete80Row() : (typeof findConcreteBagRowExact==='function' ? findConcreteBagRowExact() : null);
       if (tr) {
         if (qty > 0) {
           matSetQtyAndUse(tr, qty);
@@ -1517,7 +1752,7 @@ if (manualInp && manualQty > 0){
 <span class="pill">Mohican Valley (10‑yd trucks)</span>
 <span class="spacer"></span>
 </div>
-<div class="subcard">
+<div class="subcard" style="border:1px dashed #ccc; padding:10px; margin:10px 0;">
 <div class="row" style="margin-top:6px"><b>Concrete Connections — small loads</b></div>
 <div class="row">
 <label>Yards <input id="ct_yards" placeholder="0" step="0.25" type="number"/></label>
@@ -1531,6 +1766,7 @@ if (manualInp && manualQty > 0){
 <span class="pill">CC Subtotal: <span class="mono" id="ct_sub">$0.00</span></span>
 </div>
 </div>
+<div class="subcard" style="border:1px dashed #ccc; padding:10px; margin:10px 0;">
 <div class="subcard">
 <div class="row" style="margin-top:12px"><b>Mohican Valley — big trucks</b> <span class="muted">(enter quoted price/yd; 10‑yd trucks)</span></div>
 <div class="row">
@@ -1581,7 +1817,9 @@ if (manualInp && manualQty > 0){
 </div>
 </div>
 <!-- FUEL -->
-<div class="card">
+
+</div><!-- /concrete-shell -->
+<div class="card" id="fuelCard" data-cat="fuel">
 <div class="row">
 <h3 style="margin:0">Vehicle Fuel</h3>
 <span class="pill">PPG = AAA CT peak Regular $4.984 (6/14/22)</span>
@@ -1595,7 +1833,7 @@ if (manualInp && manualQty > 0){
 </div>
 </div>
 <!-- WASTE -->
-<div class="card" data-card-waste>
+<div class="card" data-card-waste data-cat="waste">
 <div class="row"><h3 style="margin:0">Waste / Disposal</h3><span class="spacer"></span><button class="ghost" id="wasteAdd">+ Add Disposal item</button><span class="muted">Modern Materials — Clean asphalt disposal</span></div>
 <table>
 <thead><tr><th>Use</th><th>Material</th><th>Facility</th><th>Units</th><th>Rate</th><th>Qty</th><th>Ext.</th><th></th></tr></thead>
@@ -1604,7 +1842,7 @@ if (manualInp && manualQty > 0){
 </table>
 </div>
 <!-- SILICA CONTROLS -->
-<div class="card" id="silicaCard">
+<div class="card" id="silicaCard" data-cat="silica">
   <div class="row">
     <h3 style="margin:0">Silica Controls (OSHA 29 CFR 1926.1153 Table 1)</h3>
   </div>
@@ -1622,7 +1860,7 @@ if (manualInp && manualQty > 0){
   </div>
 </div>
 <!-- TOOLS -->
-<div class="card">
+<div class="card" id="toolsCard" data-cat="tools">
 <div class="row"><h3 style="margin:0">Tools Depreciation Reserve</h3><span class="spacer"></span><button class="ghost" id="addToolBtn">+ Add Tool</button></div>
 <table>
 <thead><tr><th>Use</th><th>Tool</th><th>Replace Cost ($)</th><th>Lifetime (hrs)</th><th>Reserve frac (0–1)</th><th>Use (hrs)</th><th>Ext.</th><th></th></tr></thead>
@@ -1631,13 +1869,11 @@ if (manualInp && manualQty > 0){
 </table>
 </div>
 <!-- TOTALS -->
-<div class="card">
-<div class="row">
-<span class="pill">Directs (excl. Company): <span class="mono" id="directs">$0.00</span></span>
+<div class="card" id="totalsCard" data-cat="totals"><div class="row"><span class="pill">Directs (excl. Company): <span class="mono" id="directs">$0.00</span></span>
 <span class="pill">Overhead: <span class="mono" id="ohAmt">$0.00</span></span>
 <span class="pill">Profit (incl. Company): <span class="mono" id="profitAmt">$0.00</span></span>
 <span class="pill"><span id="taxLabel">Tax Reimbursement</span>: <span class="mono" id="taxAmt2">$0.00</span></span>
-<span class="pill" style="background:#153251; border-color:#2c5a8c; color:#d9ecff">GRAND: <span class="mono" id="grand">$0.00</span></span>
+<span class="pill" style="background:#153251; border-color:#2c5a8c; color:#d9ecff"> Total: <span class="mono" id="grand">$0.00</span></span>
 <span class="spacer"></span>
 <div class="group">
 <label>OH % <input id="ohPct" step="1" type="number" value="0"/></label>
@@ -1645,27 +1881,31 @@ if (manualInp && manualQty > 0){
 </div>
 </div>
 <div class="muted small" style="margin-top:6px">
-      Calc: Directs = Crew (excl. Co.) + Materials + Concrete + Fuel + Tools + Disposal. Overhead = Directs × OH%. Profit = Company + (Directs + Overhead) × Profit%. Grand = Directs + Overhead + Profit + Tax/Reimb.
+      Calc: Directs = Crew (excl. Co.) + Materials + Concrete + Fuel + Tools + Disposal. Overhead = Directs × OH%. Profit = Company + (Directs + Overhead) × Profit%. Total = Directs + Overhead + Profit + Tax/Reimb.
     </div>
 </div>
 <!-- sticky -->
 <div class="sticky">
-<div class="sticky-inner">
-<span class="pill">Crew (excl. Co.): <span class="mono" id="stickyCrew">$0.00</span></span>
-<span class="pill">Company → Profit: <span class="mono" id="stickyCompanyToProfit">$0.00</span></span>
-<span class="pill">Materials: <span class="mono" id="stickyMat">$0.00</span></span>
-<span class="pill">Concrete: <span class="mono" id="stickyConc">$0.00</span></span>
-<span class="pill">Fuel: <span class="mono" id="stickyFuel">$0.00</span></span>
-<span class="pill">Tools: <span class="mono" id="stickyTools">$0.00</span></span>
-<span class="pill">Disposal: <span class="mono" id="stickyWaste">$0.00</span></span>
-<span class="pill">OH: <span class="mono" id="stickyOH">$0.00</span></span>
-<span class="pill">Profit: <span class="mono" id="stickyProfit">$0.00</span></span>
-<span class="pill"><span id="stickyTaxLabel">Reimb.</span>: <span class="mono" id="stickyTax">$0.00</span></span>
-<span class="spacer"></span>
-<span class="pill" style="background:#153251; border-color:#2c5a8c; color:#d9ecff">GRAND: <span class="mono" id="stickyGrand">$0.00</span></span>
+  <div class="sticky-inner">
+    <span id="stickyGrandPill" class="pill" style="background:#153251; border-color:#2c5a8c; color:#d9ecff">Total: <span class="mono" id="stickyGrand">$0.00</span></span>
+  </div>
 </div>
+<!-- hidden sticky spans to satisfy totals() updates -->
+<div style="display:none">
+  <span id="stickyCrew"></span>
+  <span id="stickyCompanyToProfit"></span>
+  <span id="stickyMat"></span>
+  <span id="stickyConc"></span>
+  <span id="stickyFuel"></span>
+  <span id="stickyTools"></span>
+  <span id="stickyWaste"></span>
+  <span id="stickyOH"></span>
+  <span id="stickyProfit"></span>
+  <span id="stickyTax"></span>
+  <span id="stickyTaxLabel"></span>
 </div>
-<div class="card"><div class="warn" id="err" style="display:none"></div></div>
+
+<div class="warn" id="err" style="display:none"></div>
 </div>
 <script>
 (function(){
@@ -1791,13 +2031,13 @@ let materials = [
   {id:"mNH8", use:false, item:"Bluestone 1.5\" — price per sf", supplier:"New Haven Masonry", units:"sf", price:12.5, qty:0, cats:["masonry","bluestone"]},
 
   {id:'m2001',use:false,item:"Stucco Depot PRO BASE — 50 lb basecoat adhesive",supplier:'Stucco Depot',units:'bag',price:19.50,qty:0,step:10,roundUp:false,cats:["stucco"],coverageSqft:90},
-  {id:'m2002',use:false,item:"Standard EIFS Fiberglass Mesh — 38\"×150' roll",supplier:'Stucco Depot',units:'roll',price:60,qty:0,step:50,roundUp:false,cats:["stucco"],coverageSqft:350},
+  {id:'m2002',use:false,item:"Standard EIFS Fiberglass Mesh — 38\"×150' roll",supplier:'Stucco Depot',units:'roll',price:60,qty:0,step:50,roundUp:false,cats:["stucco"],coverageSqft:475},
   {id:'m2003',use:false,item:"Parex DPR Sand Coarse — 5 gal",supplier:'Parex',units:'pail',price:75,qty:0,step:50,roundUp:false,cats:["stucco"],coverageSqft:90},
   {id:'m2004',use:false,item:"Parex DPR Sand Fine — 5 gal",supplier:'Parex',units:'pail',price:75,qty:0,step:50,roundUp:false,cats:["stucco"],coverageSqft:150},
   {id:'m2005',use:false,item:"Parex DPR Swirl Fine — 5 gal",supplier:'Parex',units:'pail',price:75,qty:0,step:50,roundUp:false,cats:["stucco"],coverageSqft:120},
   {id:'m2006',use:false,item:"Parex DPR Sand Smooth — 5 gal",supplier:'Parex',units:'pail',price:75,qty:0,step:50,roundUp:false,cats:["stucco"],coverageSqft:280},
   {id:'m2007',use:false,item:"MP Roll‑Tex Coating — 5 gal",supplier:'MP Architectural Coatings',units:'pail',price:90,qty:0,step:50,roundUp:false,cats:["stucco"],coverageSqft:300},
-  {id:'m2008',use:false,item:"GREEN MAKER Decoplast Premium Basecoat — 50 lb",supplier:'RMC Stucco Supply',units:'bag',price:31,qty:0,step:10,roundUp:false,cats:["stucco"],coverageSqft:90},
+  {id:'m2008',use:false,item:"GREEN MAKER Decoplast Premium Basecoat — 50 lb",supplier:'RMC Stucco Supply',units:'bag',price:31,qty:0,step:10,roundUp:false,cats:["stucco"],coverageSqft:55},
   {id:'m2009',use:false,item:"EPS EIFS Foam — 2\" (2'×4', 9 sheets) per bundle",supplier:'RMC Stucco Supply',units:'bundle',price:45,qty:0,step:50,roundUp:false,cats:["stucco"],coverageSqft:72},
   {id:'m2010',use:false,item:"EPS EIFS Foam — 1.5\" (2'×4', 13 sheets) per bundle",supplier:'Local EIFS supplier',units:'bundle',price:45,qty:0,step:50,roundUp:false,cats:["stucco"],coverageSqft:104},
   {id:'m2011',use:false,item:"EPS EIFS Foam — 1\" (2'×4', 18 sheets) per bundle",supplier:'Local EIFS supplier',units:'bundle',price:45,qty:0,step:50,roundUp:false,cats:["stucco"],coverageSqft:144},
@@ -5067,6 +5307,26 @@ document.addEventListener('DOMContentLoaded', function(){
   document.getElementById('stu_foam_sel')?.addEventListener('change', reevaluate);
   reevaluate();
 });
+</script>
+
+
+<script id="move-status-into-sticky">
+(function(){
+  function q(sel,root){ return (root||document).querySelector(sel); }
+  var stickyInner = q('.sticky-inner');
+  if(!stickyInner) return;
+  // Find the top-of-body banner (sticky header div)
+  var topBanner = document.body.querySelector(':scope > div[style*="position:sticky"][style*="top:0"]');
+  if(!topBanner) return;
+  // Clean inline styles and retag
+  topBanner.removeAttribute('style');
+  topBanner.id = 'stickyStatusPill';
+  topBanner.className = 'pill ok'; // keep the green "ok" styling
+  topBanner.style.fontSize = '12px';
+  topBanner.style.opacity = '0.95';
+  // Insert as first child => left edge (space-between pushes GRAND to right)
+  stickyInner.insertBefore(topBanner, stickyInner.firstChild);
+})();
 </script>
 
 </body>
