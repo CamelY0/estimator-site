@@ -578,41 +578,72 @@ const BLOCKS_PER_BAG_BY_THICKNESS = { "4": 20, "6": 15, "8": 15, "10": 12, "12":
 
     
     
-    /*__BW_TO_MAT_MAPPING__*/
-    try{
-      // When CMU Type is 12x8x16 (12" thick, 8" course), select the 12" block row and write Qty = blocks_waste
-      var thicknessSel = document.getElementById('bw_thickness');
-      var heightRadio = document.querySelector('input[name="bw_height"]:checked');
-      var htCourse = heightRadio ? heightRadio.value : '8';
-      if (thicknessSel && thicknessSel.value==='12' && htCourse==='8' && L_in>0 && H_in>0){
-        if (!document.querySelector('#matTbody tr') && typeof renderMaterials==='function'){ renderMaterials(); }
-        var tbody = document.getElementById('matTbody');
-        if (tbody){
-          // Find the row by stable id or text match
-          var row = tbody.querySelector('tr[data-id="mNH1"]');
-          if(!row){
-            var rows = Array.from(tbody.querySelectorAll('tr'));
-            row = rows.find(function(tr){ return /12"\s*hollow\s*concrete\s*block/i.test((tr.textContent||'')); });
-          }
-          if (row){
-            // 1) Ensure Use is checked (UI event)
-            var cb = row.querySelector('.mat_use');
-            if (cb && !cb.checked){
-              cb.checked = true;
-              cb.dispatchEvent(new Event('change', { bubbles:true, cancelable:true }));
-            }
-            // 2) Write Qty via the qty input and fire input+change
-            var q = row.querySelector('.mat_qty');
-            if (q){
-              q.value = (typeof blocks_waste==='number') ? blocks_waste : (Number(blocks_waste)||0);
-              q.dispatchEvent(new Event('input',  { bubbles:true, cancelable:true }));
-              q.dispatchEvent(new Event('change', { bubbles:true, cancelable:true }));
-            }
-          }
-        }
-      }
-    }catch(e){ /* keep calc resilient */ }
-    /*__/BW_TO_MAT_MAPPING__*/
+    
+
+/*__BW_TO_MAT_MAPPING__*/
+try{
+  // Ensure materials table exists
+  if (!document.querySelector('#matTbody tr') && typeof renderMaterials==='function'){ renderMaterials(); }
+  var tbody = document.getElementById('matTbody');
+
+  // Inputs/state from the Block Wall calculator
+  var thicknessSel = document.getElementById('bw_thickness');
+  var heightRadio  = document.querySelector('input[name="bw_height"]:checked');
+  var htCourse     = heightRadio ? heightRadio.value : '8';
+
+  // Area present?
+  var hasArea = (typeof L_in==='number' && typeof H_in==='number' && L_in>0 && H_in>0);
+
+  function findRows(rx){
+    if(!tbody) return [];
+    var rows = Array.from(tbody.querySelectorAll('tr'));
+    rx = (rx instanceof RegExp) ? rx : new RegExp(String(rx), 'i');
+    return rows.filter(function(tr){ return rx.test((tr.textContent||'')); });
+  }
+  function clearRow(tr){
+    if(!tr) return;
+    var q = tr.querySelector('.mat_qty'); if (q){ q.value=''; q.dispatchEvent(new Event('input',{bubbles:true})); q.dispatchEvent(new Event('change',{bubbles:true})); }
+    var cb = tr.querySelector('.mat_use'); if (cb && cb.checked){ cb.checked=false; cb.dispatchEvent(new Event('change',{bubbles:true})); }
+  }
+  function clearRows(list){ (list||[]).forEach(clearRow); }
+  function setQty(tr, qty){
+    if(!tr) return;
+    var cb = tr.querySelector('.mat_use'); if (cb && !cb.checked){ cb.checked=true; cb.dispatchEvent(new Event('change',{bubbles:true})); }
+    var q  = tr.querySelector('.mat_qty'); if (q){ q.value = String(qty||0); q.dispatchEvent(new Event('input',{bubbles:true})); q.dispatchEvent(new Event('change',{bubbles:true})); }
+  }
+
+  if(!hasArea){
+    if (tbody){
+      // Clear CMU blocks (any size)
+      clearRows(findRows(/hollow\s*concrete\s*block/i));
+      // Clear core-fill grout (SPEC MIX Core Fill Grout 3k — 80 lb etc.)
+      clearRows(findRows(/core\s*fill.*grout|masonry\s*grout/i));
+      // Clear Durawall/joint reinforcement
+      clearRows(findRows(/durawall|joint\s*reinforcement/i));
+      // Clear rebar entries (any)
+      clearRows(findRows(/\brebar\b/i));
+      // Explicit ids (defensive): 12" CMU, SPEC MIX Core Fill Grout 3k (m8), #5 rebar 20' (mNH3)
+      var ids = ['mNH1','m8','mNH3','mNH2'];
+      ids.forEach(function(id){
+        var tr = tbody.querySelector('tr[data-id="'+id+'"]');
+        if (tr) clearRow(tr);
+      });
+    }
+    return;
+  }
+
+  // With area present -> set the active size row quantities as before (12" only here)
+  if (tbody && thicknessSel && thicknessSel.value==='12' && htCourse==='8'){
+    var row = tbody.querySelector('tr[data-id="mNH1"]') || (findRows(/12"\s*hollow\s*concrete\s*block/i)[0]||null);
+    if (row){
+      var qty = (typeof blocks_waste==='number') ? blocks_waste : (Number(blocks_waste)||0);
+      setQty(row, qty);
+    }
+  }
+}catch(e){ /* keep calc resilient */ }
+/*__/BW_TO_MAT_MAPPING__*/
+
+
     
 
 
@@ -785,7 +816,10 @@ if (rUpEl && rUpEl.checked){ mortar_bags = Math.ceil(mortar_bags); }
     // === Sync 12" Durawall — 10' to Materials ===
     try {
       var pcsToMat = (thickness === '12') ? Math.max(0, durawall_10ft_pcs||0) : 0;
-      var tbody = document.getElementById('matTbody');
+      
+      // Force zero when no area
+      if (!(area_sf>0) || !(L_in>0) || !(H_in>0)) pcsToMat = 0;
+var tbody = document.getElementById('matTbody');
       if (tbody && !tbody.querySelector('tr') && typeof renderMaterials==='function') { renderMaterials(); }
       tbody = document.getElementById('matTbody');
 
@@ -1235,6 +1269,34 @@ if (rUpEl && rUpEl.checked){ mortar_bags = Math.ceil(mortar_bags); }
         matClearKeys(FINISH_KEYS_TRAD);
         matClearKeys(FOAM_KEYS);
       }catch(e){}
+      
+      /* __STUCCO_ZERO_HARD_CLEAR__ */
+      try{
+        const tbody = document.getElementById('matTbody');
+        if (tbody){
+          // Explicit stucco SKUs to clear (EIFS basecoat, mesh, finishes, foam)
+          ['m2002','m2003','m2004','m2005','m2006','m2007','m2008','m2009'].forEach(function(id){
+            var tr = tbody.querySelector('tr[data-id="'+id+'"]');
+            if (tr){
+              var q = tr.querySelector('.mat_qty'); if(q){ q.value=''; q.dispatchEvent(new Event('input',{bubbles:true})); q.dispatchEvent(new Event('change',{bubbles:true})); }
+              var cb = tr.querySelector('.mat_use'); if(cb && cb.checked){ cb.checked=false; cb.dispatchEvent(new Event('change',{bubbles:true})); }
+            }
+          });
+          // Fallback by regex match in case labels/ids change
+          Array.from(tbody.querySelectorAll('tr')).forEach(function(tr){
+            var t = (tr.textContent||'').toLowerCase();
+            if(/standard.*eifs.*fiberglass.*mesh/.test(t) || /decoplast.*basecoat/.test(t) || /parex.*dpr/.test(t) || /\beifs.*foam|\bfoam\b/.test(t)){
+              var q = tr.querySelector('.mat_qty'); if(q){ q.value=''; q.dispatchEvent(new Event('input',{bubbles:true})); q.dispatchEvent(new Event('change',{bubbles:true})); }
+              var cb = tr.querySelector('.mat_use'); if(cb && cb.checked){ cb.checked=false; cb.dispatchEvent(new Event('change',{bubbles:true})); }
+            }
+          });
+        }
+        // Force totals refresh so leftover prices drop immediately
+        if (typeof window.updateAll === 'function') window.updateAll();
+        else if (typeof window.totals === 'function') window.totals();
+      }catch(e){}
+      /* __/STUCCO_ZERO_HARD_CLEAR__ */
+
       return;
     }if(isEIFS){
       // Basecoat
