@@ -211,7 +211,8 @@ window.SECTION = {
   bluestone: { cats: ['bluestone'],                pins: new Set([]) },
   veneer:    { cats: ['stone veneer','bluestone'], pins: new Set([]) },
   stucco:    { cats: ['stucco'],                   pins: new Set([]) }
-  ,cleanup: { cats: ['cleanup'], pins: new Set(['mHDX_TerryTowels_20pk']) }};
+  ,cleanup: { cats: ['cleanup'], pins: new Set(['mHDX_TerryTowels_20pk']) },
+  chimney: { cats: null, pins: new Set([]) }};
 </script>
 
 
@@ -401,6 +402,111 @@ body:not([data-active-group]) .wrap .card[data-card-stucco]{ display:block !impo
 
 <style id="sticky-split-align">.sticky-inner{ justify-content: space-between !important; }</style>
 
+
+<style id="chimney-extra-css">
+  /* Additional styles for Chimney Helper UI (kept minimal to avoid conflicts) */
+  .section-box{
+    border:1px solid #1f2937;
+    border-radius:12px;
+    padding:10px;
+    background:#0a1015;
+    margin:8px 0 10px;
+  }
+  .kpi{
+    display:inline-flex; align-items:center; gap:6px;
+    padding:6px 10px; border:1px solid #1f2937;
+    border-radius:999px; background:#0a1015; font-size:12px;
+  }
+  /* Slightly reduce Brick Size dropdown width to prevent edge cut-off */
+  #bpsf { box-sizing:border-box; width: calc(100% - 8px); }
+  #chimneyCard .group { display:block !important; }
+
+  /* Geometry: Side A/B horizontal layout within byBrick grid */
+  #chimneyCard #byBrick{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px;
+    align-items: end;
+  }
+  #chimneyCard #byBrick > label{ width: 100%; }
+
+  /* Geometry: lay out 'By Inches' inputs horizontally */
+  #chimneyCard #byInches{
+    display: grid;
+    grid-template-columns: repeat(5, minmax(160px, 1fr));
+    gap: 12px;
+    align-items: end;
+  }
+  #chimneyCard #byInches > label{ width: 100%; }
+
+  /* Tighter spacing between Rebuild height (ft) and in */
+
+  /* Extra-tighten spacing between Rebuild height (ft) and in */
+  
+  
+  /* Keep the 'in' input compact so it doesn't push apart */
+
+  /* Ultra-tight spacing between Rebuild height (ft) and in */
+
+  /* Ultra-closer spacing between Rebuild height (ft) and in */
+
+  /* Hyper-tight spacing between Rebuild height (ft) and in */
+
+  /* Hyper-tight v2: nearly touching ft/in */
+  
+  
+  
+
+  /* Tighten spacing between Outside width (in) and Outside depth (in) */
+  
+  
+  #chimneyCard #byInches #w_in,
+
+  /* Moderate spacing between Outside width (in) and Outside depth (in) */
+  #chimneyCard #byInches label:has(#w_in){ margin-right: -2px; }
+  #chimneyCard #byInches label:has(#d_in){ margin-left: -36px; }
+  #chimneyCard #byInches #w_in, 
+  
+
+  /* Smaller control for 'Outside width (in)' */
+  #chimneyCard #byInches #w_in{ max-width: 64px; }
+
+  /* Match compact width for 'Outside depth (in)' */
+  #chimneyCard #byInches #d_in{ max-width: 64px; }
+
+  /* Compact width for 'Rebuild height (ft)' */
+  #chimneyCard #byInches #h_ft{ max-width: 64px; }
+
+  /* Slightly increase space between Rebuild height (ft) and in */
+
+  /* Slightly more space between Rebuild height (ft) and in */
+
+  /* More space between Rebuild height (ft) and in */
+
+  /* Extra spacing between Rebuild height (ft) and in */
+
+  /* Tiny extra spacing between Rebuild height (ft) and in */
+
+  /* Extra tiny bump: more space between Rebuild height (ft) and in */
+
+  /* Slightly more space between Rebuild height (ft) and in */
+
+  /* Micro-nudge: a bit more space between Rebuild height (ft) and in */
+
+  /* Final nudge: more space + slightly larger 'in' box */
+  #chimneyCard #byInches label:has(#h_ft){ margin-right: 16px; }
+  #chimneyCard #byInches label:has(#h_in){ margin-left: -28px; }
+  #chimneyCard #byInches #h_in{ max-width: 56px; }
+
+</style>
+
+
+<style id="chimney-helper-visibility">.wrap .card[data-card-chimney]{ display:none; }
+  body[data-active-group="chimney"] .wrap .card[data-card-chimney],
+  body[data-active-group="all"] .wrap .card[data-card-chimney]{ display:block !important; }
+  /* Fallback: if no data-active-group is present, show the Chimney card */
+  body:not([data-active-group]) .wrap .card[data-card-chimney]{ display:block !important; }
+</style>
 </head>
 <body>
 <div style="position:sticky; top:0; z-index:1000; background:inherit; padding:6px 12px; font:600 12px system-ui; color:#0a6c2f;">✅ JS loaded and running</div>
@@ -1079,6 +1185,155 @@ var tbody = document.getElementById('matTbody');
     </div>
   </div>
 </div>
+
+<!-- BEGIN: Chimney Helper (embedded) -->
+<div class="card" data-card-chimney id="chimneyCard" data-cat="masonry">
+  <div class="row">
+    <h3 style="margin:0">Chimney Helper</h3>
+    <span class="spacer"></span>
+  </div>
+  <div class="row">
+    <div class="group" style="display:block; width:100%">
+
+<div class="card" tight" id="optsCard">
+    <div class="row">
+      <div class="kpi">Mode</div>
+      
+
+      <label class="pill"><input type="radio" name="mode" id="mode_inches" checked> By inches</label>
+      <label class="pill"><input type="radio" name="mode" id="mode_brick"> By brick count (per side)</label>
+      <span class="spacer"></span>
+      <label class="pill"><input type="checkbox" id="opt_round" checked> Round up quantities</label>
+      <label class="pill"><input type="checkbox" id="opt_crown" checked> Include concrete crown</label>
+      <label class="pill"><input type="checkbox" id="opt_flash" checked> Include flashing</label>
+    <label class="pill"><input type="checkbox" id="no_cap"> Spark Arrestor</label>
+</div>
+  </div>
+
+  <div class="card"" id="geomCard">
+    <h2>Geometry</h2>
+    <div class="row grid" id="byInches">
+      <label>Outside width (in)
+        <input type="number" id="w_in" min="0" step="1" value="0">
+      </label>
+      <label>Outside depth (in)
+        <input type="number" id="d_in" min="0" step="1" value="0">
+      </label>
+      <label>Rebuild height (ft)
+        <input type="number" id="h_ft" min="0" step="1" value="0">
+      </label>
+      <label>in
+        <input type="number" id="h_in" min="0" max="11" step="1" value="0">
+      </label>
+      <label>Waste %
+        <input type="number" id="waste" min="0" step="0.5" value="10">
+      </label>
+    </div>
+
+    <div class="row grid" id="byBrick" style="display:none">
+      <label>Side A — bricks per side (full‑brick eq.)
+        <input type="number" id="brixA" min="0" step="1" value="0">
+      </label>
+      <label>Side B — bricks per side (full‑brick eq.)
+        <input type="number" id="brixB" min="0" step="1" value="0">
+      </label>
+      <label>Brick preset
+        <select id="brickPreset">
+          <option value="mod" selected>Modular (7.625 × 2.25 actual)</option>
+          <option value="util">Utility (11.625 × 2.25 actual)</option>
+          <option value="custom">Custom</option>
+        </select>
+      </label>
+      <label>Actual brick length (in)
+        <input type="number" id="b_len" min="6" step="0.125" value="7.625">
+      </label>
+      <label>Actual brick height (in)
+        <input type="number" id="b_hgt" min="1.5" step="0.125" value="2.25">
+      </label>
+      <label>Mortar joint (in)
+        <input type="number" id="joint" min="0.25" max="0.5" step="0.125" value="0.375">
+      </label>
+      <label>Rebuild height (ft)
+        <input type="number" id="h_ft_b" min="0" step="1" value="0">
+      </label>
+      <label>in
+        <input type="number" id="h_in_b" min="0" max="11" step="1" value="0">
+      </label>
+      <label>Waste %
+        <input type="number" id="waste_b" min="0" step="0.5" value="10">
+      </label>
+      <div class="muted">Tip: In running bond, halves on one face become fulls on the next. Total bricks per course ≈ <b>2×(A+B)</b>.</div>
+    </div>
+    <div class="muted" id="geomNote"></div>
+  </div>
+
+  <div class="card"" id="unitsCard">
+    <h2>Units & Liners</h2>
+    <div class="section-box"><div class="row grid">
+      <label>Brick Size
+        <select id="bpsf">
+          <option value="7" selected>7 5/8&quot; × 3 5/8&quot; × 2 1/4&quot; ≈ 7</option>
+          <option value="6">7 5/8&quot; × 2 3/4&quot; × 2 3/4&quot; ≈ 6</option>
+          <option value="5.3">11 5/8&quot; × 3 5/8&quot; × 2 1/4&quot; ≈ 5.3</option>
+        </select>
+      </label>
+
+
+      <label>Flue tile length (in)
+        <input type="number" id="tile_len" min="12" step="1" value="24">
+      </label>
+
+      <label>Projection above crown (in)
+        <input type="number" id="proj_in" min="0" step="0.5" value="2">
+      </label>
+<label>Flue tile size
+        <select id="flue_size">
+          <option value="8x8">8×8</option>
+          <option value="8x12" selected>8×12</option>
+          <option value="12x12">12×12</option>
+          <option value="13x18">13×18</option>
+        </select>
+      </label>
+<label class="pill" style="grid-column:1/-1; align-items:center">
+        <input type="checkbox" id="auto_tiles" checked> Auto‑calculate flue tiles from height
+      </label>
+
+    </div>
+  </div>
+
+  <div class="card"" id="crownCard">
+    <h2>Concrete Crown (if included)</h2>
+    <div class="row grid">
+      <label>Average thickness (in)
+        <input type="number" id="crown_thk" min="1.5" step="0.25" value="4">
+      </label>
+      <label>Overhang each side (in)
+        <input type="number" id="crown_oh" min="0" step="0.25" value="1.5">
+      </label>
+      <label>Flash height for copper (in) <span class="muted">(for sheet area est.)</span>
+        <input type="number" id="flash_h" min="6" step="0.5" value="8">
+      </label>
+    </div>
+  </div></div>
+
+  <div class="card"" id="resultsCard">
+    <div class="row">
+      <h2 style="margin:0">Results</h2>
+      <span class="spacer"></span>
+      <button class="ghost" id="copyScope">Copy scope</button>
+    </div>
+    <div id="kpis" class="row" style="gap:8px; margin:6px 0 8px 0"></div>
+    <div id="calcOut" class="muted"></div>
+    <h3>Scope (copy‑ready)</h3>
+    <textarea id="scope" placeholder="Scope lines will appear here…"></textarea>
+  </div>
+
+    </div>
+  </div>
+</div>
+<!-- END: Chimney Helper (embedded) -->
+
+
 
 <script>
 (function(){
@@ -5391,5 +5646,204 @@ document.addEventListener('DOMContentLoaded', function(){
 })();
 </script>
 
+
+
+
+<script>
+(function(){
+  const $ = (sel)=>document.querySelector(sel);
+  const num = (v)=>{ const n = parseFloat(v); return isFinite(n)?n:0; };
+  const feetIn = (ft,inches)=> num(ft)*12 + num(inches);
+  const fmt = (n, d=2)=> (Math.round(n*Math.pow(10,d))/Math.pow(10,d)).toFixed(d);
+
+  function getMode(){ return $('#mode_brick').checked ? 'brick' : 'inch'; }
+  function wastePct(){ return getMode()==='inch' ? num($('#waste').value) : num($('#waste_b').value); }
+  function heightIn(){ 
+    if (getMode()==='inch') return feetIn($('#h_ft').value, $('#h_in').value);
+    return feetIn($('#h_ft_b').value, $('#h_in_b').value);
+  }
+
+  function dimsFromBrick(){
+    const A = Math.max(1, num($('#brixA').value));
+    const B = Math.max(1, num($('#brixB').value));
+    const len = num($('#b_len').value);
+    const joint = num($('#joint').value);
+    const nominal = len + joint;
+    const width = A * nominal;
+    const depth = B * nominal;
+    return {width, depth, perCourse: 2*(A+B), courseH: (num($('#b_hgt').value) + joint)};
+  }
+
+  function dimsFromInches(){
+    return {width: num($('#w_in').value), depth: num($('#d_in').value), perCourse: null, courseH: (2.25+0.375)};
+  }
+
+  function tilesPerFlue(){
+    const auto = $('#auto_tiles').checked;
+    const hIn = heightIn();
+    const crown = $('#opt_crown').checked ? num($('#crown_thk').value) : 0;
+    let proj = Math.max(0, num($('#proj_in').value));
+    if ($('#no_cap').checked && proj < 4){ proj = 4; $('#proj_in').value = 4; }
+    let tileLen = num($('#tile_len').value);
+    if (auto){ tileLen = Math.max(12, tileLen||24); }
+    const required = hIn + crown + proj;
+    const per = tileLen>0 ? Math.ceil(required / tileLen) : 0;
+    return {per, tileLen, proj, required};
+  }
+
+  function calc(){
+    const mode = getMode();
+    let width, depth, perCourse, courseH;
+    if (mode==='brick'){
+      const d = dimsFromBrick();
+      width=d.width; depth=d.depth; perCourse=d.perCourse; courseH=d.courseH;
+      $('#geomNote').textContent = 'Derived from brick count: width ≈ '+fmt(width,2)+'", depth ≈ '+fmt(depth,2)+'".';
+    } else {
+      const d = dimsFromInches();
+      width=d.width; depth=d.depth; perCourse=d.perCourse; courseH=d.courseH;
+      $('#geomNote').textContent = '';
+    }
+
+    const hIn = heightIn();
+    const waste = wastePct()/100;
+
+    // Courses & face area
+    const courses = courseH>0 ? Math.ceil(hIn / courseH) : 0;
+    const facePerimIn = 2*(width+depth);
+    const faceAreaSF = (facePerimIn/12) * (hIn/12);
+
+    // Brick count
+    let bricks = 0;
+    if (mode==='brick'){ bricks = perCourse * courses; }
+    else { bricks = faceAreaSF * parseFloat($('#bpsf').value); }
+    const bricksFinal = Math.ceil(bricks * (1 + waste));
+
+    // Mortar bags (Type S 80 lb) based on ~37 modular brick per bag
+    const mortarFinal = Math.ceil(bricksFinal / 37);
+
+    // Flue tiles (total to purchase, includes #flues and waste)
+    const {per: perFlue, tileLen, proj, required} = tilesPerFlue();
+    const flues = 1;
+    const flueTotal = Math.ceil(perFlue * flues * (1+waste));
+
+    // Crown concrete volume & bags (80 lb ~0.60 ft³)
+    let crownVolFt3 = 0, crownBags = 0;
+    if ($('#opt_crown').checked){
+      const oh = Math.max(0, num($('#crown_oh').value));
+      const thk = Math.max(0, num($('#crown_thk').value));
+      const planW = width + 2*oh;
+      const planD = depth + 2*oh;
+      crownVolFt3 = (planW/12) * (planD/12) * (thk/12);
+      crownBags = Math.ceil(crownVolFt3 / 0.60);
+    }
+
+    // Flashing LF & copper sheet area
+    let flashLF = 0, copperSF = 0;
+    if ($('#opt_flash').checked){
+      flashLF = (2*(width+depth))/12;
+      const flashH = Math.max(0, num($('#flash_h').value));
+      copperSF = ( (2*(width+depth)) * flashH ) / 144;
+    }
+
+    const cricketRequired = (width > 30);
+
+    // KPI pills (single flue number)
+    const k = $('#kpis'); k.innerHTML = '';
+    const makePill = (txt)=>{ const s=document.createElement('div'); s.className='kpi'; s.textContent=txt; k.appendChild(s); };
+    makePill('Bricks: ' + bricksFinal);
+    makePill('Mortar 80‑lb bags: ' + mortarFinal);
+    makePill('flue: ' + flueTotal);
+    if ($('#opt_crown').checked) makePill('Crown 80‑lb bags: ' + crownBags);
+    if ($('#opt_flash').checked) { makePill('Flashing LF: ' + flashLF.toFixed(1)); makePill('Copper est. ft²: ' + copperSF.toFixed(1)); }
+    makePill('Courses: ' + courses);
+    makePill('Chimney width: ' + width.toFixed(1) + ' in');
+    makePill(cricketRequired ? 'Cricket required by code' : 'Cricket not required');
+
+    // Calc details
+    $('#calcOut').innerHTML =
+      '<div><b>Face area</b>: '+faceAreaSF.toFixed(2)+' sf</div>' +
+      '<div><b>Perimeter</b>: '+(facePerimIn/12).toFixed(2)+' lf</div>' +
+      '<div><b>Required flue height (in)</b>: '+required.toFixed(1)+' (rebuild '+hIn.toFixed(1)+' + crown '+( $('#opt_crown').checked ? num($('#crown_thk').value).toFixed(1) : 0 )+' + projection '+(Math.max(0, num($('#proj_in').value))).toFixed(1)+')</div>';
+
+    // Scope text
+    const flueLabel = $('#flue_size').value;
+    const scope = [];
+    scope.push('Rebuild chimney above roofline to ~' + (hIn/12).toFixed(2) + ' ft (running bond).');
+    scope.push('Furnish & lay ≈ ' + bricksFinal + ' modular brick (includes ' + (waste*100).toFixed(1) + '% waste).');
+    scope.push('Mortar: ≈ ' + mortarFinal + ' bags (80‑lb Type S).');
+    if (flueTotal>0) scope.push('Flue liners: ' + flueTotal + ' pcs @ ' + flueLabel + ' × ' + num($('#tile_len').value).toFixed(0) + '" total (includes waste).');
+    if ($('#opt_crown').checked) scope.push('Cast concrete crown, avg ' + num($('#crown_thk').value).toFixed(1) + '", with bond break at flue.');
+    if ($('#opt_flash').checked) scope.push('Step & counter‑flash with 16‑oz copper (~' + flashLF.toFixed(1) + ' LF).');
+    if (cricketRequired) scope.push('Provide & flash a metal cricket (chimney width > 30").');
+    $('#scope').value = scope.join('\n');
+  }
+
+  function bind(){
+    // Toggle modes
+    $('#mode_inches').addEventListener('change', ()=>{
+      $('#byInches').style.display = 'grid';
+      $('#byBrick').style.display = 'none';
+      calc();
+    });
+    $('#mode_brick').addEventListener('change', ()=>{
+      $('#byInches').style.display = 'none';
+      $('#byBrick').style.display = 'grid';
+      calc();
+    });
+
+    // Brick preset
+    $('#brickPreset') && $('#brickPreset').addEventListener('change', (e)=>{
+      const v = e.target.value;
+      if (v==='mod'){ $('#b_len').value = 7.625; $('#b_hgt').value = 2.25; }
+      else if (v==='util'){ $('#b_len').value = 11.625; $('#b_hgt').value = 2.25; }
+      document.getElementById('b_len').disabled = (v!=='custom');
+      document.getElementById('b_hgt').disabled = (v!=='custom');
+      calc();
+    });
+
+    // Auto tiles & cap toggle
+    $('#auto_tiles').addEventListener('change', calc);
+    $('#no_cap').addEventListener('change', calc);
+    $('#proj_in').addEventListener('input', calc);
+
+    // Global listeners
+    document.querySelectorAll('input,select,textarea').forEach(el=>{
+      el.addEventListener('input', calc);
+      el.addEventListener('change', calc);
+    });
+
+    // Copy scope
+    $('#copyScope').addEventListener('click', ()=>{
+      const ta = $('#scope'); ta.select(); document.execCommand('copy');
+    });
+
+    // Reset
+    $('#resetBtn').addEventListener('click', ()=>{
+      document.querySelectorAll('input[type="number"]').forEach(i=>i.value = i.id.includes('waste') ? 10 : 0);
+      $('#mode_inches').checked = true;
+      $('#mode_inches').dispatchEvent(new Event('change'));
+      $('#opt_round').checked = true;
+      $('#opt_crown').checked = true;
+      $('#opt_flash').checked = true;
+      $('#bpsf').value = '7';
+      $('#auto_tiles').checked = true;
+      $('#tile_len').value = 24;
+      $('#proj_in').value = 2;
+      $('#no_cap').checked = false;
+      $('#flue_size').value = '8x12';
+      $('#crown_thk').value = 4;
+      $('#crown_oh').value = 1.5;
+      $('#flash_h').value = 8;
+      calc();
+      window.scrollTo({top:0, behavior:'smooth'});
+    });
+
+    calc();
+  }
+
+  if (document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', bind, {once:true}); }
+  else { bind(); }
+})();
+</script>
 </body>
 </html>
