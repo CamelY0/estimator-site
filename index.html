@@ -522,7 +522,7 @@ body:not([data-active-group]) .wrap .card[data-card-stucco]{ display:block !impo
     <h3 style="margin:0">Block Wall Helper</h3>
     <span class="spacer"></span>
     <div class="group">
-      <label class="pill"><input type="checkbox" id="bw_include_end_bars" /> Include end bars</label>
+      <label class="pill"><input type="checkbox" id="bw_include_end_bars" / checked> Include end bars</label>
       <label class="pill"><input type="checkbox" id="bw_use_20ft" checked /> Use 20' rebar lengths</label>
     </div>
   </div>
@@ -559,7 +559,7 @@ body:not([data-active-group]) .wrap .card[data-card-stucco]{ display:block !impo
     
     <div class="group">
       <h4 style="margin:6px 0">Special Shapes (allowances)</h4>
-      <label class="pill"><input type="checkbox" id="bw_open_end"> Use Open‑End units at reinforced cells</label>
+      
       <label>Bond Beam courses (enter 0 if none)
         <input type="number" id="bw_bondbeam_courses" min="0" step="1" value="0">
       </label>
@@ -587,6 +587,9 @@ body:not([data-active-group]) .wrap .card[data-card-stucco]{ display:block !impo
     <div class="col">
       <h4>Quantities</h4>
       <div id="bw_results" class="small"></div>
+<details id="bw_diag" style="margin-top:8px"><summary>Diagnostics</summary>
+  <pre id="bw_diag_pre" style="white-space:pre-wrap;font-family:monospace;font-size:12px"></pre>
+</details>
     </div>
     <div class="col">
       <h4>Scope Lines</h4>
@@ -676,6 +679,24 @@ const BLOCKS_PER_BAG_BY_THICKNESS = { "4": 20, "6": 15, "8": 15, "10": 12, "12":
 
     // Units per SF (face) per course height
     var unitsPerSf = UNITS_PER_SF[heightKey] || 1.125;
+    // Diagnostics (early) — show inputs even before area is present
+    try{
+      var pre0 = document.getElementById('bw_diag_pre');
+      if (pre0){
+        var D=[];
+        function f(n){ try{ return (typeof n==='number'&&isFinite(n))?n.toFixed(2):String(n);}catch(_){return String(n);} }
+        var heightRadio = document.querySelector('input[name="bw_height"]:checked');
+        var htCourse = heightRadio ? heightRadio.value : '8';
+        D.push('len_in='+f(L_in));
+        D.push('hgt_in='+f(H_in));
+        D.push('hasArea='+String((L_in>0&&H_in>0)));
+        D.push('thickness_in='+String(thickness));
+        D.push('course_in='+String(htCourse));
+        D.push('waste_pct='+f(wastePct));
+        pre0.textContent = D.join('\\n');
+      }
+    }catch(_){}
+
 
     // Blocks calc
     var blocks = area_sf * unitsPerSf;
@@ -747,6 +768,12 @@ try{
     }
   }
 }catch(e){ /* keep calc resilient */ }
+
+  // Ensure bond-beam courses input triggers totals
+  (function(){
+    function bindBB(){ try{ var el = document.getElementById('bw_bondbeam_courses'); if (el){ el.addEventListener('input', updateAll); el.addEventListener('change', updateAll);} }catch(e){} }
+    if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', bindBB); } else { bindBB(); }
+  })();
 /*__/BW_TO_MAT_MAPPING__*/
 
 
@@ -789,7 +816,20 @@ try{
     var rebar_sticks20 = (area_sf>0) ? Math.max(0, Math.ceil(rebar_lf / 20)) : 0;
 
 
-    // Grout from table (thickness + pattern)
+    
+    // === Bond beam horizontals (safe patch) ===
+    try {
+      var bb_courses = Math.max(0, (typeof bondCourses!=='undefined' ? bondCourses : parseInt(document.getElementById('bw_bondbeam_courses')?.value||'0',10))||0);
+      if (bb_courses > 0) {
+        var L_ft = (typeof L_in!=='undefined' ? (L_in/12) : 0);
+        var horiz_bar_len_ft = L_ft + 2; // 12" embed each end
+        var horiz_bars_total = bb_courses * 2;
+        var horiz_lf = horiz_bars_total * horiz_bar_len_ft;
+        rebar_lf += horiz_lf;
+        rebar_sticks20 = (area_sf>0) ? Math.max(0, Math.ceil(rebar_lf / 20)) : 0;
+      }
+    } catch(e) { /* non-fatal */ }
+// Grout from table (thickness + pattern)
     var yd3_100 = (GROUT_YD3_100[thickness] && GROUT_YD3_100[thickness][pattern]) ? GROUT_YD3_100[thickness][pattern] : GROUT_YD3_100['8']['full'];
     var groutYd3 = area_sf * (yd3_100 / 100) * (1 + wastePct/100);
     var groutFt3 = groutYd3 * 27;
@@ -805,6 +845,14 @@ try{
         var cores_to_fill = Math.max(0, vert_bars) * Math.max(0, courses);
         grout_bags = (cores_to_fill>0 ? (cores_to_fill / sm.cores) : 0);
       }
+      // Add bond-beam extra grout bags in any pattern (full or reinforced cells)
+      try {
+        var cols = (typeof columns!=='undefined') ? columns : 0;
+        var bb_courses2 = Math.max(0, (typeof bondCourses!=='undefined' ? bondCourses : parseInt(document.getElementById('bw_bondbeam_courses')?.value||'0',10))||0);
+        var bb_extra_cores = Math.max(0, cols) * Math.max(0, bb_courses2);
+        var bb_extra_bags = (bb_extra_cores>0 && sm && sm.cores>0) ? (bb_extra_cores / sm.cores) : 0;
+        grout_bags += bb_extra_bags;
+      } catch(e) { /* non-fatal */ }
       grout_bags = grout_bags * (1 + wastePct/100);
       if (document.getElementById('bw_round_up_bags') && document.getElementById('bw_round_up_bags').checked){
         grout_bags = Math.ceil(grout_bags);
@@ -819,7 +867,7 @@ var rUpEl = document.getElementById('bw_round_up_bags');
 if (rUpEl && rUpEl.checked){ mortar_bags = Math.ceil(mortar_bags); }
 
 // Specials
-    var useOpenEnd = document.getElementById('bw_open_end').checked;
+    var oeEl = document.getElementById('bw_open_end'); var useOpenEnd = oeEl ? oeEl.checked : false;
     var bondCourses = parseInt(document.getElementById('bw_bondbeam_courses').value || '0', 10);
     if (!isFinite(bondCourses) || bondCourses < 0) bondCourses = 0;
     // Open-end allowance: one per reinforced cell per course (approx.)
@@ -978,6 +1026,19 @@ var tbody = document.getElementById('matTbody');
     if (open_end_units>0) html += '<div><strong>Open‑End units:</strong> ' + open_end_units + '</div>';
     if (bond_beam_units>0) html += '<div><strong>Bond‑beam units:</strong> ' + bond_beam_units + ' (courses: ' + bondCourses + ')</div>';
     document.getElementById('bw_results').innerHTML = html;
+    try{
+      var pre = document.getElementById('bw_diag_pre');
+      if (pre){
+        var dbg = [];
+        dbg.push('area_sf='+fmt(area_sf,2));
+        dbg.push('unitsPerSf='+unitsPerSf);
+        dbg.push('blocks='+fmt(blocks,2)+' → order='+blocks_waste);
+        dbg.push('vert_bars='+vert_bars_count+' @ '+fmt(bar_len_ft,2)+' ft ('+fmt(rebar_lf,1)+' LF)');
+        dbg.push('grout_ft3='+fmt(grout_ft3,2)+' ('+fmt(grout_yd3,3)+' yd³)');
+        dbg.push('bond_beam_units='+bond_beam_units+', courses='+bondCourses);
+        pre.textContent = dbg.join('\n');
+      }
+    }catch(e){}
   }
 
   function bind(){
@@ -1081,6 +1142,10 @@ var tbody = document.getElementById('matTbody');
 <tbody id="crewTbody"></tbody>
 <tfoot><tr><td class="right" colspan="5">Crew Subtotal (excl. Company)</td><td class="right mono" id="crewSubtotal">$0.00</td><td></td></tr></tfoot>
 </table>
+<details id="crew_diag" style="margin-top:8px"><summary>Diagnostics</summary>
+  <pre id="crew_diag_pre" style="white-space:pre-wrap;font-family:monospace;font-size:12px"></pre>
+</details>
+
 <div class="muted small">Set role = <b>Company</b> to flow those hours into <b>Profit</b> (not Crew).</div>
 </div>
 <!-- MATERIALS -->
@@ -1097,6 +1162,10 @@ var tbody = document.getElementById('matTbody');
 <tbody id="matTbody"></tbody>
 <tfoot><tr><td class="right" colspan="6">Materials Subtotal</td><td class="right mono" id="matSubtotal">$0.00</td><td></td></tr></tfoot>
 </table>
+<details id="mat_diag" style="margin-top:8px"><summary>Diagnostics</summary>
+  <pre id="mat_diag_pre" style="white-space:pre-wrap;font-family:monospace;font-size:12px"></pre>
+</details>
+
 
 <!-- === Turcotte: Stucco Helper (Area‑based) — integrated, Stucco-tab only === -->
 
@@ -1139,23 +1208,24 @@ var tbody = document.getElementById('matTbody');
   </div>
   <div class="row" id="stu_finish_ctrls" style="flex-wrap:wrap; gap:10px; margin-top:6px">
     <label class="pill"><input type="checkbox" id="stu_finish_use_mat" checked> Use materials yield</label>
-    <span id="stu_finish_yield_src" class="small muted"></span>
+    
   </div>
 
   <!-- EIFS-only options -->
   <div id="stu_eifs_opts" class="subcard">
     <div class="row"><b>EIFS yields (fixed)</b><span class="muted small">Basecoat 55 sf/bag · Mesh 475 sf/roll · Finish per above</span></div>
     <div class="row" style="flex-wrap:wrap; gap:10px; margin-top:6px">
-      <label class="pill"><input type="checkbox" id="stu_use_foam"> Include foam</label>
+      <label class="pill"><input type="checkbox" id="stu_use_foam" onchange="try{window.stuccoCalc&&stuccoCalc()}catch(e){}" oninput="try{window.stuccoCalc&&stuccoCalc()}catch(e){}"> Include foam</label>
       <label>Foam bundle (2'×4') 
-        <select id="stu_foam_sel" style="min-width:320px">
+        <select id="stu_foam_sel" style="min-width:320px" onchange="try{window.stuccoCalc&&stuccoCalc()}catch(e){}" oninput="try{window.stuccoCalc&&stuccoCalc()}catch(e){}">
+<span id="stu_foam_note" class="text-xs text-gray-500 ml-2"></span>
           <option value="foam_2">EPS EIFS Foam — 2&quot; (2'×4', 9 sheets) per bundle</option>
           <option value="foam_1_5">EPS EIFS Foam — 1.5&quot; (2'×4', 13 sheets) per bundle</option>
           <option value="foam_1">EPS EIFS Foam — 1&quot; (2'×4', 18 sheets) per bundle</option>
           <option value="foam_0_75">EPS EIFS Foam — 3/4&quot; (2'×4', 30 sheets) per bundle</option>
         </select>
       </label>
-      <span id="stu_foam_note" class="small muted"></span>
+      
     </div>
   </div>
 
@@ -1280,7 +1350,7 @@ var tbody = document.getElementById('matTbody');
 
 
       <label>Flue tile length (in)
-        <input type="number" id="tile_len" min="12" step="1" value="24">
+        <input type="number" id="tile_len" min="12" step="1" value="24" value="24">
       </label>
 
       <label>Projection above crown (in)
@@ -1330,6 +1400,41 @@ var tbody = document.getElementById('matTbody');
 
     </div>
   </div>
+
+<details id="chim_diag" style="margin-top:8px"><summary>Diagnostics</summary>
+  <pre id="chim_diag_pre" style="white-space:pre-wrap;font-family:monospace;font-size:12px"></pre>
+</details>
+<script id="chimney_mode_helper_fix">
+(function(){
+  function $(s,c){return (c||document).querySelector(s);}
+  function applyMode(){
+    var byI = $('#byInches'), byB = $('#byBrick');
+    var rb = $('#mode_brick');
+    if(!byI || !byB || !rb) return;
+    var brickMode = !!rb.checked;
+    byI.style.display = brickMode ? 'none':'grid';
+    byB.style.display = brickMode ? 'grid':'none';
+    try{ if (typeof calc==='function') calc(); }catch(_){}
+  }
+  function bind(){
+    var r1=$('#mode_inches'), r2=$('#mode_brick');
+    if(r1){ r1.addEventListener('change', applyMode); r1.addEventListener('input', applyMode); }
+    if(r2){ r2.addEventListener('change', applyMode); r2.addEventListener('input', applyMode); }
+    // Label clicks
+    var card = document.getElementById('chimneyCard');
+    if(card){
+      card.addEventListener('click', function(e){
+        var t=e.target;
+        if(t && (t.matches('label')||t.closest('label')) && (card.contains($('#mode_inches'))||card.contains($('#mode_brick')))){
+          setTimeout(applyMode,0);
+        }
+      });
+    }
+    applyMode();
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', bind, {once:true}); else bind();
+})();
+</script>
 </div>
 <!-- END: Chimney Helper (embedded) -->
 
@@ -1354,11 +1459,11 @@ var tbody = document.getElementById('matTbody');
   const YIELD = { eifs_base:55, eifs_mesh:475 };
 
   const FINISH_EIFS = [
-    { id:'parex_coarse', label:'Parex DPR Sand Coarse — 5 gal', regex:MATCH.parex_coarse, unit:'bucket', default_sf:90 },
-    { id:'parex_fine',   label:'Parex DPR Sand Fine — 5 gal',   regex:MATCH.parex_fine,   unit:'bucket', default_sf:90 },
-    { id:'parex_swirl',  label:'Parex DPR Swirl Fine — 5 gal',  regex:MATCH.parex_swirl,  unit:'bucket', default_sf:90 },
-    { id:'parex_smooth', label:'Parex DPR Sand Smooth — 5 gal', regex:MATCH.parex_smooth, unit:'bucket', default_sf:90 },
-    { id:'mp_rolltex',   label:'MP Roll‑Tex Coating — 5 gal',   regex:MATCH.mp_rolltex,   unit:'bucket', default_sf:90 }
+    { id:'parex_coarse', label:'Parex DPR Sand Coarse — 5 gal', regex:MATCH.parex_coarse, unit:'bucket', default_sf:80 },
+    { id:'parex_fine',   label:'Parex DPR Sand Fine — 5 gal',   regex:MATCH.parex_fine,   unit:'bucket', default_sf:130 },
+    { id:'parex_swirl',  label:'Parex DPR Swirl Fine — 5 gal',  regex:MATCH.parex_swirl,  unit:'bucket', default_sf:120 },
+    { id:'parex_smooth', label:'Parex DPR Sand Smooth — 5 gal', regex:MATCH.parex_smooth, unit:'bucket', default_sf:160 },
+    { id:'mp_rolltex',   label:'MP Roll‑Tex Coating — 5 gal',   regex:MATCH.mp_rolltex,   unit:'bucket', default_sf:150 }
   ];
   const FINISH_TRAD = [
     { id:'specmix_s', label:'SPEC MIX Type S — 80 lb', regex:MATCH.specmix_s, unit:'bag', default_sf:40 }
@@ -1424,6 +1529,15 @@ var tbody = document.getElementById('matTbody');
     const n = parseSfFromText(t); if(n>0) return n;
     const cells = Array.from(tr.cells || []);
     for(const td of cells){ const n2 = parseSfFromText(td.textContent || ''); if(n2>0) return n2; }
+    // Fallback: look into in-memory materials[] for coverageSqft
+    try{
+      if (typeof materials !== 'undefined' && Array.isArray(materials) && materials.length) {
+        // Try by regex against materials.item
+        const rx = regex;
+        const row = materials.find(m => { try { return rx && rx.test(String(m.item||'')); } catch(e){ return false; } });
+        if(row && row.coverageSqft && !isNaN(parseFloat(row.coverageSqft))) return parseFloat(row.coverageSqft);
+      }
+    } catch(e){ /* ignore */ }
     return 0;
   }
 
@@ -1587,13 +1701,13 @@ var tbody = document.getElementById('matTbody');
       res.debug.push('finish_units='+fin_units+', fin_sf='+fin_sf);
 
       // Foam
-      if($('#stu_use_foam')?.checked){
+      var __cb=document.getElementById('stu_use_foam'); if(__cb && __cb.checked){
         const foam = getFoamChoice();
         const perBoard = foam.w * foam.h; // 2x4 = 8 sf
         const perBundle = foam.sheets * perBoard;
-        let bundles = areaEff / perBundle; bundles = roundRule(bundles, roundUp);
+        let bundles = Math.ceil(areaEff / perBundle);
         const boards = bundles * foam.sheets;
-        $('#stu_foam_note').textContent = '('+perBundle+' sf/bundle · '+foam.sheets+' boards/bundle)';
+        var __fn=document.getElementById('stu_foam_note'); if(__fn){ __fn.textContent = '('+perBundle+' sf/bundle · '+foam.sheets+' boards/bundle)'; }
         res.html.push('<div><strong>Foam ('+esc(foam.label)+'):</strong> '+bundles+' bundles (~'+boards+' boards)</div>');
         res.lines.push('EIFS foam 2×4 ft sheets: ≈ '+bundles+' bundles (~'+boards+' boards).');
         matClearGroupExcept(FOAM_KEYS, foam.id);
@@ -1773,6 +1887,13 @@ document.addEventListener('DOMContentLoaded', function(){
     <div class="row"><b>Bags Equivalent (approx.)</b><span class="spacer"></span><span class="muted small">Uses Quikrete/Sakrete published yields</span></div>
     <div id="tm_bags_rows" style="display:flex;flex-direction:column;gap:4px;margin-top:6px;"></div>
   </div>
+
+<div class="row" style="margin-top:8px;">
+  <details id="concrete_diag">
+    <summary>Diagnostics</summary>
+    <pre id="concrete_diag_pre" style="white-space:pre-wrap;font-family:monospace;font-size:12px"></pre>
+  </details>
+</div>
 </div>
 
 
@@ -2082,6 +2203,14 @@ return;
 <span class="pill">Delivery: <span class="mono" id="ct_deliv">$0.00</span></span>
 <span class="pill">CC Subtotal: <span class="mono" id="ct_sub">$0.00</span></span>
 </div>
+
+<!-- CC small loads Diagnostics -->
+<div class="row" style="margin-top:8px;">
+  <details id="cc_small_diag">
+    <summary>Diagnostics</summary>
+    <pre id="cc_small_diag_pre" style="white-space:pre-wrap;font-family:monospace;font-size:12px"></pre>
+  </details>
+</div>
 </div>
 <div class="subcard" style="border:1px dashed #ccc; padding:10px; margin:10px 0;">
 <div class="subcard">
@@ -2131,6 +2260,14 @@ return;
 <span class="pill">MV Subtotal: <span class="mono" id="mv_sub">$0.00</span></span>
 </div>
 </div>
+
+<!-- MV big trucks Diagnostics -->
+<div class="row" style="margin-top:8px;">
+  <details id="mv_diag">
+    <summary>Diagnostics</summary>
+    <pre id="mv_diag_pre" style="white-space:pre-wrap;font-family:monospace;font-size:12px"></pre>
+  </details>
+</div>
 </div>
 </div>
 <!-- FUEL -->
@@ -2148,15 +2285,29 @@ return;
 <div class="row">
 <span class="pill">Fuel Subtotal: <span class="mono" id="fuel_sub">$0.00</span></span>
 </div>
+
+<div class="row" style="margin-top:8px;">
+  <details id="fuel_diag">
+    <summary>Diagnostics</summary>
+    <pre id="fuel_diag_pre" style="white-space:pre-wrap;font-family:monospace;font-size:12px"></pre>
+  </details>
+</div>
 </div>
 <!-- WASTE -->
 <div class="card" data-card-waste data-cat="waste">
-<div class="row"><h3 style="margin:0">Waste / Disposal</h3><span class="spacer"></span><button class="ghost" id="wasteAdd">+ Add Disposal item</button><span class="muted">Modern Materials — Clean asphalt disposal</span></div>
+<div class="row"><h3 style="margin:0">Waste / Disposal</h3><span class="spacer"></span><button class="ghost" id="wasteAdd">+ Add Disposal item</button></div>
 <table>
 <thead><tr><th>Use</th><th>Material</th><th>Facility</th><th>Units</th><th>Rate</th><th>Qty</th><th>Ext.</th><th></th></tr></thead>
 <tbody id="wasteTbody"></tbody>
 <tfoot><tr><td class="right" colspan="6">Disposal Subtotal</td><td class="right mono" id="wasteSubtotal">$0.00</td><td></td></tr></tfoot>
 </table>
+
+<div class="row" style="margin-top:8px;">
+  <details id="waste_diag">
+    <summary>Diagnostics</summary>
+    <pre id="waste_diag_pre" style="white-space:pre-wrap;font-family:monospace;font-size:12px"></pre>
+  </details>
+</div>
 </div>
 <!-- SILICA CONTROLS -->
 <div class="card" id="silicaCard" data-cat="silica">
@@ -2175,6 +2326,13 @@ return;
     <button class="ghost" id="sil_copy_notes" type="button">Copy ECP Notes</button>
     <textarea id="sil_ecp_notes" rows="6" style="width:100%" placeholder="Silica ECP notes will appear here when you toggle tasks."></textarea>
   </div>
+
+<div class="row" style="margin-top:8px;">
+  <details id="silica_diag">
+    <summary>Diagnostics</summary>
+    <pre id="silica_diag_pre" style="white-space:pre-wrap;font-family:monospace;font-size:12px"></pre>
+  </details>
+</div>
 </div>
 <!-- TOOLS -->
 <div class="card" id="toolsCard" data-cat="tools">
@@ -2184,6 +2342,13 @@ return;
 <tbody id="toolTbody"></tbody>
 <tfoot><tr><td class="right" colspan="6">Tools Reserve Subtotal</td><td class="right mono" id="toolSubtotal">$0.00</td><td></td></tr></tfoot>
 </table>
+
+<div class="row" style="margin-top:8px;">
+  <details id="tools_diag">
+    <summary>Diagnostics</summary>
+    <pre id="tools_diag_pre" style="white-space:pre-wrap;font-family:monospace;font-size:12px"></pre>
+  </details>
+</div>
 </div>
 <!-- TOTALS -->
 <div class="card" id="totalsCard" data-cat="totals"><div class="row"><span class="pill">Directs (excl. Company): <span class="mono" id="directs">$0.00</span></span>
@@ -2315,6 +2480,18 @@ return;
       if(w.role==='company'){ companyCost+=cost; } else { subtotalExclCompany+=cost; }
     });
     byId('crewSubtotal').textContent = fmt(subtotalExclCompany);
+    try{
+      var pre=document.getElementById('crew_diag_pre');
+      if(pre){
+        var lines=[];
+        lines.push('crewWideOn='+(typeof crewWideOn!=='undefined'?crewWideOn:false));
+        lines.push('crewDaysMode='+(typeof crewDaysMode!=='undefined'?crewDaysMode:false));
+        lines.push('baseHours='+(typeof baseHours!=='undefined'?baseHours:0));
+        lines.push('subtotalExclCompany=$'+fmt(subtotalExclCompany));
+        lines.push('companyCost=$'+fmt(companyCost));
+        pre.textContent = lines.join('\n');
+      }
+    }catch(e){}
     return {subtotalExclCompany, companyCost};
   }
 
@@ -2443,7 +2620,8 @@ let materials = [
     });
   }
   function materialsSubtotal(){
-    let sub=0;
+    let sub=0; let dbg=[]; let used=0;
+
     document.querySelectorAll('#matTbody tr').forEach(tr=>{
       const idx = materials.findIndex(x=>x.id===tr.dataset.id); const m = materials[idx];
       const areaOrQty = num(m.qty);
@@ -2460,8 +2638,10 @@ let materials = [
       }
       const ext = m.use ? price * (units||0) : 0;
       sub += ext; tr.querySelector('.mat_ext').textContent = fmt(ext);
+      if (m.use && (units||0)>0){ dbg.push((m.item||m.id)+': '+(units||0)+' '+(m.units||'unit')+' × $'+fmt(price)+' = $'+fmt(ext)); used++; }
     });
-    byId('matSubtotal').textContent = fmt(sub); return sub;
+    byId('matSubtotal').textContent = fmt(sub); 
+    try{ var pre=document.getElementById('mat_diag_pre'); if(pre){ pre.textContent = 'items_used='+used+'\n' + dbg.join('\n'); } }catch(e){} return sub;
   }
 
   // ===== Concrete =====
@@ -5724,7 +5904,7 @@ document.addEventListener('DOMContentLoaded', function(){
     // Flue tiles (total to purchase, includes #flues and waste)
     const {per: perFlue, tileLen, proj, required} = tilesPerFlue();
     const flues = 1;
-    const flueTotal = Math.ceil(perFlue * flues * (1+waste));
+    const flueTotal = perFlue; // exclude waste multiplier for flue tiles
 
     // Crown concrete volume & bags (80 lb ~0.60 ft³)
     let crownVolFt3 = 0, crownBags = 0;
@@ -5764,6 +5944,37 @@ document.addEventListener('DOMContentLoaded', function(){
       '<div><b>Face area</b>: '+faceAreaSF.toFixed(2)+' sf</div>' +
       '<div><b>Perimeter</b>: '+(facePerimIn/12).toFixed(2)+' lf</div>' +
       '<div><b>Required flue height (in)</b>: '+required.toFixed(1)+' (rebuild '+hIn.toFixed(1)+' + crown '+( $('#opt_crown').checked ? num($('#crown_thk').value).toFixed(1) : 0 )+' + projection '+(Math.max(0, num($('#proj_in').value))).toFixed(1)+')</div>';
+// Diagnostics (Chimney)
+try{
+  var pre = document.getElementById('chim_diag_pre');
+  if (pre){
+    var L=[];
+    function push(label, v, d){ 
+      if (v===undefined || v===null || (typeof v==='number' && !isFinite(v))) return; 
+      if (typeof v==='number') { L.push(label+'='+v.toFixed(d!=null?d:2)); } else { L.push(label+'='+String(v)); }
+    }
+    push('mode', mode);
+    push('width_in', width);
+    push('depth_in', depth);
+    push('perCourse', perCourse);
+    push('courseH_in', courseH);
+    push('height_in', hIn);
+    push('courses', courses);
+    push('facePerim_in', facePerimIn);
+    push('faceArea_sf', faceAreaSF);
+    push('tile_len', typeof tileLen!=='undefined'?tileLen:null, 0);
+    push('proj_in', typeof proj!=='undefined'?proj:null, 0);
+    push('required_in', typeof required!=='undefined'?required:null, 0);
+    push('bricks_final', typeof bricksFinal!=='undefined'?bricksFinal:null, 0);
+    push('mortar_bags_80lb', typeof mortarFinal!=='undefined'?mortarFinal:null, 0);
+    push('flue_total', typeof flueTotal!=='undefined'?flueTotal:null, 0);
+    if (document.getElementById('opt_crown') && document.getElementById('opt_crown').checked) push('crown_bags', typeof crownBags!=='undefined'?crownBags:null, 0);
+    if (document.getElementById('opt_flash') && document.getElementById('opt_flash').checked){ push('flash_LF', typeof flashLF!=='undefined'?flashLF:null, 1); push('copper_SF', typeof copperSF!=='undefined'?copperSF:null, 1); }
+    push('cricket_required', (width>30));
+    pre.textContent = L.join('\\n');
+    }
+}catch(ex){ var pre2=document.getElementById('chim_diag_pre'); if(pre2){ pre2.textContent='JS Error: '+ex.message; } }
+
 
     // Scope text
     const flueLabel = $('#flue_size').value;
@@ -5785,13 +5996,29 @@ document.addEventListener('DOMContentLoaded', function(){
       $('#byBrick').style.display = 'none';
       calc();
     });
-    $('#mode_brick').addEventListener('change', ()=>{
+$('#mode_brick').addEventListener('change', ()=>{
       $('#byInches').style.display = 'none';
       $('#byBrick').style.display = 'grid';
       calc();
     });
 
-    // Brick preset
+    // Bind inputs (both modes) to recalc
+    (['w_in','d_in','h_ft','h_in','waste','bpsf','opt_crown','crown_thk','crown_oh','opt_flash','flash_h',
+      'tile_len','proj_in','auto_tiles','no_cap',
+      'b_len','b_hgt','joint','brixA','brixB',
+      'h_ft_b','h_in_b','w_ft_b','w_in_b','d_ft_b','d_in_b','waste_b']).forEach(function(id){
+      var el = document.getElementById(id);
+      if (!el) return;
+      ['input','change'].forEach(function(ev){
+        try{ el.addEventListener(ev, calc); }catch(_){}
+      });
+    });
+    // Fallback delegated listeners on the whole card
+    (function(card){ if(card){ 
+      card.addEventListener('input', function(){ try{ calc(); }catch(_){}});
+      card.addEventListener('change', function(){ try{ calc(); }catch(_){}});
+    }})(document.getElementById('chimneyCard'));
+// Brick preset
     $('#brickPreset') && $('#brickPreset').addEventListener('change', (e)=>{
       const v = e.target.value;
       if (v==='mod'){ $('#b_len').value = 7.625; $('#b_hgt').value = 2.25; }
@@ -5800,8 +6027,7 @@ document.addEventListener('DOMContentLoaded', function(){
       document.getElementById('b_hgt').disabled = (v!=='custom');
       calc();
     });
-
-    // Auto tiles & cap toggle
+// Auto tiles & cap toggle
     $('#auto_tiles').addEventListener('change', calc);
     $('#no_cap').addEventListener('change', calc);
     $('#proj_in').addEventListener('input', calc);
@@ -5813,12 +6039,12 @@ document.addEventListener('DOMContentLoaded', function(){
     });
 
     // Copy scope
-    $('#copyScope').addEventListener('click', ()=>{
+    (function(el){ if(el){ el.addEventListener('click', ()=>{
       const ta = $('#scope'); ta.select(); document.execCommand('copy');
-    });
+    }); }})(document.querySelector('#copyScope'));
 
     // Reset
-    $('#resetBtn').addEventListener('click', ()=>{
+    (function(el){ if(el){ el.addEventListener('click', ()=>{
       document.querySelectorAll('input[type="number"]').forEach(i=>i.value = i.id.includes('waste') ? 10 : 0);
       $('#mode_inches').checked = true;
       $('#mode_inches').dispatchEvent(new Event('change'));
@@ -5836,13 +6062,636 @@ document.addEventListener('DOMContentLoaded', function(){
       $('#flash_h').value = 8;
       calc();
       window.scrollTo({top:0, behavior:'smooth'});
-    });
+    }); }})(document.querySelector('#resetBtn'));
 
+    // Init
     calc();
   }
 
   if (document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', bind, {once:true}); }
   else { bind(); }
+})();
+</script>
+
+<!-- Auto-injected: default 'Include end bars' to ON -->
+<script id="forceEndBarsDefaultOn">
+document.addEventListener('DOMContentLoaded', function() {
+  try {
+    var el = document.getElementById('bw_include_end_bars');
+    if (el) el.checked = true;
+  } catch(e) {}
+});
+</script>
+
+<!-- Auto-injected: Stucco Finish Yield fix (per-product + materials fallback) -->
+<script id="stucco-finish-yield-fix-v2a">
+(function(){
+  function $(id){ return document.getElementById(id); }
+  // Per-product defaults and matchers
+  var MAP = {
+    'parex_coarse':  { name:'Parex DPR Sand Coarse — 5 gal',  default_sf:80,  regex:/Parex.*Coarse.*5\s*gal/i },
+    'parex_fine':    { name:'Parex DPR Sand Fine — 5 gal',    default_sf:130, regex:/Parex.*Fine.*5\s*gal/i },
+    'parex_swirl':   { name:'Parex DPR Swirl Fine — 5 gal',   default_sf:120, regex:/Parex.*Swirl.*5\s*gal/i },
+    'parex_smooth':  { name:'Parex DPR Sand Smooth — 5 gal',  default_sf:160, regex:/Parex.*Smooth.*5\s*gal/i },
+    'mp_rolltex':    { name:'MP Roll\-Tex Coating — 5 gal',  default_sf:150, regex:/Roll[\-\s]?Tex.*5\s*gal/i },
+    'specmix_s':     { name:'SPEC MIX Type S — 80 lb',        default_sf:40,  regex:/SPEC\s*MIX\s*Type\s*S.*80/i }
+  };
+
+  function getMatYield(regex){
+    try{
+      var tbody = document.getElementById('matTbody');
+      if (tbody){
+        var rows = Array.from(tbody.querySelectorAll('tr'));
+        var row = rows.find(function(tr){ return regex.test((tr.textContent||'')); });
+        if (row){
+          var cov = row.getAttribute('data-coverage') || (row.dataset ? row.dataset.coverage : null);
+          if (cov) { var n=parseFloat(cov); if(isFinite(n) && n>0) return n; }
+          // fallback: parse something like "≈150 sf" in row text
+          var m = (row.textContent||'').match(/(~|≈)?\s*(\d+)\s*sf/i);
+          if (m){ var n2=parseFloat(m[2]); if(isFinite(n2) && n2>0) return n2; }
+        }
+      }
+      // Last resort: in-memory materials[] (if present)
+      if (window.materials && Array.isArray(window.materials)){
+        var item = window.materials.find(function(m){ try{ return regex.test(String(m.item||'')); }catch(e){ return false; } });
+        if (item && isFinite(parseFloat(item.coverageSqft))) return parseFloat(item.coverageSqft);
+      }
+    }catch(e){}
+    return 0;
+  }
+
+  function syncYield(){
+    var sel = $('stu_finish_sel'); var yEl=$('stu_finish_yield'); var useMat = $('stu_finish_use_mat') && $('stu_finish_use_mat').checked;
+    if (!sel || !yEl) return;
+    var choice = MAP[sel.value] || {default_sf:90, regex:/a^/};
+    var val = 0;
+    if (useMat) val = getMatYield(choice.regex);
+    if (!(val>0)) val = choice.default_sf;
+    yEl.value = (isFinite(val) && val>0) ? Math.round(val) : 90;
+    try{ if (typeof window.stuccoCalc==='function') window.stuccoCalc(); else if (typeof calc==='function') calc(); }catch(e){}
+  }
+
+  function bind(){
+    var sel = $('stu_finish_sel'), chk=$('stu_finish_use_mat');
+    if (sel){ sel.addEventListener('change', syncYield); sel.addEventListener('input', syncYield); }
+    if (chk){ chk.addEventListener('change', syncYield); }
+    // Seed on load
+    syncYield();
+  }
+
+  if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', bind, {once:true});
+  else bind();
+})();
+</script>
+
+<script id="stucco_diag_early_fix">
+(function(){
+  function $(id){ return document.getElementById(id); }
+  function num(id){ var el=$(id); return el? (parseFloat(el.value||'0')||0) : 0; }
+  function val(id){ var el=$(id); return el? (el.value||'') : ''; }
+  function chk(id){ var el=$(id); return el? !!el.checked : false; }
+  function writeEarly(){
+    try{
+      var pre = document.getElementById('stu_diag_pre') || document.getElementById('stucco_diag_pre');
+      if (!pre) return;
+      var L=[];
+      function push(label, v, d){
+        if (v===undefined || v===null || (typeof v==='number' && !isFinite(v))) return;
+        if (typeof v==='number') L.push(label+'='+v.toFixed(d!=null?d:2));
+        else L.push(label+'='+String(v));
+      }
+      var areaRaw = num('stu_area');
+      var wastePct = num('stu_waste');
+      var roundUp = chk('stu_round');
+      var finUseMat = chk('stu_finish_use_mat');
+      var finYield = num('stu_finish_yield');
+      var finSel = val('stu_finish_sel');
+      var foamOn = chk('stu_use_foam');
+      var foamSel = val('stu_foam_sel');
+      push('area_raw_sf', areaRaw, 2);
+      push('waste_pct', wastePct, 2);
+      push('round_up', roundUp?1:0, 0);
+      push('finish_use_mat', finUseMat?1:0, 0);
+      push('finish_yield', finYield, 2);
+      push('finish_product', finSel);
+      push('foam_on', foamOn?1:0, 0);
+      push('foam_sel', foamSel);
+      pre.textContent = L.join('\n');
+      }catch(_){ /* no-op */ }
+  }
+  function bind(){
+    var ids = ['stu_area','stu_waste','stu_round','stu_finish_use_mat','stu_finish_yield','stu_finish_sel','stu_use_foam','stu_foam_sel'];
+    ids.forEach(function(id){
+      var el = $(id); if(!el) return;
+      ['input','change'].forEach(function(ev){
+        try{ el.addEventListener(ev, writeEarly); }catch(_){}
+      });
+    });
+    // First paint
+    writeEarly();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind, {once:true});
+  else bind();
+})();
+</script>
+
+<!-- Concrete Diagnostics Script -->
+<script id="concrete_diag_script">
+(function(){
+  function $(id){ return document.getElementById(id); }
+  function num(id){
+    var el = $(id); if(!el) return 0;
+    var s = String(el.value||'').replace(/[,$]/g,'');
+    var v = parseFloat(s); return isFinite(v) ? v : 0;
+  }
+  function val(id){ var el=$(id); return el ? (el.value||'') : ''; }
+  function chk(id){ var el=$(id); return el ? !!el.checked : false; }
+
+  function writeDiag(){
+    try{
+      var L = num('tm_len_ft');
+      var W = num('tm_wid_ft');
+      var T = num('tm_thk_in');
+      var waste = chk('tm_waste_on');
+      var roundStep = parseFloat(val('tm_round')||'0')||0;
+
+      var yards_raw = (L * W * (T/12)) / 27;
+      var yards_waste = waste ? yards_raw * 1.05 : yards_raw;
+      var yards_round = roundStep>0 ? Math.ceil(yards_waste/roundStep)*roundStep : yards_waste;
+
+      var pre = $('concrete_diag_pre');
+      if (pre){
+        var lines = [];
+        function push(k,v,d){
+          if (v===undefined || v===null) return;
+          if (typeof v==='number'){ lines.push(k+'='+(isFinite(v)? v.toFixed(d!=null?d:2) : String(v))); }
+          else { lines.push(k+'='+String(v)); }
+        }
+        push('L_ft', L, 2);
+        push('W_ft', W, 2);
+        push('T_in', T, 2);
+        push('waste_on', waste?1:0, 0);
+        push('round_step', roundStep, 2);
+        push('yards_raw', yards_raw, 2);
+        push('yards_with_waste', yards_waste, 2);
+        push('yards_rounded', yards_round, 2);
+        pre.textContent = lines.join('\\n');
+      }
+    }catch(ex){
+      var pre = $('concrete_diag_pre');
+      if (pre) pre.textContent = 'JS Error: '+ex.message;
+    }
+  }
+
+  function bind(){
+    var ids = ['tm_len_ft','tm_wid_ft','tm_thk_in','tm_waste_on','tm_round'];
+    ids.forEach(function(id){
+      var el = $(id); if(!el) return;
+      ['input','change'].forEach(function(ev){
+        try{ el.addEventListener(ev, writeDiag); }catch(_){}
+      });
+    });
+    var card = document.getElementById('concreteCard');
+    if (card){
+      card.addEventListener('input', writeDiag);
+      card.addEventListener('change', writeDiag);
+    }
+    writeDiag();
+  }
+
+  if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', bind, {once:true});
+  else bind();
+})();
+</script>
+
+
+<script id="cc_small_diag_script">
+(function(){
+  function $(id){ return document.getElementById(id); }
+  function toNum(val){
+    if (val==null) return 0;
+    var t = String(val).replace(/[$,]/g,'');
+    var v = parseFloat(t);
+    return isFinite(v) ? v : 0;
+  }
+  function write(){
+    try{
+      var yards = toNum( ( $('ct_yards') || {} ).value );
+      var price = toNum( ( $('ct_price') || {} ).value );
+      var deliv = toNum( ( $('ct_delivery') || {} ).value );
+      var trips = toNum( ( $('ct_trips_read') || {} ).textContent );
+      var outArea = ( ($('ct_out_of_area')||{}).checked ? 1 : 0 );
+
+      var matTxt = ( ($('ct_mat')||{}).textContent || '' ).trim();
+      var delTxt = ( ($('ct_deliv')||{}).textContent || '' ).trim();
+      var subTxt = ( ($('ct_sub')||{}).textContent || '' ).trim();
+
+      var lines = [];
+      function push(k,v){ if(v!==undefined && v!==null) lines.push(k+'='+String(v)); }
+      function pushNum(k,v,d){ lines.push(k+'='+ (isFinite(v)? Number(v).toFixed(d!=null?d:2) : String(v))); }
+
+      pushNum('yards', yards, 2);
+      pushNum('price_per_yd', price, 2);
+      pushNum('delivery_fee_trip', deliv, 2);
+      pushNum('trips_auto', trips, 0);
+      push('out_of_area', outArea);
+      push('material_out', matTxt);
+      push('delivery_out', delTxt);
+      push('cc_subtotal_out', subTxt);
+
+      var pre = $('cc_small_diag_pre');
+      if (pre) pre.textContent = lines.join('\n');
+    }catch(ex){
+      var pre = $('cc_small_diag_pre');
+      if (pre) pre.textContent = 'JS Error: ' + ex.message;
+    }
+  }
+  function bind(){
+    ['ct_yards','ct_price','ct_delivery','ct_out_of_area'].forEach(function(id){
+      var el = $(id); if(!el) return;
+      ['input','change'].forEach(function(ev){ try{ el.addEventListener(ev, write); }catch(_){ } });
+    });
+    // Observe output pills
+    ['ct_trips_read','ct_mat','ct_deliv','ct_sub'].forEach(function(id){
+      var el = $(id); if(!el || !window.MutationObserver) return;
+      var mo = new MutationObserver(function(){ write(); });
+      mo.observe(el, {characterData:true, subtree:true, childList:true});
+    });
+    // Delegate within the small-loads subcard (closest .subcard to heading)
+    var hdr = Array.from(document.querySelectorAll('.subcard .row b')).find(function(b){ return /Concrete Connections\s+—\s+small loads/.test(b.textContent||''); });
+    var sub = hdr ? hdr.closest('.subcard') : null;
+    if (sub){ sub.addEventListener('input', write); sub.addEventListener('change', write); }
+    write();
+  }
+  if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', bind, {once:true}); else bind();
+})();
+</script>
+
+
+
+<script id="mv_diag_script">
+(function(){
+  function $(id){ return document.getElementById(id); }
+  function toNum(val){
+    if (val==null) return 0;
+    var t = String(val).replace(/[$,]/g,'');
+    var v = parseFloat(t);
+    return isFinite(v) ? v : 0;
+  }
+  function write(){
+    try{
+      var yards   = toNum( ( $('mv_yards')||{} ).value );
+      var price   = toNum( ( $('mv_price')||{} ).value );
+      var fee_man = toNum( ( $('mv_short')||{} ).value );
+      var winter  = toNum( ( $('mv_winter')||{} ).value );
+      var winter_auto = ( ($('mv_winter_auto')||{}).checked ? 1 : 0 );
+      var winter_on   = ( ($('mv_winter_on')||{}).checked ? 1 : 0 );
+      var cap     = toNum( ( $('mv_cap')||{} ).value );
+      var min_ld  = toNum( ( $('mv_min')||{} ).value );
+      var short_per_yd = toNum( ( $('mv_short_per_yd')||{} ).value );
+      var fuel    = toNum( ( $('mv_fuel')||{} ).value );
+      var env     = toNum( ( $('mv_env')||{} ).value );
+      var halfAgg = ( ($('mv_ex_38')||{}).checked ? 1 : 0 );
+      var halfAggRate = toNum( ( $('mv_ex_38_ppy')||{} ).value );
+
+      var trucks  = toNum( ( ($('mv_trucks')||{}).textContent ) );
+      var loadfees= ( ($('mv_loadfees')||{}).textContent || '' ).trim();
+      var shortfees=( ($('mv_shortfees')||{}).textContent || '' ).trim();
+      var matOut  = ( ($('mv_mat')||{}).textContent || '' ).trim();
+      var extras  = ( ($('mv_extras')||{}).textContent || '' ).trim();
+      var pumpOut = ( ($('mv_pump')||{}).textContent || '' ).trim();
+      var subOut  = ( ($('mv_sub')||{}).textContent || '' ).trim();
+
+      var L=[];
+      function push(k,v){ if(v!==undefined && v!==null) L.push(k+'='+String(v)); }
+      function pushNum(k,v,d){ L.push(k+'='+ (isFinite(v)? Number(v).toFixed(d!=null?d:2) : String(v))); }
+
+      pushNum('yards', yards, 2);
+      pushNum('price_per_yd', price, 2);
+      pushNum('manual_fee', fee_man, 2);
+      pushNum('winter_per_yd', winter, 2);
+      push('winter_auto', winter_auto);
+      push('winter_now', winter_on);
+      pushNum('truck_capacity', cap, 0);
+      pushNum('min_load_threshold', min_ld, 2);
+      pushNum('short_fee_per_yd', short_per_yd, 2);
+      pushNum('fuel_per_load', fuel, 2);
+      pushNum('env_fee_per_load', env, 2);
+      push('half_inch_agg', halfAgg);
+      pushNum('half_agg_rate', halfAggRate, 2);
+      pushNum('trucks_auto', trucks, 0);
+      push('per_load_fees_out', loadfees);
+      push('short_surcharges_out', shortfees);
+      push('material_out', matOut);
+      push('extras_out', extras);
+      push('pump_out', pumpOut);
+      push('mv_subtotal_out', subOut);
+
+      var pre = $('mv_diag_pre');
+      if (pre) pre.textContent = L.join('\n');
+    }catch(ex){
+      var pre2 = $('mv_diag_pre');
+      if (pre2) pre2.textContent = 'JS Error: '+ex.message;
+    }
+  }
+  function bind(){
+    ['mv_yards','mv_price','mv_short','mv_winter','mv_winter_auto','mv_winter_on','mv_cap','mv_min','mv_short_per_yd','mv_fuel','mv_env','mv_ex_38','mv_ex_38_ppy']
+      .forEach(function(id){
+        var el = document.getElementById(id); if(!el) return;
+        ['input','change'].forEach(function(ev){ try{ el.addEventListener(ev, write); }catch(_){ } });
+      });
+    // Observe output pills
+    ['mv_trucks','mv_loadfees','mv_shortfees','mv_mat','mv_extras','mv_pump','mv_sub'].forEach(function(id){
+      var el = document.getElementById(id); if(!el || !window.MutationObserver) return;
+      var mo = new MutationObserver(function(){ write(); });
+      mo.observe(el, {characterData:true, subtree:true, childList:true});
+    });
+    // Delegate inside the MV subcard
+    var hdr = Array.from(document.querySelectorAll('.subcard .row b')).find(function(b){ return /Mohican Valley\s+—\s+big trucks/.test(b.textContent||''); });
+    var mvCard = hdr ? hdr.closest('.subcard') : null;
+    if (mvCard){ mvCard.addEventListener('input', write); mvCard.addEventListener('change', write); }
+    write();
+  }
+  if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', bind, {once:true}); else bind();
+})();
+</script>
+
+
+<script id="fuel_diag_script">
+(function(){
+  function $(id){ return document.getElementById(id); }
+  function toNum(val){
+    if (val==null) return 0;
+    var t = String(val).replace(/[$,]/g,'');
+    var v = parseFloat(t);
+    return isFinite(v) ? v : 0;
+  }
+  function write(){
+    try{
+      var ppg = toNum( ( $('fuel_ppg')||{} ).value );
+      var gal = toNum( ( $('fuel_gal')||{} ).value );
+      var subTxt = ( ($('fuel_sub')||{}).textContent || '' ).trim();
+      var subtotal_calc = ppg * gal;
+
+      var L=[];
+      function push(k,v){ if(v!==undefined && v!==null) L.push(k+'='+String(v)); }
+      function pushNum(k,v,d){ L.push(k+'='+ (isFinite(v)? Number(v).toFixed(d!=null?d:2) : String(v))); }
+      pushNum('ppg', ppg, 3);
+      pushNum('gallons', gal, 2);
+      pushNum('subtotal_calc', subtotal_calc, 2);
+      push('subtotal_out', subTxt);
+
+      var pre = $('fuel_diag_pre');
+      if (pre) pre.textContent = L.join('\\n');
+    }catch(ex){
+      var pre2 = $('fuel_diag_pre');
+      if (pre2) pre2.textContent = 'JS Error: '+ex.message;
+    }
+  }
+  function bind(){
+    ['fuel_ppg','fuel_gal'].forEach(function(id){
+      var el = document.getElementById(id); if(!el) return;
+      ['input','change'].forEach(function(ev){ try{ el.addEventListener(ev, write); }catch(_){ } });
+    });
+    // Observe output pill
+    var out = document.getElementById('fuel_sub');
+    if (out && window.MutationObserver){
+      var mo = new MutationObserver(function(){ write(); });
+      mo.observe(out, {characterData:true, subtree:true, childList:true});
+    }
+    // Delegate inside card
+    var card = document.getElementById('fuelCard');
+    if (card){ card.addEventListener('input', write); card.addEventListener('change', write); }
+    write();
+  }
+  if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', bind, {once:true}); else bind();
+})();
+</script>
+
+<script id="waste_diag_script">
+(function(){
+  function $(id){ return document.getElementById(id); }
+  function toNum(val){
+    if (val==null) return 0;
+    var t = String(val).replace(/[$,]/g,'');
+    var v = parseFloat(t);
+    return isFinite(v) ? v : 0;
+  }
+  function write(){
+    try{
+      var rows = Array.from(document.querySelectorAll('#wasteTbody tr'));
+      var L = [];
+      L.push('rows='+rows.length);
+      var sub = 0;
+      rows.forEach(function(tr, i){
+        var useEl = tr.querySelector('.w_use');
+        var item = (tr.querySelector('.w_item')||{}).value || '';
+        var fac  = (tr.querySelector('.w_fac')||{}).value || '';
+        var units= (tr.querySelector('.w_units')||{}).value || '';
+        var rate = toNum( (tr.querySelector('.w_rate')||{}).value );
+        var qty  = toNum( (tr.querySelector('.w_qty')||{}).value );
+        var use  = useEl && useEl.checked ? 1 : 0;
+        var ext  = use ? rate * qty : 0;
+        sub += ext;
+        try{
+          var line = 'r'+(i+1)+': use='+use+' item='+item+' fac='+fac+' units='+units+
+                     ' rate='+ (isFinite(rate)? rate.toFixed(2):'0.00')+
+                     ' qty='+ (isFinite(qty)? qty.toFixed(2):'0.00')+
+                     ' ext='+ (isFinite(ext)? ext.toFixed(2):'0.00');
+          L.push(line);
+        }catch(_){}
+      });
+      var subTxt = (function(){ var el=$('wasteSubtotal'); return el ? (el.textContent||'').trim() : ''; })();
+      L.push('subtotal_calc='+sub.toFixed(2));
+      L.push('subtotal_out='+subTxt);
+      var pre = $('waste_diag_pre');
+      if (pre) pre.textContent = L.join('\\n');
+    }catch(ex){
+      var pre = $('waste_diag_pre');
+      if (pre) pre.textContent = 'JS Error: '+ex.message;
+    }
+  }
+  function bind(){
+    // Listen for changes within the waste card
+    var card = document.querySelector('[data-card-waste]');
+    if (card){
+      card.addEventListener('input', write);
+      card.addEventListener('change', write);
+    }
+    // Observe tbody for dynamic row changes and updates
+    var tb = document.getElementById('wasteTbody');
+    if (tb && window.MutationObserver){
+      var mo = new MutationObserver(function(){ write(); });
+      mo.observe(tb, {childList:true, subtree:true, characterData:true});
+    }
+    // Also watch subtotal pill changes
+    var pill = document.getElementById('wasteSubtotal');
+    if (pill && window.MutationObserver){
+      var mo2 = new MutationObserver(function(){ write(); });
+      mo2.observe(pill, {childList:true, characterData:true, subtree:true});
+    }
+    // Watch for "Add Disposal item" clicks
+    var btn = document.getElementById('wasteAdd');
+    if (btn){ btn.addEventListener('click', function(){ setTimeout(write, 0); }); }
+    write();
+  }
+  if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', bind, {once:true}); else bind();
+})();
+</script>
+
+<script id="silica_diag_script">
+(function(){
+  function $(id){ return document.getElementById(id); }
+  function containsDWVText(node){
+    if (!node) return false;
+    var txt = (node.textContent||'').toLowerCase();
+    return txt.indexOf('dewalt')!==-1 || txt.indexOf('dwv9402')!==-1 || txt.indexOf('fleece dust bag')!==-1;
+  }
+  function toNum(v){
+    if (v==null) return 0;
+    var t = String(v).replace(/[$,]/g,'');
+    var n = parseFloat(t);
+    return isFinite(n) ? n : 0;
+  }
+  function findDWVRow(){
+    var tb = document.getElementById('matTbody');
+    if (!tb) return null;
+    var rows = Array.from(tb.querySelectorAll('tr'));
+    for (var i=0;i<rows.length;i++){
+      var r = rows[i];
+      var itemCell = r.querySelector('.mat_item');
+      if (containsDWVText(itemCell)) return r;
+    }
+    return null;
+  }
+  function write(){
+    try{
+      var tuck = ( $('#sil_task_tuck')||{} ).checked ? 1 : 0;
+      var grind = ( $('#sil_task_grind')||{} ).checked ? 1 : 0;
+      var enclosed = ( $('#sil_enclosed')||{} ).checked ? 1 : 0;
+      var notesEl = $('#sil_ecp_notes');
+      var notesLen = notesEl ? (notesEl.value||'').length : 0;
+      var notesPreview = notesEl ? (notesEl.value||'').slice(0,80) : '';
+
+      var dwvRow = findDWVRow();
+      var dwv_in = !!dwvRow;
+      var dwv_use = 0, dwv_qty = 0, dwv_ext = 0;
+      if (dwvRow){
+        var u = dwvRow.querySelector('.mat_use'); dwv_use = u && u.checked ? 1 : 0;
+        var q = dwvRow.querySelector('.mat_qty'); dwv_qty = q ? toNum(q.value) : 0;
+        var extCell = dwvRow.querySelector('.mat_price'); // if ext shown elsewhere, fall back to row text
+        var extTxt = extCell ? (extCell.textContent||'') : '';
+        // Some tables have extension shown in a right cell; attempt more specific
+        var extRight = dwvRow.querySelector('.right.mono');
+        if (extRight && /[$]/.test(extRight.textContent||'')) extTxt = extRight.textContent;
+        dwv_ext = toNum(extTxt);
+      }
+      var matSubTxt = (function(){ var el=document.getElementById('matSubtotal'); return el ? (el.textContent||'').trim() : ''; })();
+
+      var lines = [];
+      function push(k,v){ lines.push(k+'='+String(v)); }
+      function pushNum(k,v,d){ lines.push(k+'='+ (isFinite(v)? Number(v).toFixed(d!=null?d:2) : String(v))); }
+      push('task_tuck', tuck);
+      push('task_grind', grind);
+      push('enclosed', enclosed);
+      push('notes_len', notesLen);
+      push('notes_preview', notesPreview);
+      push('dwv_in_materials', dwv_in?1:0);
+      push('dwv_use', dwv_use);
+      pushNum('dwv_qty', dwv_qty, 2);
+      push('materials_subtotal', matSubTxt);
+
+      var pre = document.getElementById('silica_diag_pre');
+      if (pre) pre.textContent = lines.join('\\n');
+    }catch(ex){
+      var pre2 = document.getElementById('silica_diag_pre');
+      if (pre2) pre2.textContent = 'JS Error: ' + ex.message;
+    }
+  }
+  function bind(){
+    ['sil_task_tuck','sil_task_grind','sil_enclosed','sil_ecp_notes'].forEach(function(id){
+      var el = document.getElementById(id); if(!el) return;
+      ['input','change','keyup'].forEach(function(ev){ try{ el.addEventListener(ev, write); }catch(_){ } });
+    });
+    // Observe Materials table & subtotal for auto-added bag rows
+    var tb = document.getElementById('matTbody');
+    if (tb && window.MutationObserver){
+      var mo = new MutationObserver(function(){ write(); });
+      mo.observe(tb, {childList:true, subtree:true, characterData:true});
+    }
+    var pill = document.getElementById('matSubtotal');
+    if (pill && window.MutationObserver){
+      var mo2 = new MutationObserver(function(){ write(); });
+      mo2.observe(pill, {childList:true, subtree:true, characterData:true});
+    }
+    // Delegate inside silica card
+    var card = document.getElementById('silicaCard');
+    if (card){ card.addEventListener('input', write); card.addEventListener('change', write); }
+    write();
+  }
+  if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', bind, {once:true}); else bind();
+})();
+</script>
+
+<script id="tools_diag_script">
+(function(){
+  function toNum(v){
+    if (v==null) return 0;
+    var t=String(v).replace(/[$,]/g,'');
+    var n=parseFloat(t);
+    return isFinite(n)?n:0;
+  }
+  function write(){
+    try{
+      var tb = document.getElementById('toolTbody');
+      var rows = tb ? Array.from(tb.querySelectorAll('tr')) : [];
+      var subTxt = (function(){ var el=document.getElementById('toolSubtotal'); return el ? (el.textContent||'').trim() : ''; })();
+      var L = [];
+      L.push('rows='+rows.length);
+      rows.forEach(function(tr,i){
+        try{
+          var use = (tr.querySelector('.t_use')||{}).checked ? 1 : 0;
+          var name = (tr.querySelector('.t_name')||{}).value || '';
+          var cost = toNum( (tr.querySelector('.t_cost')||{}).value );
+          var life = toNum( (tr.querySelector('.t_life')||{}).value );
+          var frac = toNum( (tr.querySelector('.t_frac')||{}).value );
+          var hrs  = toNum( (tr.querySelector('.t_usehrs')||{}).value );
+          var extTxt = (tr.querySelector('.t_ext')||{}).textContent || '';
+          var ext = toNum(extTxt);
+          L.push('r'+(i+1)+': use='+use+' name='+name+' cost='+cost.toFixed(2)+
+                 ' life='+life.toFixed(1)+' frac='+frac.toFixed(2)+' hrs='+hrs.toFixed(1)+
+                 ' ext='+ext.toFixed(2));
+        }catch(_){}
+      });
+      L.push('subtotal_out='+subTxt);
+      var pre = document.getElementById('tools_diag_pre');
+      if (pre) pre.textContent = L.join('\\n');
+    }catch(ex){
+      var pre2 = document.getElementById('tools_diag_pre');
+      if (pre2) pre2.textContent = 'JS Error: '+ex.message;
+    }
+  }
+  function bind(){
+    var card = document.getElementById('toolsCard');
+    if (card){
+      card.addEventListener('input', write);
+      card.addEventListener('change', write);
+    }
+    var tb = document.getElementById('toolTbody');
+    if (tb && window.MutationObserver){
+      var mo = new MutationObserver(function(){ write(); });
+      mo.observe(tb, {childList:true, subtree:true, characterData:true});
+    }
+    var sub = document.getElementById('toolSubtotal');
+    if (sub && window.MutationObserver){
+      var mo2 = new MutationObserver(function(){ write(); });
+      mo2.observe(sub, {childList:true, subtree:true, characterData:true});
+    }
+    var btn = document.getElementById('addToolBtn');
+    if (btn){ btn.addEventListener('click', function(){ setTimeout(write,0); }); }
+    write();
+  }
+  if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', bind, {once:true}); else bind();
 })();
 </script>
 </body>
