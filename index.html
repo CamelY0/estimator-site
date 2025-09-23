@@ -72,30 +72,7 @@ body[data-active-group="crew"] .wrap .card[data-card-crew] {
 }
 
 </style>
-<script 
-(function(){
-  if (window.__errdash) return; window.__errdash = true;
-  function base(p){ try{ return (p||'').split('/').pop(); }catch(e){ return p; } }
-  var banner = document.createElement('div');
-  banner.id = 'js-error-banner';
-  banner.setAttribute('role','alert');
-  banner.textContent = '⏳ JS initializing…';
-  document.addEventListener('DOMContentLoaded', function(){
-    document.body.prepend(banner);
-  });
-
-  function show(msg, ok){
-    banner.style.display = 'block';
-    banner.className = ok ? 'ok' : '';
-    banner.innerHTML = (ok ? '✅ ' : '❌ ') + msg;
-  }
-
-  // Window "error" catches runtime errors AND most parse errors in later scripts
-  window.addEventListener('error', function(e){
-    var fn = base(e.filename||'');
-    var ln = (typeof e.lineno==='number' && e.lineno) ? (':'+e.lineno) : '';
-    var msg = (e && e.message) ? e.message : 'Script error';
-    show('JS not loaded <span class="mono">'+ fn + ln + '</span> ' + msg, false);
+<script "error"="" &&="" '="" '';="" ')="" ').pop();="" 'ok'="" 'script="" '✅="" '❌="" (':'+e.lineno)="" (function(){="" (p||'').split('="" (window.__errdash)="" +="" :="" ;="" <span="" ?="" and="" banner="document.createElement('div');" banner.classname="ok" banner.id="js-error-banner" banner.innerhtml="(ok" banner.setattribute('role','alert');="" banner.style.display="block" banner.textcontent="⏳ JS initializing…" base(p){="" catches="" class="mono" document.addeventlistener('domcontentloaded',="" document.body.prepend(banner);="" e.lineno="number" e.lineno)="" e.message="" e.message)="" error';="" errors="" fn="base(e.filename||'');" function="" function(){="" function(e){="" if="" in="" later="" ln="(typeof" loaded="" most="" msg="(e" msg;="" not="" ok){="" p;="" parse="" return="" return;="" runtime="" scripts="" show('js="" show(msg,="" try{="" var="" window="" window.__errdash="true;" window.addeventlistener('error',="" }="" });="" }catch(e){="">'+ fn + ln + '</span> ' + msg, false);
   }, true);
 
   // Unhandled rejected promises
@@ -214,9 +191,6 @@ window.SECTION = {
   ,cleanup: { cats: ['cleanup'], pins: new Set(['mHDX_TerryTowels_20pk']) },
   chimney: { cats: null, pins: new Set([]) }};
 </script>
-
-
-
 <style id="stucco-helper-visibility">
 /* Show the Stucco Helper card on Stucco and All tabs */
 .card[data-card-stucco]{ display:none; }
@@ -225,8 +199,6 @@ body[data-active-group="all"] .wrap .card[data-card-stucco]{ display:block !impo
 /* Fallback: if no data-active-group is present, do not hide the card */
 body:not([data-active-group]) .wrap .card[data-card-stucco]{ display:block !important; }
 </style>
-
-
 <style id="stucco-dropdown-fix">
 /* Ensure selects are clickable and visible */
 #stu_finish_sel{
@@ -244,7 +216,6 @@ body:not([data-active-group]) .wrap .card[data-card-stucco]{ display:block !impo
 }
 </style>
 <style>#stu_foam_sel{position:relative;z-index:10}</style>
-
 <style id="per-card-bubble-v2">
 /* Make each major group look like its own bubble */
 .card{
@@ -262,8 +233,6 @@ body:not([data-active-group]) .wrap .card[data-card-stucco]{ display:block !impo
 .sticky .pill:not(#stickyGrandPill):not(#stickyStatusPill){ display:none !important; }
 .sticky .group{ display:none !important; }
 </style>
-
-
 <style id="rings-safe-css">
 /* Colored rings for cards that are not the nested Block Wall container */
 .card[data-cat]{ position: relative; border-radius:16px; box-shadow: 0 6px 18px rgba(0,0,0,.2); }
@@ -288,8 +257,6 @@ body:not([data-active-group]) .wrap .card[data-card-stucco]{ display:block !impo
 .card[data-cat="tools"]{ --ring:#8b5cf6; }       /* purple */
 .card[data-cat="totals"]{ --ring:#22d3ee; }      /* cyan */
 </style>
-
-
 <style id="bw-shell-css">
 #bwShell{
   position: relative;
@@ -307,8 +274,6 @@ body:not([data-active-group]) .wrap .card[data-card-stucco]{ display:block !impo
 }
 /* Keep other card rings intact (from rings-safe-css) */
 </style>
-
-
 <style id="materials-shell-css">
 #materialsShell{
   position: relative;
@@ -325,27 +290,19 @@ body:not([data-active-group]) .wrap .card[data-card-stucco]{ display:block !impo
   padding-bottom: 0;
 }
 </style>
-
-
 <style id="materials-ring-off">
 /* Turn off the older card ring for Materials so only the shell border remains */
 #materialsCard::before { display:none !important; }
 </style>
-
-
 <style id="materials-border-off">
 /* Remove the default 1px gray card border for Materials so only the green shell shows */
 #materialsCard{ border: none !important; }
 </style>
-
-
 <style id="materials-flush-fix">
 /* Make Materials green border flush with the card edges (like Crew) */
 #materialsCard{ padding:0 !important; }
 #materialsShell{ margin:0 !important; border-radius:16px; padding:14px !important; }
 </style>
-
-
 <style id="flush-borders-fix">
 /* Delete the big blue border that wraps everything (card-level border-left) */
 #blockWallCard{ border: none !important; padding: 0 !important; }
@@ -359,8 +316,6 @@ body:not([data-active-group]) .wrap .card[data-card-stucco]{ display:block !impo
 #materialsCard::before{ display:none !important; }
 #materialsShell{ margin: 0 !important; border-radius:16px; padding:14px !important; }
 </style>
-
-
 <style id="bubble-tints">
 /* Soft fill tints to match each bubble's ring color */
 /* Use card backgrounds for all except Block Wall & Materials (they use inner shells) */
@@ -377,8 +332,6 @@ body:not([data-active-group]) .wrap .card[data-card-stucco]{ display:block !impo
 .card[data-cat="stucco"]{ background: rgba(96,165,250,0.06) !important; }     /* light blue */
 .card[data-cat="totals"]{ background: rgba(34,211,238,0.06) !important; }     /* cyan */
 </style>
-
-
 <style id="concrete-shell-css">
 /* Concrete bubble: dedicated shell so the entire Concrete section has its own ring and tint */
 #concreteCard{ padding:0 !important; border:none !important; }
@@ -398,11 +351,7 @@ body:not([data-active-group]) .wrap .card[data-card-stucco]{ display:block !impo
   padding-bottom: 0 !important;
 }
 </style>
-
-
 <style id="sticky-split-align">.sticky-inner{ justify-content: space-between !important; }</style>
-
-
 <style id="chimney-extra-css">
   /* Additional styles for Chimney Helper UI (kept minimal to avoid conflicts) */
   .section-box{
@@ -499,8 +448,6 @@ body:not([data-active-group]) .wrap .card[data-card-stucco]{ display:block !impo
   #chimneyCard #byInches #h_in{ max-width: 56px; }
 
 </style>
-
-
 <style id="chimney-helper-visibility">.wrap .card[data-card-chimney]{ display:none; }
   body[data-active-group="chimney"] .wrap .card[data-card-chimney],
   body[data-active-group="all"] .wrap .card[data-card-chimney]{ display:block !important; }
@@ -510,98 +457,89 @@ body:not([data-active-group]) .wrap .card[data-card-stucco]{ display:block !impo
 </head>
 <body>
 <div style="position:sticky; top:0; z-index:1000; background:inherit; padding:6px 12px; font:600 12px system-ui; color:#0a6c2f;">✅ JS loaded and running</div>
-
-
 <div class="wrap">
 <h2 style="margin:8px 0">Turcotte Masonry Estimator</h2>
 <!-- BLOCK WALL HELPER CARD -->
-<div class="card" id="blockWallCard" data-card="blockwall" data-cat="masonry">
-<div id="bwShell" class="bw-shell">
-
-  <div class="row">
-    <h3 style="margin:0">Block Wall Helper</h3>
-    <span class="spacer"></span>
-    <div class="group">
-      <label class="pill"><input type="checkbox" id="bw_include_end_bars" / checked> Include end bars</label>
-      <label class="pill"><input type="checkbox" id="bw_use_20ft" checked /> Use 20' rebar lengths</label>
-    </div>
-  </div>
-  
-  <div class="row" style="margin-top:8px">
-    <div class="group">
-      <h4 style="margin:6px 0">CMU Type</h4>
-      <label>Thickness (select one)
+<div class="card" data-card="blockwall" data-cat="masonry" id="blockWallCard">
+<div class="bw-shell" id="bwShell">
+<div class="row">
+<h3 style="margin:0">Block Wall Helper</h3>
+<span class="spacer"></span>
+<div class="group">
+<label class="pill"><input checked="" id="bw_include_end_bars" type="checkbox"/> Include end bars</label>
+<label class="pill"><input checked="" id="bw_use_20ft" type="checkbox"/> Use 20' rebar lengths</label>
+</div>
+</div>
+<div class="row" style="margin-top:8px">
+<div class="group">
+<h4 style="margin:6px 0">CMU Type</h4>
+<label>Thickness (select one)
         <select id="bw_thickness">
-          <option value="6">6&quot; (6x8x16)</option>
-          <option value="8" selected>8&quot; (8x8x16)</option>
-          <option value="10">10&quot; (10x8x16)</option>
-          <option value="12">12&quot; (12x8x16)</option>
-        </select>
-      </label>
-      <div class="pill">
-        <label><input type="radio" name="bw_height" value="8" checked> Standard 8&quot; course</label>
-      </div>
-      <div class="pill">
-        <label><input type="radio" name="bw_height" value="4"> Half‑High 4&quot; course</label>
-      </div>
-    
-    </div>
-    <div class="group">
-      <h4 style="margin:6px 0">Grout & Rebar</h4>
-      <label>Grout Pattern
+<option value="6">6" (6x8x16)</option>
+<option selected="" value="8">8" (8x8x16)</option>
+<option value="10">10" (10x8x16)</option>
+<option value="12">12" (12x8x16)</option>
+</select>
+</label>
+<div class="pill">
+<label><input checked="" name="bw_height" type="radio" value="8"/> Standard 8" course</label>
+</div>
+<div class="pill">
+<label><input name="bw_height" type="radio" value="4"/> Half‑High 4" course</label>
+</div>
+</div>
+<div class="group">
+<h4 style="margin:6px 0">Grout &amp; Rebar</h4>
+<label>Grout Pattern
         <select id="groutPattern">
-          <option value="full" selected>Fully Grouted</option>
-          <option value="16oc">Cells @ 16&quot; o.c.</option>
-          <option value="24oc">Cells @ 24&quot; o.c.</option>
-          <option value="32oc">Cells @ 32&quot; o.c.</option>
-        </select>
-      </label>
-    
-    <div class="group">
-      <h4 style="margin:6px 0">Special Shapes (allowances)</h4>
-      
-      <label>Bond Beam courses (enter 0 if none)
-        <input type="number" id="bw_bondbeam_courses" min="0" step="1" value="0">
-      </label>
-    </div>
-  </div>
-
-  <div class="row">
-    <div class="group">
-      <label>Wall Length — ft <input type="number" id="bw_len_ft" step="1" min="0" value="0"></label>
-      <label>in <input type="number" id="bw_len_in" step="1" min="0" max="11" value="0"></label>
-      <label>Wall Height — ft <input type="number" id="bw_h_ft" step="1" min="0" value="0"></label>
-      <label>in <input type="number" id="bw_h_in" step="1" min="0" max="11" value="0"></label>
-      <label>Waste % <input type="number" id="bw_waste" step="0.5" min="0" value="5"></label>
-    </div>
-  </div>
-  <div class="row small muted">Assumptions: 8×8×16 CMU (nominal), 3/8&quot; joints, every third cell has a vertical #4 rebar, all cells filled with grout.</div>
-  <div class="row">
-    <div class="group">
-      <label class="pill"><input type="checkbox" id="bw_round_up_blocks" checked> Round blocks up</label>
-      <label class="pill"><input type="checkbox" id="bw_round_up_bars" checked> Round bars up</label>
-      <label class="pill"><input type="checkbox" id="bw_round_up_bags" checked> Round bags up</label>
-    </div>
-  </div>
-  <div class="row">
-    <div class="col">
-      <h4>Quantities</h4>
-      <div id="bw_results" class="small"></div>
+<option selected="" value="full">Fully Grouted</option>
+<option value="16oc">Cells @ 16" o.c.</option>
+<option value="24oc">Cells @ 24" o.c.</option>
+<option value="32oc">Cells @ 32" o.c.</option>
+</select>
+</label>
+<div class="group">
+<h4 style="margin:6px 0">Special Shapes (allowances)</h4>
+<label>Bond Beam courses (enter 0 if none)
+        <input id="bw_bondbeam_courses" min="0" step="1" type="number" value="0"/>
+</label>
+</div>
+</div>
+<div class="row">
+<div class="group">
+<label>Wall Length — ft <input id="bw_len_ft" min="0" step="1" type="number" value="0"/></label>
+<label>in <input id="bw_len_in" max="11" min="0" step="1" type="number" value="0"/></label>
+<label>Wall Height — ft <input id="bw_h_ft" min="0" step="1" type="number" value="0"/></label>
+<label>in <input id="bw_h_in" max="11" min="0" step="1" type="number" value="0"/></label>
+<label>Waste % <input id="bw_waste" min="0" step="0.5" type="number" value="5"/></label>
+</div>
+</div>
+<div class="row small muted">Assumptions: 8×8×16 CMU (nominal), 3/8" joints, every third cell has a vertical # 5 rebar, all cells filled with grout.</div>
+<div class="row">
+<div class="group">
+<label class="pill"><input checked="" id="bw_round_up_blocks" type="checkbox"/> Round blocks up</label>
+<label class="pill"><input checked="" id="bw_round_up_bars" type="checkbox"/> Round bars up</label>
+<label class="pill"><input checked="" id="bw_round_up_bags" type="checkbox"/> Round bags up</label>
+</div>
+</div>
+<div class="row">
+<div class="col">
+<h4>Quantities</h4>
+<div class="small" id="bw_results"></div>
 <details id="bw_diag" style="margin-top:8px"><summary>Diagnostics</summary>
-  <pre id="bw_diag_pre" style="white-space:pre-wrap;font-family:monospace;font-size:12px"></pre>
+<pre id="bw_diag_pre" style="white-space:pre-wrap;font-family:monospace;font-size:12px"></pre>
 </details>
-    </div>
-    <div class="col">
-      <h4>Scope Lines</h4>
-      <textarea id="bw_scope" rows="8" style="width:100%;font-family:monospace"></textarea>
-      <button id="bw_copy" class="ghost">Copy to clipboard</button>
-    </div>
-  </div>
+</div>
+<div class="col">
+<h4>Scope Lines</h4>
+<textarea id="bw_scope" rows="8" style="width:100%;font-family:monospace"></textarea>
+<button class="ghost" id="bw_copy">Copy to clipboard</button>
+</div>
+</div>
 </div>
 <style>
   /* Block Wall tab: no global hide; rely on applyGroup filtering */
 </style>
-
 <script>
 (function(){
 
@@ -1095,13 +1033,10 @@ var tbody = document.getElementById('matTbody');
 
 })();
 </script>
-
-
 <div id="jsStatus" style="display:none"></div>
 <!-- TAX -->
-
 </div><!-- /bw-shell -->
-<div class="card" id="taxCard" data-cat="tax">
+<div class="card" data-cat="tax" id="taxCard">
 <div class="row">
 <h3 style="margin:0">Tax / Reimbursement (CT default 6.35%)</h3>
 <span class="spacer"></span>
@@ -1126,7 +1061,7 @@ var tbody = document.getElementById('matTbody');
 <div class="row small muted">CT rate is 6.35% with no local add-ons. Motor vehicle fuel is sales-tax-exempt. Use overrides as your policy requires.</div>
 </div>
 <!-- CREW -->
-<div class="card" id="crewCard" data-cat="crew">
+<div class="card" data-cat="crew" id="crewCard">
 <div class="row">
 <h3 style="margin:0">Crew &amp; Time</h3>
 <span class="spacer"></span>
@@ -1135,7 +1070,7 @@ var tbody = document.getElementById('matTbody');
 <div class="row" style="margin-bottom:6px">
 <label class="pill"><input checked="" id="crewWideToggle" type="checkbox"/> Use CREW‑WIDE time</label>
 <label class="pill"><input checked="" id="timeUnitsDays" type="checkbox"/> Time in Days (8 hr/day)</label>
-<label>Crew‑wide time <input id="crewWideQty" placeholder="e.g., 1" step="1" type="number"/></label>  <label style="margin-left:.5rem">Crew <input id="crewManual" type="number" step="1" value="3" placeholder="3" style="width:5rem"></label>  <label style="margin-left:.5rem">Days <input id="daysManual" type="number" step="1" value="1" placeholder="1" style="width:5rem"></label>
+<label>Crew‑wide time <input id="crewWideQty" placeholder="e.g., 1" step="1" type="number"/></label> <label style="margin-left:.5rem">Crew <input id="crewManual" placeholder="3" step="1" style="width:5rem" type="number" value="3"/></label> <label style="margin-left:.5rem">Days <input id="daysManual" placeholder="1" step="1" style="width:5rem" type="number" value="1"/></label>
 </div>
 <table>
 <thead><tr><th>Use</th><th>Name</th><th>Role</th><th>Rate ($/hr)</th><th>Hours</th><th>Cost</th><th></th></tr></thead>
@@ -1143,15 +1078,13 @@ var tbody = document.getElementById('matTbody');
 <tfoot><tr><td class="right" colspan="5">Crew Subtotal (excl. Company)</td><td class="right mono" id="crewSubtotal">$0.00</td><td></td></tr></tfoot>
 </table>
 <details id="crew_diag" style="margin-top:8px"><summary>Diagnostics</summary>
-  <pre id="crew_diag_pre" style="white-space:pre-wrap;font-family:monospace;font-size:12px"></pre>
+<pre id="crew_diag_pre" style="white-space:pre-wrap;font-family:monospace;font-size:12px"></pre>
 </details>
-
 <div class="muted small">Set role = <b>Company</b> to flow those hours into <b>Profit</b> (not Crew).</div>
 </div>
 <!-- MATERIALS -->
-<div class="card" id="materialsCard" data-cat="materials">
-<div id="materialsShell" class="materials-shell">
-
+<div class="card" data-cat="materials" id="materialsCard">
+<div class="materials-shell" id="materialsShell">
 <div class="row">
 <h3 style="margin:0">Materials</h3>
 <span class="spacer"></span>
@@ -1163,246 +1096,219 @@ var tbody = document.getElementById('matTbody');
 <tfoot><tr><td class="right" colspan="6">Materials Subtotal</td><td class="right mono" id="matSubtotal">$0.00</td><td></td></tr></tfoot>
 </table>
 <details id="mat_diag" style="margin-top:8px"><summary>Diagnostics</summary>
-  <pre id="mat_diag_pre" style="white-space:pre-wrap;font-family:monospace;font-size:12px"></pre>
+<pre id="mat_diag_pre" style="white-space:pre-wrap;font-family:monospace;font-size:12px"></pre>
 </details>
-
-
 <!-- === Turcotte: Stucco Helper (Area‑based) — integrated, Stucco-tab only === -->
-
 <!-- === Turcotte: Stucco Helper (Area‑based) — CLEAN REBUILD === -->
-
 <!-- === Turcotte: Stucco Helper (Area-based) — v15 SAFE === -->
 <!-- === Turcotte: Stucco Helper (Area-based) — v18 CLEAN === -->
-
 </div><!-- /materials-shell -->
-<div class="card" data-card-stucco id="stuccoCard" data-cat="stucco">
-  <div class="row">
-    <h3 style="margin:0">Stucco Helper (Area‑based)</h3>
-    <span class="spacer"></span>
-    <div class="group">
-      <label class="pill"><input type="radio" name="stu_sys" id="stu_sys_eifs" value="eifs" checked> Synthetic EIFS</label>
-      <label class="pill"><input type="radio" name="stu_sys" id="stu_sys_trad" value="trad"> Traditional</label>
-    </div>
-  </div>
-
-  <div class="row" style="flex-wrap:wrap; gap:10px; margin-top:6px">
-    <label>Wall Area (sf) <input id="stu_area" type="number" step="1" min="0" placeholder="e.g., 550"></label>
-    <label>Waste % <input id="stu_waste" type="number" step="0.5" min="0" value="10"></label>
-    <label class="pill"><input type="checkbox" id="stu_round" checked> Round up quantities</label>
-  </div>
-
-  <div class="row" id="stu_finish_row" style="flex-wrap:wrap; gap:10px; margin-top:6px">
-    <label>Finish Product
+<div class="card" data-card-stucco="" data-cat="stucco" id="stuccoCard">
+<div class="row">
+<h3 style="margin:0">Stucco Helper (Area‑based)</h3>
+<span class="spacer"></span>
+<div class="group">
+<label class="pill"><input checked="" id="stu_sys_eifs" name="stu_sys" type="radio" value="eifs"/> Synthetic EIFS</label>
+<label class="pill"><input id="stu_sys_trad" name="stu_sys" type="radio" value="trad"/> Traditional</label>
+</div>
+</div>
+<div class="row" style="flex-wrap:wrap; gap:10px; margin-top:6px">
+<label>Wall Area (sf) <input id="stu_area" min="0" placeholder="e.g., 550" step="1" type="number"/></label>
+<label>Waste % <input id="stu_waste" min="0" step="0.5" type="number" value="10"/></label>
+<label class="pill"><input checked="" id="stu_round" type="checkbox"/> Round up quantities</label>
+</div>
+<div class="row" id="stu_finish_row" style="flex-wrap:wrap; gap:10px; margin-top:6px">
+<label>Finish Product
       <select id="stu_finish_sel" style="min-width:280px">
-        <option value="parex_coarse">Parex DPR Sand Coarse — 5 gal</option>
-        <option value="parex_fine">Parex DPR Sand Fine — 5 gal</option>
-        <option value="parex_swirl">Parex DPR Swirl Fine — 5 gal</option>
-        <option value="parex_smooth">Parex DPR Sand Smooth — 5 gal</option>
-        <option value="mp_rolltex">MP Roll‑Tex Coating — 5 gal</option>
-        <option value="specmix_s">SPEC MIX Type S — 80 lb</option>
-      </select>
-    </label>
-    <label>Finish yield (sf per unit)
-      <input id="stu_finish_yield" type="number" step="1" min="1" value="90">
-    </label>
-  </div>
-  <div class="row" id="stu_finish_ctrls" style="flex-wrap:wrap; gap:10px; margin-top:6px">
-    <label class="pill"><input type="checkbox" id="stu_finish_use_mat" checked> Use materials yield</label>
-    
-  </div>
-
-  <!-- EIFS-only options -->
-  <div id="stu_eifs_opts" class="subcard">
-    <div class="row"><b>EIFS yields (fixed)</b><span class="muted small">Basecoat 55 sf/bag · Mesh 475 sf/roll · Finish per above</span></div>
-    <div class="row" style="flex-wrap:wrap; gap:10px; margin-top:6px">
-      <label class="pill"><input type="checkbox" id="stu_use_foam" onchange="try{window.stuccoCalc&&stuccoCalc()}catch(e){}" oninput="try{window.stuccoCalc&&stuccoCalc()}catch(e){}"> Include foam</label>
-      <label>Foam bundle (2'×4') 
-        <select id="stu_foam_sel" style="min-width:320px" onchange="try{window.stuccoCalc&&stuccoCalc()}catch(e){}" oninput="try{window.stuccoCalc&&stuccoCalc()}catch(e){}">
-<span id="stu_foam_note" class="text-xs text-gray-500 ml-2"></span>
-          <option value="foam_2">EPS EIFS Foam — 2&quot; (2'×4', 9 sheets) per bundle</option>
-          <option value="foam_1_5">EPS EIFS Foam — 1.5&quot; (2'×4', 13 sheets) per bundle</option>
-          <option value="foam_1">EPS EIFS Foam — 1&quot; (2'×4', 18 sheets) per bundle</option>
-          <option value="foam_0_75">EPS EIFS Foam — 3/4&quot; (2'×4', 30 sheets) per bundle</option>
-        </select>
-      </label>
-      
-    </div>
-  </div>
-
-  <!-- Traditional-only options -->
-  <div id="stu_trad_opts" class="subcard" style="display:none">
-    <div class="row"><b>Traditional additives</b><span class="muted small">Enter optional LF/SF for accessories</span></div>
-    <div class="row" style="flex-wrap:wrap; gap:10px; margin-top:6px">
-      <label>Netting — sf per roll/sheet <input id="stu_trad_net_sfb" type="number" step="1" min="0" placeholder="e.g., 400"></label>
-      <label>Casing bead (LF) <input id="stu_trad_bead_lf" type="number" step="1" min="0" placeholder="optional"></label>
-      <label>Wood lath strips (LF) <input id="stu_trad_lath_lf" type="number" step="1" min="0" placeholder="optional"></label>
-    </div>
-  </div>
-
-  <div class="row" style="gap:18px">
-    <div class="col">
-      <h4>Quantities</h4>
-      <div id="stu_results" class="small"></div>
-      <details id="stu_diag" style="margin-top:8px">
-        <summary>Diagnostics</summary>
-        <pre id="stu_diag_pre" style="white-space:pre-wrap;font-family:monospace;font-size:12px"></pre>
-      </details>
-    </div>
-    <div class="col">
-      <h4>Scope Lines</h4>
-      <textarea id="stu_scope" rows="8" style="width:100%;font-family:monospace"></textarea>
-      <button id="stu_copy" class="ghost">Copy to clipboard</button>
-    </div>
-  </div>
+<option value="parex_coarse">Parex DPR Sand Coarse — 5 gal</option>
+<option value="parex_fine">Parex DPR Sand Fine — 5 gal</option>
+<option value="parex_swirl">Parex DPR Swirl Fine — 5 gal</option>
+<option value="parex_smooth">Parex DPR Sand Smooth — 5 gal</option>
+<option value="mp_rolltex">MP Roll‑Tex Coating — 5 gal</option>
+<option value="specmix_s">SPEC MIX Type S — 80 lb</option>
+</select>
+</label>
+<label>Finish yield (sf per unit)
+      <input id="stu_finish_yield" min="1" step="1" type="number" value="90"/>
+</label>
 </div>
-
+<div class="row" id="stu_finish_ctrls" style="flex-wrap:wrap; gap:10px; margin-top:6px">
+<label class="pill"><input checked="" id="stu_finish_use_mat" type="checkbox"/> Use materials yield</label>
+</div>
+<!-- EIFS-only options -->
+<div class="subcard" id="stu_eifs_opts">
+<div class="row"><b>EIFS yields (fixed)</b><span class="muted small">Basecoat 55 sf/bag · Mesh 475 sf/roll · Finish per above</span></div>
+<div class="row" style="flex-wrap:wrap; gap:10px; margin-top:6px">
+<label class="pill"><input id="stu_use_foam" onchange="try{window.stuccoCalc&amp;&amp;stuccoCalc()}catch(e){}" oninput="try{window.stuccoCalc&amp;&amp;stuccoCalc()}catch(e){}" type="checkbox"/> Include foam</label>
+<label>Foam bundle (2'×4') 
+        <select id="stu_foam_sel" onchange="try{window.stuccoCalc&amp;&amp;stuccoCalc()}catch(e){}" oninput="try{window.stuccoCalc&amp;&amp;stuccoCalc()}catch(e){}" style="min-width:320px">
+<span class="text-xs text-gray-500 ml-2" id="stu_foam_note"></span>
+<option value="foam_2">EPS EIFS Foam — 2" (2'×4', 9 sheets) per bundle</option>
+<option value="foam_1_5">EPS EIFS Foam — 1.5" (2'×4', 13 sheets) per bundle</option>
+<option value="foam_1">EPS EIFS Foam — 1" (2'×4', 18 sheets) per bundle</option>
+<option value="foam_0_75">EPS EIFS Foam — 3/4" (2'×4', 30 sheets) per bundle</option>
+</select>
+</label>
+</div>
+</div>
+<!-- Traditional-only options -->
+<div class="subcard" id="stu_trad_opts" style="display:none">
+<div class="row"><b>Traditional additives</b><span class="muted small">Enter optional LF/SF for accessories</span></div>
+<div class="row" style="flex-wrap:wrap; gap:10px; margin-top:6px">
+<label>Netting — sf per roll/sheet <input id="stu_trad_net_sfb" min="0" placeholder="e.g., 400" step="1" type="number"/></label>
+<label>Casing bead (LF) <input id="stu_trad_bead_lf" min="0" placeholder="optional" step="1" type="number"/></label>
+<label>Wood lath strips (LF) <input id="stu_trad_lath_lf" min="0" placeholder="optional" step="1" type="number"/></label>
+</div>
+</div>
+<div class="row" style="gap:18px">
+<div class="col">
+<h4>Quantities</h4>
+<div class="small" id="stu_results"></div>
+<details id="stu_diag" style="margin-top:8px">
+<summary>Diagnostics</summary>
+<pre id="stu_diag_pre" style="white-space:pre-wrap;font-family:monospace;font-size:12px"></pre>
+</details>
+</div>
+<div class="col">
+<h4>Scope Lines</h4>
+<textarea id="stu_scope" rows="8" style="width:100%;font-family:monospace"></textarea>
+<button class="ghost" id="stu_copy">Copy to clipboard</button>
+</div>
+</div>
+</div>
 <!-- BEGIN: Chimney Helper (embedded) -->
-<div class="card" data-card-chimney id="chimneyCard" data-cat="masonry">
-  <div class="row">
-    <h3 style="margin:0">Chimney Helper</h3>
-    <span class="spacer"></span>
-  </div>
-  <div class="row">
-    <div class="group" style="display:block; width:100%">
-
-<div class="card" tight" id="optsCard">
-    <div class="row">
-      <div class="kpi">Mode</div>
-      
-
-      <label class="pill"><input type="radio" name="mode" id="mode_inches" checked> By inches</label>
-      <label class="pill"><input type="radio" name="mode" id="mode_brick"> By brick count (per side)</label>
-      <span class="spacer"></span>
-      <label class="pill"><input type="checkbox" id="opt_round" checked> Round up quantities</label>
-      <label class="pill"><input type="checkbox" id="opt_crown" checked> Include concrete crown</label>
-      <label class="pill"><input type="checkbox" id="opt_flash" checked> Include flashing</label>
-    <label class="pill"><input type="checkbox" id="no_cap"> Spark Arrestor</label>
+<div class="card" data-card-chimney="" data-cat="masonry" id="chimneyCard">
+<div class="row">
+<h3 style="margin:0">Chimney Helper</h3>
+<span class="spacer"></span>
 </div>
-  </div>
-
-  <div class="card"" id="geomCard">
-    <h2>Geometry</h2>
-    <div class="row grid" id="byInches">
-      <label>Outside width (in)
-        <input type="number" id="w_in" min="0" step="1" value="0">
-      </label>
-      <label>Outside depth (in)
-        <input type="number" id="d_in" min="0" step="1" value="0">
-      </label>
-      <label>Rebuild height (ft)
-        <input type="number" id="h_ft" min="0" step="1" value="0">
-      </label>
-      <label>in
-        <input type="number" id="h_in" min="0" max="11" step="1" value="0">
-      </label>
-      <label>Waste %
-        <input type="number" id="waste" min="0" step="0.5" value="10">
-      </label>
-    </div>
-
-    <div class="row grid" id="byBrick" style="display:none">
-      <label>Side A — bricks per side (full‑brick eq.)
-        <input type="number" id="brixA" min="0" step="1" value="0">
-      </label>
-      <label>Side B — bricks per side (full‑brick eq.)
-        <input type="number" id="brixB" min="0" step="1" value="0">
-      </label>
-      <label>Brick preset
+<div class="row">
+<div class="group" style="display:block; width:100%">
+<div class="card" id="optsCard" tight"="">
+<div class="row">
+<div class="kpi">Mode</div>
+<label class="pill"><input checked="" id="mode_inches" name="mode" type="radio"/> By inches</label>
+<label class="pill"><input id="mode_brick" name="mode" type="radio"/> By brick count (per side)</label>
+<span class="spacer"></span>
+<label class="pill"><input checked="" id="opt_round" type="checkbox"/> Round up quantities</label>
+<label class="pill"><input checked="" id="opt_crown" type="checkbox"/> Include concrete crown</label>
+<label class="pill"><input checked="" id="opt_flash" type="checkbox"/> Include flashing</label>
+<label class="pill"><input id="no_cap" type="checkbox"/> Spark Arrestor</label>
+</div>
+</div>
+<div "="" class="card" id="geomCard">
+<h2>Geometry</h2>
+<div class="row grid" id="byInches">
+<label>Outside width (in)
+        <input id="w_in" min="0" step="1" type="number" value="0"/>
+</label>
+<label>Outside depth (in)
+        <input id="d_in" min="0" step="1" type="number" value="0"/>
+</label>
+<label>Rebuild height (ft)
+        <input id="h_ft" min="0" step="1" type="number" value="0"/>
+</label>
+<label>in
+        <input id="h_in" max="11" min="0" step="1" type="number" value="0"/>
+</label>
+<label>Waste %
+        <input id="waste" min="0" step="0.5" type="number" value="10"/>
+</label>
+</div>
+<div class="row grid" id="byBrick" style="display:none">
+<label>Side A — bricks per side (full‑brick eq.)
+        <input id="brixA" min="0" step="1" type="number" value="0"/>
+</label>
+<label>Side B — bricks per side (full‑brick eq.)
+        <input id="brixB" min="0" step="1" type="number" value="0"/>
+</label>
+<label>Brick preset
         <select id="brickPreset">
-          <option value="mod" selected>Modular (7.625 × 2.25 actual)</option>
-          <option value="util">Utility (11.625 × 2.25 actual)</option>
-          <option value="custom">Custom</option>
-        </select>
-      </label>
-      <label>Actual brick length (in)
-        <input type="number" id="b_len" min="6" step="0.125" value="7.625">
-      </label>
-      <label>Actual brick height (in)
-        <input type="number" id="b_hgt" min="1.5" step="0.125" value="2.25">
-      </label>
-      <label>Mortar joint (in)
-        <input type="number" id="joint" min="0.25" max="0.5" step="0.125" value="0.375">
-      </label>
-      <label>Rebuild height (ft)
-        <input type="number" id="h_ft_b" min="0" step="1" value="0">
-      </label>
-      <label>in
-        <input type="number" id="h_in_b" min="0" max="11" step="1" value="0">
-      </label>
-      <label>Waste %
-        <input type="number" id="waste_b" min="0" step="0.5" value="10">
-      </label>
-      <div class="muted">Tip: In running bond, halves on one face become fulls on the next. Total bricks per course ≈ <b>2×(A+B)</b>.</div>
-    </div>
-    <div class="muted" id="geomNote"></div>
-  </div>
-
-  <div class="card"" id="unitsCard">
-    <h2>Units & Liners</h2>
-    <div class="section-box"><div class="row grid">
-      <label>Brick Size
+<option selected="" value="mod">Modular (7.625 × 2.25 actual)</option>
+<option value="util">Utility (11.625 × 2.25 actual)</option>
+<option value="custom">Custom</option>
+</select>
+</label>
+<label>Actual brick length (in)
+        <input id="b_len" min="6" step="0.125" type="number" value="7.625"/>
+</label>
+<label>Actual brick height (in)
+        <input id="b_hgt" min="1.5" step="0.125" type="number" value="2.25"/>
+</label>
+<label>Mortar joint (in)
+        <input id="joint" max="0.5" min="0.25" step="0.125" type="number" value="0.375"/>
+</label>
+<label>Rebuild height (ft)
+        <input id="h_ft_b" min="0" step="1" type="number" value="0"/>
+</label>
+<label>in
+        <input id="h_in_b" max="11" min="0" step="1" type="number" value="0"/>
+</label>
+<label>Waste %
+        <input id="waste_b" min="0" step="0.5" type="number" value="10"/>
+</label>
+<div class="muted">Tip: In running bond, halves on one face become fulls on the next. Total bricks per course ≈ <b>2×(A+B)</b>.</div>
+</div>
+<div class="muted" id="geomNote"></div>
+</div>
+<div "="" class="card" id="unitsCard">
+<h2>Units &amp; Liners</h2>
+<div class="section-box"><div class="row grid">
+<label>Brick Size
         <select id="bpsf">
-          <option value="7" selected>7 5/8&quot; × 3 5/8&quot; × 2 1/4&quot; ≈ 7</option>
-          <option value="6">7 5/8&quot; × 2 3/4&quot; × 2 3/4&quot; ≈ 6</option>
-          <option value="5.3">11 5/8&quot; × 3 5/8&quot; × 2 1/4&quot; ≈ 5.3</option>
-        </select>
-      </label>
-
-
-      <label>Flue tile length (in)
-        <input type="number" id="tile_len" min="12" step="1" value="24" value="24">
-      </label>
-
-      <label>Projection above crown (in)
-        <input type="number" id="proj_in" min="0" step="0.5" value="2">
-      </label>
+<option selected="" value="7">7 5/8" × 3 5/8" × 2 1/4" ≈ 7</option>
+<option value="6">7 5/8" × 2 3/4" × 2 3/4" ≈ 6</option>
+<option value="5.3">11 5/8" × 3 5/8" × 2 1/4" ≈ 5.3</option>
+</select>
+</label>
+<label>Flue tile length (in)
+        <input id="tile_len" min="12" step="1" type="number" value="24"/>
+</label>
+<label>Projection above crown (in)
+        <input id="proj_in" min="0" step="0.5" type="number" value="2"/>
+</label>
 <label>Flue tile size
         <select id="flue_size">
-          <option value="8x8">8×8</option>
-          <option value="8x12" selected>8×12</option>
-          <option value="12x12">12×12</option>
-          <option value="13x18">13×18</option>
-        </select>
-      </label>
+<option value="8x8">8×8</option>
+<option selected="" value="8x12">8×12</option>
+<option value="12x12">12×12</option>
+<option value="13x18">13×18</option>
+</select>
+</label>
 <label class="pill" style="grid-column:1/-1; align-items:center">
-        <input type="checkbox" id="auto_tiles" checked> Auto‑calculate flue tiles from height
+<input checked="" id="auto_tiles" type="checkbox"/> Auto‑calculate flue tiles from height
       </label>
-
-    </div>
-  </div>
-
-  <div class="card"" id="crownCard">
-    <h2>Concrete Crown (if included)</h2>
-    <div class="row grid">
-      <label>Average thickness (in)
-        <input type="number" id="crown_thk" min="1.5" step="0.25" value="4">
-      </label>
-      <label>Overhang each side (in)
-        <input type="number" id="crown_oh" min="0" step="0.25" value="1.5">
-      </label>
-      <label>Flash height for copper (in) <span class="muted">(for sheet area est.)</span>
-        <input type="number" id="flash_h" min="6" step="0.5" value="8">
-      </label>
-    </div>
-  </div></div>
-
-  <div class="card"" id="resultsCard">
-    <div class="row">
-      <h2 style="margin:0">Results</h2>
-      <span class="spacer"></span>
-      <button class="ghost" id="copyScope">Copy scope</button>
-    </div>
-    <div id="kpis" class="row" style="gap:8px; margin:6px 0 8px 0"></div>
-    <div id="calcOut" class="muted"></div>
-    <h3>Scope (copy‑ready)</h3>
-    <textarea id="scope" placeholder="Scope lines will appear here…"></textarea>
-  </div>
-
-    </div>
-  </div>
-
+</div>
+</div>
+<div "="" class="card" id="crownCard">
+<h2>Concrete Crown (if included)</h2>
+<div class="row grid">
+<label>Average thickness (in)
+        <input id="crown_thk" min="1.5" step="0.25" type="number" value="4"/>
+</label>
+<label>Overhang each side (in)
+        <input id="crown_oh" min="0" step="0.25" type="number" value="1.5"/>
+</label>
+<label>Flash height for copper (in) <span class="muted">(for sheet area est.)</span>
+<input id="flash_h" min="6" step="0.5" type="number" value="8"/>
+</label>
+</div>
+</div></div>
+<div "="" class="card" id="resultsCard">
+<div class="row">
+<h2 style="margin:0">Results</h2>
+<span class="spacer"></span>
+<button class="ghost" id="copyScope">Copy scope</button>
+</div>
+<div class="row" id="kpis" style="gap:8px; margin:6px 0 8px 0"></div>
+<div class="muted" id="calcOut"></div>
+<h3>Scope (copy‑ready)</h3>
+<textarea id="scope" placeholder="Scope lines will appear here…"></textarea>
+</div>
+</div>
+</div>
 <details id="chim_diag" style="margin-top:8px"><summary>Diagnostics</summary>
-  <pre id="chim_diag_pre" style="white-space:pre-wrap;font-family:monospace;font-size:12px"></pre>
+<pre id="chim_diag_pre" style="white-space:pre-wrap;font-family:monospace;font-size:12px"></pre>
 </details>
 <script id="chimney_mode_helper_fix">
 (function(){
@@ -1437,9 +1343,6 @@ var tbody = document.getElementById('matTbody');
 </script>
 </div>
 <!-- END: Chimney Helper (embedded) -->
-
-
-
 <script>
 (function(){
   const MATCH = {
@@ -1855,51 +1758,40 @@ document.addEventListener('DOMContentLoaded', function(){
   else { bind(); }
 })();
 </script>
-
-
-
 </div>
 <!-- CONCRETE -->
-<div class="card" id="concreteCard" data-cat="concrete">
-<div id="concreteShell" class="concrete-shell">
-
+<div class="card" data-cat="concrete" id="concreteCard">
+<div class="concrete-shell" id="concreteShell">
 <div class="row">
 <h3 style="margin:0">Concrete</h3>
 <!-- Turcotte: Concrete Yards Helper v1 (2025-09-02) -->
 <div class="subcard" id="tm-concrete-yards-helper" style="border:1px dashed #ccc; padding:10px; margin:10px 0;">
-  <div class="row" style="flex-wrap:wrap; gap:10px;">
-    <b>Concrete Yards Calculator</b>
-    <label>L (ft) <input type="number" id="tm_len_ft" step="0.1" placeholder="e.g., 11"></label>
-    <label>W (ft) <input type="number" id="tm_wid_ft" step="0.1" placeholder="e.g., 11"></label>
-    <label>H (in) <input type="number" id="tm_thk_in" step="0.25" placeholder="e.g., 6"></label>
-    <label class="pill"><input type="checkbox" id="tm_waste_on" checked> +5% waste</label>
-    <label>Round to <select id="tm_round"><option value="0.25">¼ yd</option><option value="0.5">½ yd</option><option value="1">1 yd</option><option value="0">exact</option></select></label>
-    
+<div class="row" style="flex-wrap:wrap; gap:10px;">
+<b>Concrete Yards Calculator</b>
+<label>L (ft) <input id="tm_len_ft" placeholder="e.g., 11" step="0.1" type="number"/></label>
+<label>W (ft) <input id="tm_wid_ft" placeholder="e.g., 11" step="0.1" type="number"/></label>
+<label>H (in) <input id="tm_thk_in" placeholder="e.g., 6" step="0.25" type="number"/></label>
+<label class="pill"><input checked="" id="tm_waste_on" type="checkbox"/> +5% waste</label>
+<label>Round to <select id="tm_round"><option value="0.25">¼ yd</option><option value="0.5">½ yd</option><option value="1">1 yd</option><option value="0">exact</option></select></label>
+</div>
+<div class="row small muted" style="margin-top:6px;">
+    Formula: L × W × (T in ÷ 12) ÷ 27 = yd³. (Adds optional 5% waste. Auto-fills supplier by rule: &lt; 3 yd → Concrete Connections; ≥ 3 yd → Mohican Valley.) 30-bag cap: ≤ 30 bags stays as 80-lb bags; ≥ 31 bags routes to Concrete Connections.
   </div>
-  <div class="row small muted" style="margin-top:6px;">
-    Formula: L × W × (T in ÷ 12) ÷ 27 = yd³. (Adds optional 5% waste. Auto-fills supplier by rule: < 3 yd → Concrete Connections; ≥ 3 yd → Mohican Valley.) 30-bag cap: ≤ 30 bags stays as 80-lb bags; ≥ 31 bags routes to Concrete Connections.
-  </div>
-  <div class="row" style="gap:10px; margin-top:8px;">
-    <div>Yards (computed): <span id="tm_yards_out" class="pill" style="min-width:80px; text-align:center;">—</span></div>
-    <div>Selected source: <span id="tm_supplier_out" class="pill" style="min-width:160px; text-align:center;">—</span></div>
-  </div>
-  <div class="subcard" style="margin-top:8px;">
-    <div class="row"><b>Bags Equivalent (approx.)</b><span class="spacer"></span><span class="muted small">Uses Quikrete/Sakrete published yields</span></div>
-    <div id="tm_bags_rows" style="display:flex;flex-direction:column;gap:4px;margin-top:6px;"></div>
-  </div>
-
+<div class="row" style="gap:10px; margin-top:8px;">
+<div>Yards (computed): <span class="pill" id="tm_yards_out" style="min-width:80px; text-align:center;">—</span></div>
+<div>Selected source: <span class="pill" id="tm_supplier_out" style="min-width:160px; text-align:center;">—</span></div>
+</div>
+<div class="subcard" style="margin-top:8px;">
+<div class="row"><b>Bags Equivalent (approx.)</b><span class="spacer"></span><span class="muted small">Uses Quikrete/Sakrete published yields</span></div>
+<div id="tm_bags_rows" style="display:flex;flex-direction:column;gap:4px;margin-top:6px;"></div>
+</div>
 <div class="row" style="margin-top:8px;">
-  <details id="concrete_diag">
-    <summary>Diagnostics</summary>
-    <pre id="concrete_diag_pre" style="white-space:pre-wrap;font-family:monospace;font-size:12px"></pre>
-  </details>
+<details id="concrete_diag">
+<summary>Diagnostics</summary>
+<pre id="concrete_diag_pre" style="white-space:pre-wrap;font-family:monospace;font-size:12px"></pre>
+</details>
 </div>
 </div>
-
-
-
-
-
 <script>
 (function(){
   const whenReady = (fn)=>{
@@ -2183,9 +2075,7 @@ return;
   });
 })();
 </script>
-
 <!-- /Turcotte helper -->
-
 <span class="pill">Concrete Connections (≤ 3 yd/trip)</span>
 <span class="pill">Mohican Valley (10‑yd trucks)</span>
 <span class="spacer"></span>
@@ -2203,13 +2093,12 @@ return;
 <span class="pill">Delivery: <span class="mono" id="ct_deliv">$0.00</span></span>
 <span class="pill">CC Subtotal: <span class="mono" id="ct_sub">$0.00</span></span>
 </div>
-
 <!-- CC small loads Diagnostics -->
 <div class="row" style="margin-top:8px;">
-  <details id="cc_small_diag">
-    <summary>Diagnostics</summary>
-    <pre id="cc_small_diag_pre" style="white-space:pre-wrap;font-family:monospace;font-size:12px"></pre>
-  </details>
+<details id="cc_small_diag">
+<summary>Diagnostics</summary>
+<pre id="cc_small_diag_pre" style="white-space:pre-wrap;font-family:monospace;font-size:12px"></pre>
+</details>
 </div>
 </div>
 <div class="subcard" style="border:1px dashed #ccc; padding:10px; margin:10px 0;">
@@ -2260,20 +2149,18 @@ return;
 <span class="pill">MV Subtotal: <span class="mono" id="mv_sub">$0.00</span></span>
 </div>
 </div>
-
 <!-- MV big trucks Diagnostics -->
 <div class="row" style="margin-top:8px;">
-  <details id="mv_diag">
-    <summary>Diagnostics</summary>
-    <pre id="mv_diag_pre" style="white-space:pre-wrap;font-family:monospace;font-size:12px"></pre>
-  </details>
+<details id="mv_diag">
+<summary>Diagnostics</summary>
+<pre id="mv_diag_pre" style="white-space:pre-wrap;font-family:monospace;font-size:12px"></pre>
+</details>
 </div>
 </div>
 </div>
 <!-- FUEL -->
-
 </div><!-- /concrete-shell -->
-<div class="card" id="fuelCard" data-cat="fuel">
+<div class="card" data-cat="fuel" id="fuelCard">
 <div class="row">
 <h3 style="margin:0">Vehicle Fuel</h3>
 <span class="pill">PPG = AAA CT peak Regular $4.984 (6/14/22)</span>
@@ -2285,73 +2172,69 @@ return;
 <div class="row">
 <span class="pill">Fuel Subtotal: <span class="mono" id="fuel_sub">$0.00</span></span>
 </div>
-
 <div class="row" style="margin-top:8px;">
-  <details id="fuel_diag">
-    <summary>Diagnostics</summary>
-    <pre id="fuel_diag_pre" style="white-space:pre-wrap;font-family:monospace;font-size:12px"></pre>
-  </details>
+<details id="fuel_diag">
+<summary>Diagnostics</summary>
+<pre id="fuel_diag_pre" style="white-space:pre-wrap;font-family:monospace;font-size:12px"></pre>
+</details>
 </div>
 </div>
 <!-- WASTE -->
-<div class="card" data-card-waste data-cat="waste">
+<div class="card" data-card-waste="" data-cat="waste">
 <div class="row"><h3 style="margin:0">Waste / Disposal</h3><span class="spacer"></span><button class="ghost" id="wasteAdd">+ Add Disposal item</button></div>
 <table>
 <thead><tr><th>Use</th><th>Material</th><th>Facility</th><th>Units</th><th>Rate</th><th>Qty</th><th>Ext.</th><th></th></tr></thead>
 <tbody id="wasteTbody"></tbody>
 <tfoot><tr><td class="right" colspan="6">Disposal Subtotal</td><td class="right mono" id="wasteSubtotal">$0.00</td><td></td></tr></tfoot>
 </table>
-
 <div class="row" style="margin-top:8px;">
-  <details id="waste_diag">
-    <summary>Diagnostics</summary>
-    <pre id="waste_diag_pre" style="white-space:pre-wrap;font-family:monospace;font-size:12px"></pre>
-  </details>
+<details id="waste_diag">
+<summary>Diagnostics</summary>
+<pre id="waste_diag_pre" style="white-space:pre-wrap;font-family:monospace;font-size:12px"></pre>
+</details>
 </div>
 </div>
 <!-- SILICA CONTROLS -->
-<div class="card" id="silicaCard" data-cat="silica">
-  <div class="row">
-    <h3 style="margin:0">Silica Controls (OSHA 29 CFR 1926.1153 Table 1)</h3>
+<div class="card" data-cat="silica" id="silicaCard">
+<div class="row">
+<h3 style="margin:0">Silica Controls (OSHA 29 CFR 1926.1153 Table 1)</h3>
+</div>
+<div class="row small muted">
+    Tuckpointing &amp; handheld grinder controls. Use these toggles to add ECP notes and auto‑include DWV9402 HEPA fleece bags.
   </div>
-  <div class="row small muted">
-    Tuckpointing & handheld grinder controls. Use these toggles to add ECP notes and auto‑include DWV9402 HEPA fleece bags.
-  </div>
-  <div class="row" style="gap:1rem; flex-wrap:wrap">
-    <label class="pill"><input type="checkbox" id="sil_task_tuck"> Tuckpointing (mortar removal)</label>
-    <label class="pill"><input type="checkbox" id="sil_task_grind"> Handheld grinder (non‑mortar)</label>
-    <label class="pill"><input type="checkbox" id="sil_enclosed"> Indoors / enclosed</label>
-  </div>
-  <div class="row" style="gap:.75rem; flex-wrap:wrap">
-    <button class="ghost" id="sil_copy_notes" type="button">Copy ECP Notes</button>
-    <textarea id="sil_ecp_notes" rows="6" style="width:100%" placeholder="Silica ECP notes will appear here when you toggle tasks."></textarea>
-  </div>
-
+<div class="row" style="gap:1rem; flex-wrap:wrap">
+<label class="pill"><input id="sil_task_tuck" type="checkbox"/> Tuckpointing (mortar removal)</label>
+<label class="pill"><input id="sil_task_grind" type="checkbox"/> Handheld grinder (non‑mortar)</label>
+<label class="pill"><input id="sil_enclosed" type="checkbox"/> Indoors / enclosed</label>
+</div>
+<div class="row" style="gap:.75rem; flex-wrap:wrap">
+<button class="ghost" id="sil_copy_notes" type="button">Copy ECP Notes</button>
+<textarea id="sil_ecp_notes" placeholder="Silica ECP notes will appear here when you toggle tasks." rows="6" style="width:100%"></textarea>
+</div>
 <div class="row" style="margin-top:8px;">
-  <details id="silica_diag">
-    <summary>Diagnostics</summary>
-    <pre id="silica_diag_pre" style="white-space:pre-wrap;font-family:monospace;font-size:12px"></pre>
-  </details>
+<details id="silica_diag">
+<summary>Diagnostics</summary>
+<pre id="silica_diag_pre" style="white-space:pre-wrap;font-family:monospace;font-size:12px"></pre>
+</details>
 </div>
 </div>
 <!-- TOOLS -->
-<div class="card" id="toolsCard" data-cat="tools">
+<div class="card" data-cat="tools" id="toolsCard">
 <div class="row"><h3 style="margin:0">Tools Depreciation Reserve</h3><span class="spacer"></span><button class="ghost" id="addToolBtn">+ Add Tool</button></div>
 <table>
 <thead><tr><th>Use</th><th>Tool</th><th>Replace Cost ($)</th><th>Lifetime (hrs)</th><th>Reserve frac (0–1)</th><th>Use (hrs)</th><th>Ext.</th><th></th></tr></thead>
 <tbody id="toolTbody"></tbody>
 <tfoot><tr><td class="right" colspan="6">Tools Reserve Subtotal</td><td class="right mono" id="toolSubtotal">$0.00</td><td></td></tr></tfoot>
 </table>
-
 <div class="row" style="margin-top:8px;">
-  <details id="tools_diag">
-    <summary>Diagnostics</summary>
-    <pre id="tools_diag_pre" style="white-space:pre-wrap;font-family:monospace;font-size:12px"></pre>
-  </details>
+<details id="tools_diag">
+<summary>Diagnostics</summary>
+<pre id="tools_diag_pre" style="white-space:pre-wrap;font-family:monospace;font-size:12px"></pre>
+</details>
 </div>
 </div>
 <!-- TOTALS -->
-<div class="card" id="totalsCard" data-cat="totals"><div class="row"><span class="pill">Directs (excl. Company): <span class="mono" id="directs">$0.00</span></span>
+<div class="card" data-cat="totals" id="totalsCard"><div class="row"><span class="pill">Directs (excl. Company): <span class="mono" id="directs">$0.00</span></span>
 <span class="pill">Overhead: <span class="mono" id="ohAmt">$0.00</span></span>
 <span class="pill">Profit (incl. Company): <span class="mono" id="profitAmt">$0.00</span></span>
 <span class="pill"><span id="taxLabel">Tax Reimbursement</span>: <span class="mono" id="taxAmt2">$0.00</span></span>
@@ -2368,25 +2251,24 @@ return;
 </div>
 <!-- sticky -->
 <div class="sticky">
-  <div class="sticky-inner">
-    <span id="stickyGrandPill" class="pill" style="background:#153251; border-color:#2c5a8c; color:#d9ecff">Total: <span class="mono" id="stickyGrand">$0.00</span></span>
-  </div>
+<div class="sticky-inner">
+<span class="pill" id="stickyGrandPill" style="background:#153251; border-color:#2c5a8c; color:#d9ecff">Total: <span class="mono" id="stickyGrand">$0.00</span></span>
+</div>
 </div>
 <!-- hidden sticky spans to satisfy totals() updates -->
 <div style="display:none">
-  <span id="stickyCrew"></span>
-  <span id="stickyCompanyToProfit"></span>
-  <span id="stickyMat"></span>
-  <span id="stickyConc"></span>
-  <span id="stickyFuel"></span>
-  <span id="stickyTools"></span>
-  <span id="stickyWaste"></span>
-  <span id="stickyOH"></span>
-  <span id="stickyProfit"></span>
-  <span id="stickyTax"></span>
-  <span id="stickyTaxLabel"></span>
+<span id="stickyCrew"></span>
+<span id="stickyCompanyToProfit"></span>
+<span id="stickyMat"></span>
+<span id="stickyConc"></span>
+<span id="stickyFuel"></span>
+<span id="stickyTools"></span>
+<span id="stickyWaste"></span>
+<span id="stickyOH"></span>
+<span id="stickyProfit"></span>
+<span id="stickyTax"></span>
+<span id="stickyTaxLabel"></span>
 </div>
-
 <div class="warn" id="err" style="display:none"></div>
 </div>
 <script>
@@ -2562,6 +2444,24 @@ let materials = [
 ,
   { id:"mMilwaukee_SDSPlus_5_8x18in_4C_48_20_8306", item:"Milwaukee 5/8 in. x 18 in. 4-Cutter SDS-PLUS Carbide Drill Bit (48-20-8306)", units:"each", supplier:"Home Depot", price:37.77, cats:["concrete"] },
   {id:'mCOL_DT5_TP_4_5', use:false, item:'4 1/2" Tuckpoint Diamond Blade', supplier:'Colony Hardware', units:'each', price:54, qty:0, cats:['masonry','tools']}
+,
+  { id:'mROB_BRICK_762x362x214', use:false, item:"Brick 7 5/8\" \u00d7 3 5/8\" \u00d7 2 1/4\"", supplier:"New Haven Masonry", units:"each", price:1, qty:0, cats:["masonry"] }
+,
+  { id:'mROB_FLU_12x12', use:false, item:"Flu 12x12", supplier:"New Haven Masonry", units:"each", price:33, qty:0, cats:["masonry"] }
+,
+  { id:'mROB_COPPER_3x8', use:false, item:"Copper Sheet 3x8", supplier:"ABC Supply", units:"each", price:300, qty:0, cats:["masonry"] }
+,
+  {id:'mUSR_Brick_7_5_8_2_3_4_2_3_4_each', use:false, item:'Brick 7 5/8" × 2 3/4" × 2 3/4"', supplier:'New Haven Masonry', units:'each', price:1.00, qty:0, cats:['masonry']},
+  {id:'mUSR_Brick_11_5_8_3_5_8_2_1_4_each', use:false, item:'Brick  11 5/8" × 3 5/8" × 2 1/4"', supplier:'New Haven Masonry', units:'each', price:1.00, qty:0, cats:['masonry']},
+  {id:'mUSR_Flu_8x8_each', use:false, item:'Flu 8x8', supplier:'New Haven Masonry', units:'each', price:33.00, qty:0, cats:['masonry']},
+  {id:'mUSR_Flu_8x12_each', use:false, item:'Flu 8x12', supplier:'New Haven Masonry', units:'each', price:33.00, qty:0, cats:['masonry']},
+  {id:'mUSR_Flu_13x18_each', use:false, item:'Flu 13x18', supplier:'New Haven Masonry', units:'each', price:33.00, qty:0, cats:['masonry']},
+  {id:'mUSR_6_hollow_concrete_block_each', use:false, item:'6" hollow concrete block', supplier:'New Haven Masonry', units:'each', price:4.80, qty:0, cats:['masonry']},
+  {id:'mUSR_8_hollow_concrete_block_each', use:false, item:'8" hollow concrete block', supplier:'New Haven Masonry', units:'each', price:4.80, qty:0, cats:['masonry']},
+  {id:'mUSR_10_hollow_concrete_block_each', use:false, item:'10" hollow concrete block', supplier:'New Haven Masonry', units:'each', price:4.80, qty:0, cats:['masonry']},
+  {id:'mUSR_6_Durawall_10_each', use:false, item:'6" Durawall — 10\'', supplier:'New Haven Masonry', units:'each', price:7.85, qty:0, cats:['masonry']},
+  {id:'mUSR_8_Durawall_10_each', use:false, item:'8" Durawall — 10\'', supplier:'New Haven Masonry', units:'each', price:7.85, qty:0, cats:['masonry']},
+  {id:'mUSR_10_Durawall_10_each', use:false, item:'10" Durawall — 10\'', supplier:'New Haven Masonry', units:'each', price:7.85, qty:0, cats:['masonry']}
 ];
 
 
@@ -3777,15 +3677,7 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 });
 </script>
-<script 
-document.addEventListener('DOMContentLoaded', function(){
-  try{
-    if(!window.USD){ window.USD = new Intl.NumberFormat('en-US', {style:'currency', currency:'USD', maximumFractionDigits:2}); }
-    if(!window.$$){ window.$$ = function(n){ return window.USD.format((Number(n)||0)); }; }
-    if(typeof window.fmt === 'function'){ window.fmt = function(n){ return window.$$((Number(n)||0)); }; }
-  }catch(e){ console.warn('currency formatter patch:', e); }
-});
-</script>
+<script ){="" <="" console.warn('currency="" currency:'usd',="" document.addeventlistener('domcontentloaded',="" e);="" formatter="" function(){="" if(!window.$$){="" if(!window.usd){="" if(typeof="" intl.numberformat('en-us',="" maximumfractiondigits:2});="" patch:',="" return="" script="" try{="" window.$$="function(n){" window.$$((number(n)||0));="" window.fmt="function(n){" window.usd="new" window.usd.format((number(n)||0));="" {style:'currency',="" }="" });="" };="" }catch(e){="">
 <script 
 document.addEventListener('DOMContentLoaded', function(){
   try{
@@ -3801,21 +3693,7 @@ document.addEventListener('DOMContentLoaded', function(){
   }catch(e){ console.warn('updateAll raf patch:', e); }
 });
 </script>
-<script 
-document.addEventListener('DOMContentLoaded', function(){
-  try{
-    if(typeof window.updateAll === 'function' && !window.__updateAllPost){
-      var raw = window.updateAll;
-      window.updateAll = (function(orig){
-        return function(){
-          return orig.apply(this, arguments), (function(){ try{ if(window.totals) totals(); } catch(e){} })();
-        };
-      })(raw);
-      window.__updateAllPost = true;
-    }
-  }catch(e){ console.warn('updateAll posthook error', e); }
-});
-</script>
+<script !window.__updateallpost){="" &&="" (function(){="" <="" arguments),="" catch(e){}="" console.warn('updateall="" document.addeventlistener('domcontentloaded',="" e);="" error',="" function(){="" if(typeof="" if(window.totals)="" orig.apply(this,="" posthook="" raw="window.updateAll;" return="" script="" totals();="" try{="" var="" window.__updateallpost="true;" window.updateall="(function(orig){" }="" })();="" })(raw);="" });="" };="" }catch(e){="">
 <script 
 document.addEventListener('DOMContentLoaded', function(){
   function recalcMV(){
@@ -3833,23 +3711,7 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 });
 </script>
-<script 
-document.addEventListener('DOMContentLoaded', function(){
-  function needsTotals(id){
-    return /^mv_/.test(id) || /^pump_/.test(id) || /^fuel_/.test(id);
-  }
-  function recalc(){
-    try{ if(window.totals) totals(); } catch(e){}
-  }
-  ['input','change'].forEach(function(type){
-    document.addEventListener(type, function(e){
-      if(!e || !e.target) return;
-      var id = e.target.id || '';
-      if(needsTotals(id)) recalc();
-    }, true); // capture phase to catch dynamic inserts
-  });
-});
-</script>
+<script !e.target)="" '';="" .test(id)="" .test(id);="" <="" ['input','change'].foreach(function(type){="" ^fuel_="" ^mv_="" ^pump_="" capture="" catch="" catch(e){}="" document.addeventlistener('domcontentloaded',="" document.addeventlistener(type,="" dynamic="" function="" function(){="" function(e){="" id="e.target.id" if(!e="" if(needstotals(id))="" if(window.totals)="" inserts="" needstotals(id){="" phase="" recalc();="" recalc(){="" return="" return;="" script="" to="" totals();="" true);="" try{="" var="" ||="" }="" });="" },="">
 <script 
 document.addEventListener('DOMContentLoaded', function(){
   function recalc(){
@@ -3865,17 +3727,7 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 });
 </script>
-<script 
-document.addEventListener('DOMContentLoaded', function(){
-  var use = document.getElementById('pump_use');
-  var ap  = document.getElementById('mv_apply_pump');
-  if(use && ap){
-    function sync(){ ap.checked = !!use.checked; try{ updateAll(); } catch(e){} }
-    use.addEventListener('input', sync);
-    use.addEventListener('change', sync);
-  }
-});
-</script>
+<script &&="" <="" ap="document.getElementById('mv_apply_pump');" ap){="" ap.checked="!!use.checked;" catch(e){}="" document.addeventlistener('domcontentloaded',="" function="" function(){="" if(use="" script="" sync(){="" sync);="" try{="" updateall();="" use="document.getElementById('pump_use');" use.addeventlistener('change',="" use.addeventlistener('input',="" var="" }="" });="">
 <!-- Global live-totals delegate: keeps every input/select/checkbox in sync -->
 <script 
 document.addEventListener('DOMContentLoaded', function(){
@@ -3902,15 +3754,7 @@ document.addEventListener('DOMContentLoaded', function(){
   document.addEventListener('change', function(){ recalc(); }, true);
 });
 </script>
-<script 
-document.addEventListener('DOMContentLoaded', function(){
-  function setCats(c){ window.__matCats = c; if (typeof renderMaterials==='function') renderMaterials(); }
-  function pick(group){
-    if(group==='bluestone') setCats(['bluestone','masonry','stone veneer']);
-    else if(group==='veneer') setCats(['stone veneer','masonry','bluestone']);
-    else setCats(null);
-    var h3s = Array.from(document.querySelectorAll('.card h3'));
-    var matCard = h3s.find(h=>/Materials/i.test(h.textContent));
+<script (typeof="" )="" document.addeventlistener('domcontentloaded',="" else="" function="" function(){="" h3'));="" h3s="Array.from(document.querySelectorAll('.card" if="" if(group="veneer" matcard="h3s.find(h=" pick(group){="" rendermaterials="function" rendermaterials();="" setcats(['bluestone','masonry','stone="" setcats(['stone="" setcats(c){="" setcats(null);="" var="" veneer','masonry','bluestone']);="" veneer']);="" window.__matcats="c;" }="">/Materials/i.test(h.textContent));
     if(matCard){ matCard.scrollIntoView({behavior:'smooth', block:'start'}); }
   }
   document.querySelectorAll('.groupbar .tag[data-group="bluestone"]').forEach(btn=>{
@@ -3987,38 +3831,7 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 });
 </script>
-<script 
-(function(){
-  if (window.__autoCovSq) return; window.__autoCovSq = true;
-  function markSqCoverage(){
-    try{
-      (window.materials||[]).forEach(function(m){
-        var u = (m && m.units ? String(m.units).toLowerCase() : '').trim();
-        var norm = u.replace(/\s+/g,'');
-        // If units look like square feet (sf, sq ft, sqft, square foot/feet, ft²), and no explicit coverage set, default to 1 sf/unit
-        if (!m.coverageSqft && (
-            norm.startsWith('sf') ||
-            norm.startsWith('sqft') ||
-            norm.startsWith('sqft.') ||
-            norm.startsWith('sqft2') ||
-            norm.startsWith('sq') ||
-            norm.includes('squarefoot') ||
-            norm.includes('squarefeet') ||
-            norm==='ft²' || norm==='ft2'
-        )){
-          m.coverageSqft = 1;
-        }
-      });
-    }catch(e){/* no-op */}
-  }
-  document.addEventListener('DOMContentLoaded', function(){
-    markSqCoverage();
-    // Re-render so Area (sf) placeholder appears for these items, then recompute totals
-    try{ if (typeof renderMaterials==='function') renderMaterials(); } catch(e){}
-    try{ if (typeof updateAll==='function') updateAll(); } catch(e){}
-  });
-})();
-</script>
+<script &&="" '').trim();="" (="" (!m.coveragesqft="" (function(){="" (sf)="" (sf,="" (typeof="" (window.__autocovsq)="" (window.materials||[]).foreach(function(m){="" )="" )){="" *="" 1="" :="" <="" ?="" and="" appears="" area="" catch(e){}="" coverage="" default="" document.addeventlistener('domcontentloaded',="" explicit="" feet="" feet,="" foot="" for="" ft,="" ft²),="" function="" function(){="" if="" items,="" like="" look="" m.coveragesqft="1;" m.units="" marksqcoverage();="" marksqcoverage(){="" no="" no-op="" norm="ft2" norm.includes('squarefeet')="" norm.includes('squarefoot')="" norm.startswith('sf')="" norm.startswith('sq')="" norm.startswith('sqft')="" norm.startswith('sqft.')="" norm.startswith('sqft2')="" placeholder="" re-render="" recompute="" rendermaterials="function" rendermaterials();="" return;="" script="" set,="" sf="" so="" sq="" sqft,="" square="" string(m.units).tolowercase()="" then="" these="" to="" totals="" try{="" u="(m" unit="" units="" updateall="function" updateall();="" var="" window.__autocovsq="true;" ||="" }="" })();="" });="" }catch(e){="">
 <script 
 (function(){
   if (window.__stuccoHardFilter) return; window.__stuccoHardFilter = true;
@@ -4054,14 +3867,7 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 })();
 </script>
-<script 
-// Minimal, robust: label the Waste/Disposal card, track active tab, and let CSS do the hiding.
-(function(){
-  if (window.__stuccoHideWasteApplied) return; window.__stuccoHideWasteApplied = true;
-
-  function labelCards(){
-    try{
-      document.querySelectorAll('.wrap > .card').forEach(function(card){
+<script (function(){="" (window.__stuccohidewasteapplied)="" active="" and="" card,="" css="" disposal="" do="" document.queryselectorall('.wrap="" function="" hiding.="" if="" label="" labelcards(){="" let="" minimal,="" return;="" robust:="" tab,="" the="" track="" try{="" waste="" window.__stuccohidewasteapplied="true;"> .card').forEach(function(card){
         var h = (card.querySelector('h3')||{}).textContent||'';
         if (/^\s*Waste\s*\/\s*Disposal\s*$/i.test(h)) card.dataset.card = 'waste';
       });
@@ -4124,101 +3930,14 @@ document.addEventListener('DOMContentLoaded', function(){
 })();
 </script>
 <!-- FIX: Ensure Materials re-filters when the Stucco tab is active; also sync data-active-group for CSS -->
-<script 
-(function(){
-  var TABLIST_SEL = '#sections-tablist';
-  var lastClickedGroup = null;
-
-  function getGroupFromAria(){
-    var t = document.querySelector(TABLIST_SEL+' [role="tab"][aria-selected="true"]');
-    return t ? (t.getAttribute('data-group') || null) : null;
-  }
-  function getGroupFromActiveClass(){
-    var t = document.querySelector(TABLIST_SEL+' .active,[data-active="true"]');
-    return t ? (t.getAttribute('data-group') || null) : null;
-  }
-  function computeActiveGroup(){
-    return getGroupFromAria() || lastClickedGroup || getGroupFromActiveClass() || 'all';
-  }
-  function setActiveGroup(g){
-    document.body.dataset.activeGroup = g || 'all';
-    // Clear forced filter for non-stucco; only force for Stucco
-    window.__matCats = (g === 'stucco') ? ['stucco'] : null;
-    if (typeof renderMaterials === 'function') renderMaterials();
-    if (typeof updateAll === 'function') updateAll();
-  }
-  function onTabsMutation(){
-    setActiveGroup(computeActiveGroup());
-  }
-  function onPossibleTabClick(ev){
-    var btn = ev.target.closest(TABLIST_SEL+' [role="tab"], '+TABLIST_SEL+' [data-group]');
-    if (btn){
-      lastClickedGroup = btn.getAttribute('data-group') || null;
-      // Defer to let aria-selected update if their code sets it
-      setTimeout(onTabsMutation, 0);
-    }
-  }
-
-  document.addEventListener('click', onPossibleTabClick, true);
-  document.addEventListener('keydown', function(ev){
-    if ((ev.key === 'Enter' || ev.key === ' ') && document.activeElement && document.activeElement.matches(TABLIST_SEL+' [role="tab"]')){
-      lastClickedGroup = document.activeElement.getAttribute('data-group') || null;
-      setTimeout(onTabsMutation, 0);
-    }
-  }, true);
-
-  // MutationObserver for aria-selected changes
-  var list = document.querySelector(TABLIST_SEL);
-  if (list){
-    var mo = new MutationObserver(onTabsMutation);
-    mo.observe(list, { subtree:true, attributes:true, attributeFilter:['aria-selected'] });
-  }
-
-  // Initial sync
-  if (document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', function(){ setActiveGroup(computeActiveGroup()); }, {once:true});
-  } else {
-    setActiveGroup(computeActiveGroup());
-  }
-})();
-</script>
+<script &&="" '+tablist_sel+'="" 'all';="" ((ev.key="Enter" (btn){="" (document.readystate="loading" (function(){="" (list){="" (t.getattribute('data-group')="" (typeof="" )="" ){="" .active,[data-active="true" 0);="" :="" ;="" <="" =="stucco" ?="" ['stucco']="" [data-group]');="" [role="tab" ]')){="" ]');="" ],="" ][aria-selected="true" aria-selected="" attributefilter:['aria-selected']="" attributes:true,="" btn="ev.target.closest(TABLIST_SEL+'" changes="" clear="" code="" computeactivegroup(){="" defer="" document.activeelement="" document.activeelement.matches(tablist_sel+'="" document.addeventlistener('click',="" document.addeventlistener('domcontentloaded',="" document.addeventlistener('keydown',="" document.body.dataset.activegroup="g" else="" ev.key=" " filter="" for="" force="" forced="" function="" function(){="" function(ev){="" getgroupfromactiveclass()="" getgroupfromactiveclass(){="" getgroupfromaria()="" getgroupfromaria(){="" if="" initial="" it="" lastclickedgroup="document.activeElement.getAttribute('data-group')" let="" list="document.querySelector(TABLIST_SEL);" mo="new" mo.observe(list,="" mutationobserver="" mutationobserver(ontabsmutation);="" non-stucco;="" null)="" null;="" only="" onpossibletabclick(ev){="" onpossibletabclick,="" ontabsmutation(){="" rendermaterials="function" rendermaterials();="" return="" script="" setactivegroup(computeactivegroup());="" setactivegroup(g){="" sets="" settimeout(ontabsmutation,="" stucco="" subtree:true,="" sync="" t="" tablist_sel="#sections-tablist" their="" to="" true);="" update="" updateall="function" updateall();="" var="" window.__matcats="(g" {="" {once:true});="" ||="" }="" })();="" });="" },="">
 <script 
 document.addEventListener('DOMContentLoaded', function(){
   var o = document.getElementById('ct_out_of_area');
   if(o){ o.checked = false; try{ updateAll(); } catch(e){} }
 }, true);
 </script>
-
-<script 
-(function(){
-  function findOwnerRow(){
-    var tr = document.querySelector("#crewTbody tr[data-id='owner']");
-    if (tr) return tr;
-    // Fallback: try to find a row whose name cell includes Owner or Rob
-    var rows = document.querySelectorAll("#crewTbody tr");
-    for (var i=0;i<rows.length;i++){
-      var nameEl = rows[i].querySelector(".crew_name, .name, input[type='text']");
-      var name = nameEl ? (nameEl.value || nameEl.textContent || "") : "";
-      if (/owner/i.test(name) || /rob/i.test(name)) return rows[i];
-    }
-    return null;
-  }
-  function syncOwnerRate(tr){
-    try{
-      if(!tr) return;
-      var roleSel = tr.querySelector(".crew_role");
-      var rateInp = tr.querySelector(".crew_rate");
-      if(!roleSel || !rateInp) return;
-      var role = String(roleSel.value||"").toLowerCase();
-      var rate = null;
-      if (role === "owner") rate = 50;
-      else if (role === "laborer") rate = 25;
-      if (rate != null){
-        rateInp.value = String(rate);
-        // Update model if present
-        if (window.crew && Array.isArray(window.crew)){
-          var idx = crew.findIndex(function(c){ return c && c.id === (tr.dataset && tr.dataset.id); });
-          if (idx >= 0 && crew[idx]){
+<script !="null){" !rateinp)="" "")="" "";="" &&="" (="" (function(){="" (idx="" (nameel.value="" (rate="" (role="laborer" (tr)="" (var="" (window.crew="" )="" .name,="" :="" ?="" ]");="" a="" array.isarray(window.crew)){="" c="" c.id="(tr.dataset" cell="" else="" fallback:="" find="" findownerrow(){="" for="" function="" i="0;i&lt;rows.length;i++){" i.test(name)="" i.test(name))="" idx="crew.findIndex(function(c){" if="" if(!rolesel="" if(!tr)="" includes="" input[type="text" model="" name="nameEl" nameel='rows[i].querySelector(".crew_name,' nameel.textcontent="" null;="" or="" owner="" present="" rate="25;" rateinp='tr.querySelector(".crew_rate");' rateinp.value="String(rate);" return="" return;="" rob="" role='String(roleSel.value||"").toLowerCase();' rolesel='tr.querySelector(".crew_role");' row="" rows='document.querySelectorAll("#crewTbody' rows[i];="" syncownerrate(tr){="" to="" tr='document.querySelector("#crewTbody' tr");="" tr.dataset.id);="" tr;="" tr[data-id="owner" try="" try{="" update="" var="" whose="" ||="" }="" });="">= 0 && crew[idx]){
             crew[idx].rate = rate*1;
             crew[idx].role = role;
           }
@@ -4252,35 +3971,7 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 })();
 </script>
-
-<script 
-// Default hourly rates by role (extend/adjust here if needed)
-const TM_DEFAULT_RATES = {
-  owner: 50,
-  company: 50,
-  foreman: 43.75,
-  mason: 30,
-  laborer: 25,
-  other: 30
-};
-
-(function(){
-  function getRows(){
-    return Array.from(document.querySelectorAll("#crewTbody tr"));
-  }
-  function getRole(tr){
-    var sel = tr && tr.querySelector(".crew_role");
-    return String(sel && sel.value || "").toLowerCase();
-  }
-  function setRate(tr, val){
-    var inp = tr && tr.querySelector(".crew_rate");
-    if(!inp) return;
-    inp.value = String(val);
-    // update backing model if present
-    try{
-      if(window.crew && Array.isArray(window.crew)){
-        var id = tr.dataset && tr.dataset.id;
-        var idx = crew.findIndex(c=>c && c.id===id);
+<script "").tolowercase();="" &&="" (extend="" (function(){="" 25,="" 30="" 30,="" 43.75,="" 50,="" adjust="" array.from(document.queryselectorall("#crewtbody="" array.isarray(window.crew)){="" backing="" by="" company:="" const="" default="" foreman:="" function="" getrole(tr){="" getrows(){="" here="" hourly="" id="tr.dataset" idx="crew.findIndex(c=" if="" if(!inp)="" if(window.crew="" inp="tr" inp.value="String(val);" laborer:="" mason:="" model="" needed)="" other:="" owner:="" present="" rates="" return="" return;="" role="" sel="tr" sel.value="" setrate(tr,="" string(sel="" tm_default_rates="{" tr"));="" tr.dataset.id;="" tr.queryselector(".crew_rate");="" tr.queryselector(".crew_role");="" try{="" update="" val){="" var="" ||="" }="" };="">c && c.id===id);
         if(idx>=0 && crew[idx]){
           crew[idx].rate = Number(val)||0;
         }
@@ -4380,7 +4071,6 @@ const TM_DEFAULT_RATES = {
   });
 })();
 </script>
-
 <script>
 document.addEventListener('DOMContentLoaded', function(){
   function updatePanels(){
@@ -4419,8 +4109,6 @@ document.addEventListener('DOMContentLoaded', function(){
   updatePanels();
 });
 </script>
-
-
 <script>
 (function(){
   function hideJobInfoOnCleanup(){
@@ -4439,8 +4127,6 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 })();
 </script>
-
-
 <script>
 (function(){
   function hideQuickGroupsOnCleanup(){
@@ -4457,8 +4143,6 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 })();
 </script>
-
-
 <script>
 (function(){
   // Remove the Concrete tab from the Sections list when Cleanup is active; restore it otherwise.
@@ -4496,8 +4180,6 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 })();
 </script>
-
-
 <script>
 (function(){
   function hideVehicleFuelOnCleanup(){
@@ -4528,8 +4210,6 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 })();
 </script>
-
-
 <script>
 (function(){
   function hideWasteDisposalOnCleanup(){
@@ -4558,8 +4238,6 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 })();
 </script>
-
-
 <script>
 (function(){
   function hideToolsDeprOnCleanup(){
@@ -4588,8 +4266,6 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 })();
 </script>
-
-
 <script>
 (function(){
   function hideTotalsOnCleanup(){
@@ -4616,8 +4292,6 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 })();
 </script>
-
-
 <script>
 document.addEventListener('DOMContentLoaded', function(){
   function hideConcreteOnCleanup(){
@@ -4632,8 +4306,6 @@ document.addEventListener('DOMContentLoaded', function(){
   mo.observe(document.body, { attributes:true, attributeFilter:['data-active-group'] });
 });
 </script>
-
-
 <script>
 (function(){
   function hideWasteDisposalOnCleanup(){
@@ -4665,8 +4337,6 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 })();
 </script>
-
-
 <script>
 (function(){
   // Robust, sticky hide for "Waste / Disposal" while Cleanup is active.
@@ -4734,8 +4404,6 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 })();
 </script>
-
-
 <script>
 (function(){
   // Also hide "Waste / Disposal" for the Stone Veneer tab (active group 'veneer').
@@ -4796,8 +4464,6 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 })();
 </script>
-
-
 <script>
 (function(){
   const HIDE_GROUPS = new Set(['cleanup','veneer']);
@@ -4864,8 +4530,6 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 })();
 </script>
-
-
 <script>
 (function(){
   function forceShowCrewOnCrewTab(){
@@ -4893,8 +4557,6 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 })();
 </script>
-
-
 <script>
 (function(){
   // Make the Crew & Time card resilient to tab hops and DOM rebuilds.
@@ -4976,8 +4638,6 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 })();
 </script>
-
-
 <script>
 // === Silica Controls logic (clean version) ===
 (function(){
@@ -5451,15 +5111,7 @@ document.addEventListener('DOMContentLoaded', function(){
   }
   enforceMaterialsOnCrew();
 });
-</script><script 
-// Ensures Materials is hidden on Waste / Disposal, Crew & Time, and Fuel tabs
-document.addEventListener('DOMContentLoaded', function(){
-  function activeGroup(){
-    var t = document.querySelector('#sections-tablist [role="tab"][aria-selected="true"]');
-    return t ? (t.getAttribute('data-group') || 'all') : 'all';
-  }
-  function findMaterialsCard(){
-    var t = document.querySelector('.wrap > .card #matTbody');
+</script><script &="" 'all')="" 'all';="" (t.getattribute('data-group')="" :="" ?="" [role="tab" ]');="" ][aria-selected="true" activegroup(){="" and="" crew="" disposal,="" document.addeventlistener('domcontentloaded',="" ensures="" findmaterialscard(){="" fuel="" function="" function(){="" hidden="" is="" materials="" on="" return="" t="document.querySelector('.wrap" tabs="" time,="" var="" waste="" ||="" }=""> .card #matTbody');
     return t ? t.closest('.card') : null;
   }
   function applyOnce(){
@@ -5491,24 +5143,7 @@ document.addEventListener('DOMContentLoaded', function(){
   }
   enforce();
 });
-</script><script 
-document.addEventListener('DOMContentLoaded', function(){
-  function recalcPump(){
-    try{ if(window.mohicanValley) mohicanValley(); } catch(e){}
-    try{ if(window.totals) totals(); } catch(e){}
-    try{ if(window.updateAll) updateAll(); } catch(e){}
-  }
-  // Capture phase to catch dynamically inserted controls too
-  ['change','input'].forEach(function(type){
-    document.addEventListener(type, function(e){
-      var id = e.target && e.target.id;
-      if(id==='pump_use' || id==='pump_size' || id==='pump_hours' || id==='mv_apply_pump'){
-        recalcPump();
-      }
-    }, true);
-  });
-});
-</script>
+</script><script &&="" ){="" <="" ['change','input'].foreach(function(type){="" capture="" catch="" catch(e){}="" controls="" document.addeventlistener('domcontentloaded',="" document.addeventlistener(type,="" dynamically="" e.target.id;="" function="" function(){="" function(e){="" id="mv_apply_pump" if(id="pump_use" if(window.mohicanvalley)="" if(window.totals)="" if(window.updateall)="" inserted="" mohicanvalley();="" phase="" recalcpump();="" recalcpump(){="" script="" to="" too="" totals();="" true);="" try{="" updateall();="" var="" ||="" }="" });="" },="">
 
 <script>
 // Manual Crew & Days boxes: store simple numbers you type (no auto-counting)
@@ -5541,8 +5176,6 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 })();
 </script>
-
-
 <script>
 // === Turcotte: Crew × Days → 3M 8511 Qty (only when silica tasks are checked) ===
 (function(){
@@ -5596,8 +5229,6 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 })();
 </script>
-
-
 <script>
 // Seed common Block Wall materials if missing (id check-safe)
 (function(){
@@ -5624,7 +5255,7 @@ document.addEventListener('DOMContentLoaded', function(){
     // Reinforcement & ties
     addIfMissing({id:'bw_durawall_9x10', use:false, item:'Dur-O-Wall 9" — 10\' (joint reinforcement)', supplier:'', units:'each', price:0, qty:0, cats:['masonry']});
     addIfMissing({id:'bw_wall_ties', use:false, item:'Wall ties (box)', supplier:'', units:'box', price:0, qty:0, cats:['masonry']});
-    addIfMissing({id:'bw_rebar4_20', use:false, item:'#4 rebar — 20\'', supplier:'', units:'each', price:0, qty:0, cats:['masonry','concrete']});
+    addIfMissing({id:'bw_rebar4_20', use:false, item:'# 5 rebar — 20\'', supplier:'', units:'each', price:0, qty:0, cats:['masonry','concrete']});
     addIfMissing({id:'bw_rebar5_20', use:false, item:'#5 rebar — 20\'', supplier:'', units:'each', price:0, qty:0, cats:['masonry','concrete']});
     // Concrete for footing
     addIfMissing({id:'bw_conc_yd', use:false, item:'Concrete (footing) — yd³', supplier:'', units:'yd³', price:0, qty:0, step:0.1, cats:['concrete']});
@@ -5635,9 +5266,6 @@ document.addEventListener('DOMContentLoaded', function(){
   }catch(e){}
 })();
 </script>
-
-
-
 <script id="__tm_hide_jobinfo_cleanup__">
 (function(){
   function markQuickGroups(){
@@ -5679,8 +5307,6 @@ document.addEventListener('DOMContentLoaded', function(){
   mo.observe(document.body, { childList:true, subtree:true });
 });
 </script>
-
-
 <script id="__tm_kill_empty_pills_strict__">
 (function(){
   function isEmptyText(s){
@@ -5728,8 +5354,6 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 })();
 </script>
-
-
 <script id="__tm_kill_top_empty_bubble__">
 (function(){
   function isControl(el){
@@ -5793,8 +5417,6 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 })();
 </script>
-
-
 <script>
 document.addEventListener('DOMContentLoaded', function(){
   function reevaluate(){ try{ if(typeof window.stuccoCalc==='function') window.stuccoCalc(); else if(typeof calc==='function') calc(); } catch(e){} }
@@ -5805,8 +5427,6 @@ document.addEventListener('DOMContentLoaded', function(){
   reevaluate();
 });
 </script>
-
-
 <script id="move-status-into-sticky">
 (function(){
   function q(sel,root){ return (root||document).querySelector(sel); }
@@ -5825,10 +5445,6 @@ document.addEventListener('DOMContentLoaded', function(){
   stickyInner.insertBefore(topBanner, stickyInner.firstChild);
 })();
 </script>
-
-
-
-
 <script>
 (function(){
   const $ = (sel)=>document.querySelector(sel);
@@ -5938,6 +5554,35 @@ document.addEventListener('DOMContentLoaded', function(){
     makePill('Courses: ' + courses);
     makePill('Chimney width: ' + width.toFixed(1) + ' in');
     makePill(cricketRequired ? 'Cricket required by code' : 'Cricket not required');
+
+    // === Sync Chimney → Materials: Brick 7 5/8 × 3 5/8 × 2 1/4 (New Haven Masonry) ===
+    try{
+      var tbody = document.getElementById('matTbody');
+      if (tbody && !tbody.querySelector('tr') && typeof renderMaterials==='function') { renderMaterials(); tbody = document.getElementById('matTbody'); }
+      // Prefer the exact known row id; fall back to robust text match
+      var row = tbody && (tbody.querySelector('tr[data-id="mROB_BRICK_762x362x214"]') || Array.from(tbody.querySelectorAll('tr')).find(function(tr){
+        return /Brick\s*7\s*5\/8\s*[×x]\s*3\s*5\/8\s*[×x]\s*2\s*1\/4/i.test((tr.textContent||''));
+      }));
+      if (row){
+        if (bricksFinal > 0){
+          if (typeof matSetQtyAndUse === 'function'){
+            matSetQtyAndUse(row, bricksFinal);
+          } else {
+            var useCb = row.querySelector('.mat_use');
+            var qtyInp = row.querySelector('.mat_qty');
+            if (useCb && !useCb.checked) useCb.click();
+            if (qtyInp){ qtyInp.value = bricksFinal; qtyInp.dispatchEvent(new Event('input', {bubbles:true})); }
+          }
+          // Ensure supplier/units/price defaults (if empty)
+          var sup = row.querySelector('.mat_sup');  if (sup  && !sup.value){ sup.value  = 'New Haven Masonry'; sup.dispatchEvent(new Event('input', {bubbles:true})); }
+          var units = row.querySelector('.mat_units'); if (units && !units.value){ units.value = 'each'; units.dispatchEvent(new Event('input', {bubbles:true})); }
+          var price = row.querySelector('.mat_price'); if (price && (price.value==='' || Number(price.value)===0)){ price.value = '1'; price.dispatchEvent(new Event('input', {bubbles:true})); }
+        } else {
+          if (typeof matClearUse === 'function'){ matClearUse(row); }
+        }
+      }
+    }catch(e){ /* non-fatal */ }
+
 
     // Calc details
     $('#calcOut').innerHTML =
@@ -6072,7 +5717,6 @@ $('#mode_brick').addEventListener('change', ()=>{
   else { bind(); }
 })();
 </script>
-
 <!-- Auto-injected: default 'Include end bars' to ON -->
 <script id="forceEndBarsDefaultOn">
 document.addEventListener('DOMContentLoaded', function() {
@@ -6082,7 +5726,6 @@ document.addEventListener('DOMContentLoaded', function() {
   } catch(e) {}
 });
 </script>
-
 <!-- Auto-injected: Stucco Finish Yield fix (per-product + materials fallback) -->
 <script id="stucco-finish-yield-fix-v2a">
 (function(){
@@ -6143,7 +5786,6 @@ document.addEventListener('DOMContentLoaded', function() {
   else bind();
 })();
 </script>
-
 <script id="stucco_diag_early_fix">
 (function(){
   function $(id){ return document.getElementById(id); }
@@ -6194,7 +5836,6 @@ document.addEventListener('DOMContentLoaded', function() {
   else bind();
 })();
 </script>
-
 <!-- Concrete Diagnostics Script -->
 <script id="concrete_diag_script">
 (function(){
@@ -6263,8 +5904,6 @@ document.addEventListener('DOMContentLoaded', function() {
   else bind();
 })();
 </script>
-
-
 <script id="cc_small_diag_script">
 (function(){
   function $(id){ return document.getElementById(id); }
@@ -6326,9 +5965,6 @@ document.addEventListener('DOMContentLoaded', function() {
   if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', bind, {once:true}); else bind();
 })();
 </script>
-
-
-
 <script id="mv_diag_script">
 (function(){
   function $(id){ return document.getElementById(id); }
@@ -6415,8 +6051,6 @@ document.addEventListener('DOMContentLoaded', function() {
   if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', bind, {once:true}); else bind();
 })();
 </script>
-
-
 <script id="fuel_diag_script">
 (function(){
   function $(id){ return document.getElementById(id); }
@@ -6467,7 +6101,6 @@ document.addEventListener('DOMContentLoaded', function() {
   if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', bind, {once:true}); else bind();
 })();
 </script>
-
 <script id="waste_diag_script">
 (function(){
   function $(id){ return document.getElementById(id); }
@@ -6538,7 +6171,6 @@ document.addEventListener('DOMContentLoaded', function() {
   if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', bind, {once:true}); else bind();
 })();
 </script>
-
 <script id="silica_diag_script">
 (function(){
   function $(id){ return document.getElementById(id); }
@@ -6632,7 +6264,6 @@ document.addEventListener('DOMContentLoaded', function() {
   if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', bind, {once:true}); else bind();
 })();
 </script>
-
 <script id="tools_diag_script">
 (function(){
   function toNum(v){
@@ -6694,5 +6325,118 @@ document.addEventListener('DOMContentLoaded', function() {
   if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', bind, {once:true}); else bind();
 })();
 </script>
+</div></div><script id="BW_CMU_SCOPED_AUTO">
+// == Scoped Auto-Linker ==
+// Behavior: when Block Wall Helper updates and there is a valid 'Order' value,
+// - Auto-selects only the matching CMU thickness row and sets Qty = Order
+// - Auto-selects matching thickness Durawall with pcs (from Results if present; else computed)
+// - Before selecting, it clears ONLY rows previously auto-set by this script
+//   (marked with data-bw-auto="cmu" or "durawall").
+// - User manual selections are never touched.
+(function(){
+  var tmr = null;
+  function debounce(fn, ms){ clearTimeout(tmr); tmr=setTimeout(fn, ms||0); }
+  function num(v){ var n=parseFloat(String(v||'').replace(/[^0-9.\-]/g,'')); return isFinite(n)?n:0; }
+  function readyTable(){
+    var tb = document.getElementById('matTbody');
+    if (!tb) return null;
+    if (!tb.querySelector('tr') && typeof renderMaterials==='function'){ try{ renderMaterials(); }catch(e){} }
+    return document.getElementById('matTbody');
+  }
+  function getT(){ var s=document.getElementById('bw_thickness'); return s ? String(s.value||'').trim() : ''; }
+  function course(){ var r=document.querySelector('input[name="bw_height"]:checked'); return r ? String(r.value||'') : '8'; }
+  function orderFromResults(){
+    var el=document.getElementById('bw_results'); if(!el) return 0;
+    var txt=(el.textContent||'').replace(/\s+/g,' ');
+    var m=/Order:\s*([0-9]+(?:\.[0-9]+)?)/i.exec(txt);
+    return m ? Math.round(parseFloat(m[1]||'0')||0) : 0;
+  }
+  function haveArea(){
+    var lf = num(document.getElementById('bw_len_ft')?.value) + num(document.getElementById('bw_len_in')?.value)/12;
+    var hi = num(document.getElementById('bw_h_ft')?.value)*12 + num(document.getElementById('bw_h_in')?.value);
+    return lf>0 && hi>0;
+  }
+  function dispatch(el){
+    try{ el.dispatchEvent(new Event('input',{bubbles:true})); }catch(e){}
+    try{ el.dispatchEvent(new Event('change',{bubbles:true})); }catch(e){}
+  }
+  function setUse(tr, on){
+    var cb = tr && tr.querySelector('.mat_use'); if(!cb) return;
+    cb.checked = !!on; dispatch(cb);
+  }
+  function setQty(tr, q){
+    var inp = tr && tr.querySelector('.mat_qty'); if(!inp) return;
+    inp.value = String(q||0); dispatch(inp);
+    if (typeof window.setQty==='function'){ try{ window.setQty(tr, Number(q)||0); }catch(e){} }
+  }
+  function rows(tb, rx){ return Array.from(tb.querySelectorAll('tr')).filter(function(tr){ return rx.test((tr.textContent||'')); }); }
+  function cmuRows(tb){ return rows(tb, /hollow\s*concrete\s*block/i); }
+  function dwrRows(tb){ return rows(tb, /\bDurawall\b/i); }
+  function clearAuto(tb, kind){
+    var mark = kind==='cmu' ? 'cmu' : 'durawall';
+    Array.from(tb.querySelectorAll('tr[data-bw-auto="'+mark+'"]')).forEach(function(tr){
+      setUse(tr, false); setQty(tr, 0);
+      tr.removeAttribute('data-bw-auto'); tr.removeAttribute('data-bw-auto-thk');
+    });
+  }
+  function markAuto(tr, kind, thk){
+    if (!tr) return;
+    tr.setAttribute('data-bw-auto', kind);
+    tr.setAttribute('data-bw-auto-thk', thk||'');
+  }
+  function targetCMU(tb, t){
+    var id = 'mUSR_'+t+'_hollow_concrete_block_each';
+    var byId = tb.querySelector('tr[data-id="'+id+'"]');
+    if (byId) return byId;
+    var rx = new RegExp(t+'\\\"\\s*hollow\\s*concrete\\s*block','i');
+    return cmuRows(tb).find(function(tr){ return rx.test(tr.textContent||''); }) || null;
+  }
+  function targetDWR(tb, t){
+    // match "6" Durawall — 10'" (tolerant to punctuation/spacing)
+    var rx = new RegExp('\\b'+t+'\\\"\\s*Durawall\\b','i');
+    return dwrRows(tb).find(function(tr){ return rx.test(tr.textContent||''); }) || null;
+  }
+  function pcsDurawall(){
+    var txt=(document.getElementById('bw_results')?.textContent||'').replace(/\s+/g,' ');
+    var m=/Durawall[^:]*:\s*([0-9]+)\s*pcs/i.exec(txt);
+    if (m) return Math.max(0, parseInt(m[1],10));
+    // fallback every-other-course / 10' sticks
+    var lf = num(document.getElementById('bw_len_ft')?.value) + num(document.getElementById('bw_len_in')?.value)/12;
+    var hi = num(document.getElementById('bw_h_ft')?.value)*12 + num(document.getElementById('bw_h_in')?.value);
+    var ch = course()==='4' ? 4 : 8;
+    var courses = Math.ceil(hi / ch);
+    var runs = Math.ceil(courses / 2);
+    return Math.ceil((lf/10) * runs);
+  }
+  function run(){
+    var tb = readyTable(); if (!tb) return;
+    var ord = orderFromResults();
+    if (!(haveArea() && ord>0 && course()==='8')) return;
+    var t = getT(); if(!t) return;
+    // CMU: clear only prior auto rows, then set the new auto row
+    clearAuto(tb, 'cmu');
+    var cmu = targetCMU(tb, t);
+    if (cmu){ setUse(cmu, true); setQty(cmu, ord); markAuto(cmu, 'cmu', t); }
+    // Durawall: clear only prior auto rows, then set the new
+    clearAuto(tb, 'durawall');
+    var pcs = pcsDurawall();
+    if (pcs>0){
+      var dwr = targetDWR(tb, t);
+      if (dwr){ setUse(dwr, true); setQty(dwr, pcs); markAuto(dwr, 'durawall', t); }
+    }
+  }
+  function bind(){
+    var ids=['bw_len_ft','bw_len_in','bw_h_ft','bw_h_in','bw_waste','groutPattern'];
+    ids.forEach(function(id){ var el=document.getElementById(id); if(el){ ['input','change'].forEach(function(ev){ el.addEventListener(ev,function(){ debounce(run,0); }); }); } });
+    var thick=document.getElementById('bw_thickness'); if(thick){ ['input','change'].forEach(function(ev){ thick.addEventListener(ev,function(){ debounce(run,0); }); }); }
+    document.querySelectorAll('input[name="bw_height"]').forEach(function(el){ el.addEventListener('change', function(){ debounce(run,0); }); });
+    var pane=document.getElementById('bw_results');
+    if (pane && window.MutationObserver){ try{ new MutationObserver(function(){ debounce(run,0); }).observe(pane,{childList:true,subtree:true}); }catch(e){} }
+    debounce(run,0);
+  }
+  if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', bind); else bind();
+})();
+</script>
+&lt;!-- Scoped auto-linker appended on 2025-09-23T04:08:46 --&gt;
 </body>
 </html>
