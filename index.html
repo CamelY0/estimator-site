@@ -720,10 +720,10 @@ try{
 
 // Course count (for openings/specials)
     var courses = Math.ceil(H_in / courseHeightIn());
-    // === Durawall (joint reinforcement) calc for 12" walls ===
-    // Default: every other course (16" o.c. when courses are 8" high)
+    // === Durawall (joint reinforcement) calc — all wall thicknesses ===
+    // Default: every other course (approx 16" o.c. when courses are 8" high)
     var DURAWALL_SPACING_COURSES = 2;
-    var durawall_runs = (thickness === '12') ? Math.ceil(courses / DURAWALL_SPACING_COURSES) : 0;
+    var durawall_runs = Math.ceil(courses / DURAWALL_SPACING_COURSES);
     var durawall_lf_total = (L_in/12) * durawall_runs; // linear feet per run along length
     var durawall_10ft_pcs = Math.max(0, Math.ceil(durawall_lf_total / 10));
 
@@ -905,25 +905,89 @@ if (rUpEl && rUpEl.checked){ mortar_bags = Math.ceil(mortar_bags); }
       }
     } catch(e) { /* non-fatal */ }
 
-    // === Sync 12" Durawall — 10' to Materials ===
+    
+    // === Sync Mortar (SPEC MIX Type S — 80 lb) to Materials ===
     try {
-      var pcsToMat = (thickness === '12') ? Math.max(0, durawall_10ft_pcs||0) : 0;
+      var mortarToMat = Math.max(0, (rUpEl && rUpEl.checked) ? Math.ceil(mortar_bags||0) : (typeof mortar_bags==='number' ? mortar_bags : 0));
+      var tbody = document.getElementById('matTbody');
+      if (tbody && !tbody.querySelector('tr') && typeof renderMaterials==='function') { renderMaterials(); }
+      tbody = document.getElementById('matTbody');
+      if (tbody){
+        var mortarRow = tbody.querySelector('tr[data-id="m4"]') || Array.from(tbody.querySelectorAll('tr')).find(function(tr){
+          return /SPEC\s*MIX.*Type\s*S.*80/i.test((tr.textContent||''));
+        });
+        if (!mortarRow){
+          mortarRow = Array.from(tbody.querySelectorAll('tr')).find(function(tr){
+            return /Type\s*S.*SPEC/i.test((tr.textContent||''));
+          });
+        }
+        if (mortarToMat > 0 && mortarRow){
+          if (typeof matSetQtyAndUse === 'function') {
+            matSetQtyAndUse(mortarRow, mortarToMat);
+          } else {
+            var useCb = mortarRow.querySelector('.mat_use');
+            var qtyInp = mortarRow.querySelector('.mat_qty');
+            if (useCb && !useCb.checked) useCb.click();
+            if (qtyInp){ qtyInp.value = mortarToMat; qtyInp.dispatchEvent(new Event('input', {bubbles:true})); }
+          }
+        } else if (mortarRow){
+          var useCb = mortarRow.querySelector('.mat_use');
+          var qtyInp = mortarRow.querySelector('.mat_qty');
+          if (qtyInp){ qtyInp.value=''; qtyInp.dispatchEvent(new Event('input', {bubbles:true})); }
+          if (useCb && useCb.checked) useCb.click();
+        }
+      }
+    } catch(e) { /* non-fatal */ }
+// === Sync 12" Durawall — 10' to Materials ===
+    try {
+      var pcsToMat = Math.max(0, durawall_10ft_pcs||0);
       
       // Force zero when no area
       if (!(area_sf>0) || !(L_in>0) || !(H_in>0)) pcsToMat = 0;
 var tbody = document.getElementById('matTbody');
+
+      // Clear any Durawall rows first so old sizes don't stick
+      try {
+        if (tbody) {
+          var allDW = Array.from(tbody.querySelectorAll('tr')).filter(function(tr){
+            return /Durawall.*10['’]/i.test((tr.textContent||''));
+          });
+          allDW.forEach(function(tr){
+            var useCb = tr.querySelector('.mat_use');
+            var qtyInp = tr.querySelector('.mat_qty');
+            if (qtyInp) { qtyInp.value = ''; qtyInp.dispatchEvent(new Event('input', {bubbles:true})); }
+            if (useCb && useCb.checked) { useCb.click(); }
+          });
+        }
+      } catch(_e) {}
+
       if (tbody && !tbody.querySelector('tr') && typeof renderMaterials==='function') { renderMaterials(); }
       tbody = document.getElementById('matTbody');
 
       function getDurawallRow(){
-        if (!tbody) return null;
-        var row = tbody.querySelector('tr[data-id="mNH2"]'); // exact 12" Durawall — 10' id
-        if (!row){
-          row = Array.from(tbody.querySelectorAll('tr')).find(function(tr){
-            return /12["”]\s*Durawall.*10['’]/i.test((tr.textContent||''));
-          });
+        // Explicit ID mapping by thickness
+        var idMap = { '6':'mDW6', '8':'mDW8', '10':'mDW10', '12':'mNH2' };
+        var idTry = idMap[String(thickness)];
+        if (idTry) {
+          var r0 = tbody.querySelector('tr[data-id="'+idTry+'"]');
+          if (r0) return r0;
         }
-        return row;
+        if (!tbody) return null;
+        // Try thickness-specific first (e.g., 8" Durawall — 10')
+        try {
+          var rxStr = String(thickness) + '["”]\\s*Durawall.*10[\'’]';
+          var rx = new RegExp(rxStr, 'i');
+          var row = Array.from(tbody.querySelectorAll('tr')).find(function(tr){
+            return rx.test((tr.textContent||''));
+          });
+          if (row) return row;
+        } catch(e) {}
+        // Fallback to known id, then any generic Durawall — 10'
+        var row2 = tbody.querySelector('tr[data-id="mNH2"]');
+        if (row2) return row2;
+        return Array.from(tbody.querySelectorAll('tr')).find(function(tr){
+          return /Durawall.*10['’]/i.test((tr.textContent||''));
+        }) || null;
       }
 
       var row = getDurawallRow();
@@ -958,7 +1022,7 @@ var tbody = document.getElementById('matTbody');
     html += '<div><strong>Vertical #4 bars:</strong> ' + vert_bars + ' @ ' + fmt(bar_len_ft,2) + ' ft (' + fmt(rebar_lf,1) + ' LF)</div>';
     html += '<div><strong>Grout (table):</strong> ' + fmt(groutFt3,2) + ' ft³ (' + fmt(groutYd3,3) + ' yd³) — ' + thickness + '\" / ' + (pattern==='full' ? 'Full' : (spacingIn + '\" o.c.')) + '</div>';
     html += '<div><strong>Grout Bags (SPEC MIX Core Fill 80 lb):</strong> ' + (sm ? ( (document.getElementById('bw_round_up_bags') && document.getElementById('bw_round_up_bags').checked) ? (grout_bags + ' bags') : (fmt(grout_bags,2) + ' bags') ) : '—') + '</div>';
-    html += '<div><strong>Durawall 12&quot; — 10\' pieces:</strong> ' + durawall_10ft_pcs + ' pcs</div>';
+    html += '<div><strong>Durawall — 10\' pieces:</strong> ' + durawall_10ft_pcs + ' pcs</div>';
     html += '<div><strong>Rebar #5 (20\') sticks:</strong> ' + rebar_sticks20 + ' pcs</div>';
     html += '<div><strong>Mortar:</strong> ~' + fmt(mortar_bags,2) + ' bags</div>';
     if (open_end_units>0) html += '<div><strong>Open‑End units:</strong> ' + open_end_units + '</div>';
@@ -2381,6 +2445,9 @@ return;
   
   
 let materials = [
+  {id:"mDW8", use:false, item:"8\" Durawall — 10'", supplier:"New Haven Masonry", units:"each", price:7.85, qty:0, cats:["masonry"]},
+  {id:"mDW10", use:false, item:"10\" Durawall — 10'", supplier:"New Haven Masonry", units:"each", price:7.85, qty:0, cats:["masonry"]},
+
   {id:'mCT_DC_FLAT',   use:false, item:"Desert Creek Mosaic ThinStone — flats",   supplier:"Connecticut Stone", units:"sf",  price:11.87, qty:0, cats:["masonry","stone veneer"]},
   {id:'mCT_DC_CORNER', use:false, item:"Desert Creek Mosaic Corner ThinStone",    supplier:"Connecticut Stone", units:"lf",  price:17.57, qty:0, cats:["masonry","stone veneer"]},
   {id:'mCT_PMAVM',     use:false, item:"SPEC MIX Polymer-Modified Adhered Veneer Mortar — 80 lb (Gray)", supplier:"Connecticut Stone", units:"bag", price:21.75, qty:0, cats:["masonry","stone veneer","stucco"]},
@@ -2399,6 +2466,8 @@ let materials = [
   {id:'m8',  use:false, item:"SPEC MIX Core Fill Grout 3k — 80 lb",supplier:'Homer C. Godfrey', units:'bag',    price:11, qty:0, cats:["masonry"]},
   {id:'m10', use:false, item:"Bulk crushed rock 3/4\"",            supplier:'SiteOne',          units:'yard',  price:44, qty:0, step:0.25, roundUp:false, cats:['concrete', 'pavers']},
   {id:"mNH1", use:false, item:"12\" hollow concrete block", supplier:"New Haven Masonry", units:"each", price:4.8, qty:0, cats:["masonry"]},
+  {id:"mDW6", use:false, item:"6\" Durawall — 10'", supplier:"New Haven Masonry", units:"each", price:7.85, qty:0, cats:["masonry"]},
+
   {id:"mNH2", use:false, item:"12\" Durawall — 10'", supplier:"New Haven Masonry", units:"each", price:7.85, qty:0, cats:["masonry"]},
   {id:"mNH3", use:false, item:"#5 rebar (5/8\") — 20'", supplier:"New Haven Masonry", units:"each", price:14.95, qty:0, cats:["masonry","concrete"]},
   {id:"mNH5", use:false, item:"QUIKRETE 5000 — 80 lb", supplier:"New Haven Masonry", units:"bag", price:8.95, qty:0, cats:["concrete", "masonry"]},
@@ -2459,9 +2528,6 @@ let materials = [
   {id:'mUSR_6_hollow_concrete_block_each', use:false, item:'6" hollow concrete block', supplier:'New Haven Masonry', units:'each', price:4.80, qty:0, cats:['masonry']},
   {id:'mUSR_8_hollow_concrete_block_each', use:false, item:'8" hollow concrete block', supplier:'New Haven Masonry', units:'each', price:4.80, qty:0, cats:['masonry']},
   {id:'mUSR_10_hollow_concrete_block_each', use:false, item:'10" hollow concrete block', supplier:'New Haven Masonry', units:'each', price:4.80, qty:0, cats:['masonry']},
-  {id:'mUSR_6_Durawall_10_each', use:false, item:'6" Durawall — 10\'', supplier:'New Haven Masonry', units:'each', price:7.85, qty:0, cats:['masonry']},
-  {id:'mUSR_8_Durawall_10_each', use:false, item:'8" Durawall — 10\'', supplier:'New Haven Masonry', units:'each', price:7.85, qty:0, cats:['masonry']},
-  {id:'mUSR_10_Durawall_10_each', use:false, item:'10" Durawall — 10\'', supplier:'New Haven Masonry', units:'each', price:7.85, qty:0, cats:['masonry']}
 ];
 
 
@@ -2491,7 +2557,9 @@ let materials = [
     } catch(e){}
     
 
-    materials.filter(m=> !cats || (m.cats && m.cats.some(c=>cats.includes(c)))).forEach(m=>{
+    const __list = materials.filter(m=> !cats || (m.cats && m.cats.some(c=>cats.includes(c))));
+    const __render = (m)=>{
+
       const tr=document.createElement('tr'); tr.dataset.id=m.id; tr.classList.toggle('fade', !m.use);
       tr.innerHTML = `
         <td><input type="checkbox" class="mat_use" ${m.use?'checked':''}></td>
@@ -2504,7 +2572,9 @@ let materials = [
         <td><button class="ghost mat_del">✕</button></td>`;
       tr.setAttribute('data-cats', (m.cats||[]).join(','));
       tb.appendChild(tr);
-    });
+    };
+    if (__list.length===0) { materials.forEach(__render); } else { __list.forEach(__render); }
+
     bindMatEvents(); updateAll();
   }
   function bindMatEvents(){
@@ -5553,38 +5623,259 @@ document.addEventListener('DOMContentLoaded', function(){
     if ($('#opt_flash').checked) { makePill('Flashing LF: ' + flashLF.toFixed(1)); makePill('Copper est. ft²: ' + copperSF.toFixed(1)); }
     makePill('Courses: ' + courses);
     makePill('Chimney width: ' + width.toFixed(1) + ' in');
-    makePill(cricketRequired ? 'Cricket required by code' : 'Cricket not required');
+    // Defensive cleanup: if 10" block qty equals mortar or flash LF, clear it
+(function(){
+  try{
+    var tbody = document.getElementById('matTbody'); if (!tbody) return;
+    var r = tbody.querySelector('tr[data-id="mUSR_10_hollow_concrete_block_each"]');
+    if (!r) return;
+    var q = r.querySelector('.mat_qty'); var val = q ? parseFloat(q.value||'0') : 0;
+    if ((typeof mortarFinal==='number' && val===Math.ceil(mortarFinal)) ||
+        (typeof flashLF==='number' && Math.abs(val - flashLF) < 1e-6)){
+      clearRow(r);
+    }
+  }catch(e){}
+})();
+makePill(cricketRequired ? 'Cricket required by code' : 'Cricket not required');
 
-    // === Sync Chimney → Materials: Brick 7 5/8 × 3 5/8 × 2 1/4 (New Haven Masonry) ===
+    // === Sync Chimney → Materials: Brick + Mortar + Flue + Crown + Flashing + Copper (by selections) — GUARDED & EVENTFUL ===
+try{
+  if (window.__chimneyMatSync) { /* prevent re-entrancy */ }
+  else {
+    window.__chimneyMatSync = 1;
     try{
       var tbody = document.getElementById('matTbody');
-      if (tbody && !tbody.querySelector('tr') && typeof renderMaterials==='function') { renderMaterials(); tbody = document.getElementById('matTbody'); }
-      // Prefer the exact known row id; fall back to robust text match
-      var row = tbody && (tbody.querySelector('tr[data-id="mROB_BRICK_762x362x214"]') || Array.from(tbody.querySelectorAll('tr')).find(function(tr){
-        return /Brick\s*7\s*5\/8\s*[×x]\s*3\s*5\/8\s*[×x]\s*2\s*1\/4/i.test((tr.textContent||''));
-      }));
-      if (row){
-        if (bricksFinal > 0){
-          if (typeof matSetQtyAndUse === 'function'){
-            matSetQtyAndUse(row, bricksFinal);
-          } else {
-            var useCb = row.querySelector('.mat_use');
-            var qtyInp = row.querySelector('.mat_qty');
-            if (useCb && !useCb.checked) useCb.click();
-            if (qtyInp){ qtyInp.value = bricksFinal; qtyInp.dispatchEvent(new Event('input', {bubbles:true})); }
-          }
-          // Ensure supplier/units/price defaults (if empty)
-          var sup = row.querySelector('.mat_sup');  if (sup  && !sup.value){ sup.value  = 'New Haven Masonry'; sup.dispatchEvent(new Event('input', {bubbles:true})); }
-          var units = row.querySelector('.mat_units'); if (units && !units.value){ units.value = 'each'; units.dispatchEvent(new Event('input', {bubbles:true})); }
-          var price = row.querySelector('.mat_price'); if (price && (price.value==='' || Number(price.value)===0)){ price.value = '1'; price.dispatchEvent(new Event('input', {bubbles:true})); }
-        } else {
-          if (typeof matClearUse === 'function'){ matClearUse(row); }
+      if (!tbody) { /* materials not rendered yet; skip safely */ }
+          else {
+// ---------- helpers ----------
+function byRowId(id){ return tbody.querySelector('tr[data-id="'+id+'"]'); }
+function findByText(re){
+  if (typeof matFindRow === 'function') return matFindRow(re);
+  var rows = Array.from(tbody.querySelectorAll('tr'));
+  return rows.find(function(tr){ return re.test((tr.textContent||'')); }) || null;
+}
+function ensureRowWithDefaults(opts){
+  var tr = opts.id ? byRowId(opts.id) : null;
+  if (!tr) tr = opts.re ? findByText(opts.re) : null;
+  if (!tr) {
+    var addBtn = document.getElementById('addMatBtn');
+    if (addBtn) { addBtn.click(); }
+    var rows = document.querySelectorAll('#matTbody tr');
+    tr = rows[rows.length-1] || null;
+  }
+  if (tr){
+    function setIfEmpty(sel,val){
+      var el = tr.querySelector(sel);
+      if (!el) return;
+      if (!el.value){ el.value = String(val); el.dispatchEvent(new Event('input',{bubbles:true})); }
+    }
+    setIfEmpty('.mat_item',  opts.item||'');
+    setIfEmpty('.mat_sup',   opts.sup||'');
+    setIfEmpty('.mat_units', opts.units||'');
+    var priceEl = tr.querySelector('.mat_price');
+    if (priceEl && (priceEl.value==='' || Number(priceEl.value)===0) && (opts.price!==undefined)){
+      priceEl.value = String(opts.price);
+      priceEl.dispatchEvent(new Event('input',{bubbles:true}));
+      priceEl.dispatchEvent(new Event('change',{bubbles:true}));
+    }
+    if (opts.id) tr.setAttribute('data-id', opts.id);
+  }
+  return tr;
+}
+function setQtyAndUse(tr, qty){
+  if (!tr) return;
+  if (typeof matSetQtyAndUse === 'function'){ matSetQtyAndUse(tr, qty); return; }
+  var cb = tr.querySelector('.mat_use');
+  var q  = tr.querySelector('.mat_qty');
+  if (cb && !cb.checked){ cb.click(); cb.dispatchEvent(new Event('change', {bubbles:true})); }
+  if (q){ q.value = String(qty); q.dispatchEvent(new Event('input',{bubbles:true})); q.dispatchEvent(new Event('change',{bubbles:true})); }
+}
+function clearRow(tr){
+  if (!tr) return;
+  if (typeof matClearUse === 'function'){ matClearUse(tr); return; }
+  var cb = tr.querySelector('.mat_use'); if (cb && cb.checked){ cb.click(); cb.dispatchEvent(new Event('change',{bubbles:true})); }
+  var q  = tr.querySelector('.mat_qty'); if (q){ q.value=''; q.dispatchEvent(new Event('input',{bubbles:true})); q.dispatchEvent(new Event('change',{bubbles:true})); }
+}
+
+// ---------- READY GUARD ----------
+var __ready = (typeof bricksFinal==='number' && bricksFinal>0);
+if (!__ready){
+  try{ ['mUSR_Flu_8x8_each','mUSR_Flu_8x12_each','mROB_FLU_12x12','mUSR_Flu_13x18_each'].forEach(function(id){ var r=byRowId(id); if(r) clearRow(r); }); }catch(e){}
+  try{ var r = byRowId('mNHM_Concrete_80lb'); if(r) clearRow(r); }catch(e){}
+  try{ var r = byRowId('bw_specmix_s_80'); if(r) clearRow(r); }catch(e){}
+  try{ var r = byRowId('mROB_COPPER_3x8'); if(r) clearRow(r); }catch(e){}
+  try{ var r = byRowId('mUSR_CopperFlashing_LF'); if(r) clearRow(r); }catch(e){}
+  // Brick rows are already gated on bricksFinal below.
+  return;
+}
+        function byRowId(id){ return tbody.querySelector('tr[data-id="'+id+'"]'); }
+        function findByText(re){
+          if (typeof matFindRow === 'function') return matFindRow(re);
+          var rows = Array.from(tbody.querySelectorAll('tr'));
+          return rows.find(function(tr){ return re.test((tr.textContent||'')); }) || null;
         }
+        function ensureRowWithDefaults(opts){
+          // opts: {id, re, item, sup, units, price}
+          var tr = opts.id ? byRowId(opts.id) : null;
+          if (!tr) tr = opts.re ? findByText(opts.re) : null;
+          if (!tr) {
+            var addBtn = document.getElementById('addMatBtn');
+            if (addBtn) { addBtn.click(); }
+            var rows = document.querySelectorAll('#matTbody tr');
+            tr = rows[rows.length-1] || null;
+          }
+          if (tr){
+            // Set defaults if empty
+            function setIfEmpty(sel,val){
+              var el = tr.querySelector(sel);
+              if (!el) return;
+              if (!el.value){ el.value = String(val); el.dispatchEvent(new Event('input',{bubbles:true})); }
+            }
+            setIfEmpty('.mat_item',  opts.item||'');
+            setIfEmpty('.mat_sup',   opts.sup||'');
+            setIfEmpty('.mat_units', opts.units||'');
+            var priceEl = tr.querySelector('.mat_price');
+            if (priceEl && (priceEl.value==='' || Number(priceEl.value)===0) && (opts.price!==undefined)){
+              priceEl.value = String(opts.price);
+              priceEl.dispatchEvent(new Event('input',{bubbles:true}));
+              priceEl.dispatchEvent(new Event('change',{bubbles:true}));
+            }
+            if (opts.id) tr.setAttribute('data-id', opts.id);
+          }
+          return tr;
+        }
+        function setQtyAndUse(tr, qty){
+          if (!tr) return;
+          if (typeof matSetQtyAndUse === 'function'){ matSetQtyAndUse(tr, qty); return; }
+          var cb = tr.querySelector('.mat_use');
+          var q  = tr.querySelector('.mat_qty');
+          if (cb && !cb.checked){ cb.click(); cb.dispatchEvent(new Event('change', {bubbles:true})); }
+          if (q){ q.value = String(qty); q.dispatchEvent(new Event('input',{bubbles:true})); q.dispatchEvent(new Event('change',{bubbles:true})); }
+        }
+        function clearRow(tr){
+          if (!tr) return;
+          if (typeof matClearUse === 'function'){ matClearUse(tr); return; }
+          var cb = tr.querySelector('.mat_use'); if (cb && cb.checked){ cb.click(); cb.dispatchEvent(new Event('change',{bubbles:true})); }
+          var q  = tr.querySelector('.mat_qty'); if (q){ q.value=''; q.dispatchEvent(new Event('input',{bubbles:true})); q.dispatchEvent(new Event('change',{bubbles:true})); }
+        }
+
+        // ---------- BRICK (existing) ----------
+        (function(){
+          var bpsfVal = (function(){ var el = document.getElementById('bpsf'); return el ? String(el.value).trim() : '7'; })();
+          var BRICK_MAP = {
+            '7':   { id: 'mROB_BRICK_762x362x214',    re: /Brick\s*7\s*5\/8\s*[×x]\s*3\s*5\/8\s*[×x]\s*2\s*1\/4/i },
+            '6':   { id: 'mUSR_Brick_7_5_8_2_3_4_2_3_4_each', re: /Brick\s*7\s*5\/8\s*[×x]\s*2\s*3\/4\s*[×x]\s*2\s*3\/4/i },
+            '5.3': { id: 'mUSR_Brick_11_5_8_3_5_8_2_1_4_each', re: /Brick\s*11\s*5\/8\s*[×x]\s*3\s*5\/8\s*[×x]\s*2\s*1\/4/i }
+          };
+          var sel = BRICK_MAP[bpsfVal] || BRICK_MAP['7'];
+          var row = byRowId(sel.id) || findByText(sel.re);
+          if (row){
+            if (typeof bricksFinal === 'number' && bricksFinal > 0){
+              setQtyAndUse(row, bricksFinal);
+              // Clear the non-selected brick rows
+              ['mROB_BRICK_762x362x214','mUSR_Brick_7_5_8_2_3_4_2_3_4_each','mUSR_Brick_11_5_8_3_5_8_2_1_4_each']
+                .forEach(function(id){ if (id!==sel.id) clearRow(byRowId(id)); });
+            } else {
+              clearRow(row);
+            }
+          }
+        })();
+
+        // ---------- MORTAR: SPEC MIX Type S — 80 lb (hardened: no auto-create) ----------
+(function(){
+  var qty = (typeof mortarFinal==='number') ? Math.ceil(mortarFinal) : 0;
+  var row = byRowId('bw_specmix_s_80') || byRowId('m4') || findByText(/SPEC\s*MIX\s*Type\s*S\s*—?\s*80\s*lb/i);
+  if (qty>0 && row){
+    var itemTxt = (row.querySelector('.mat_item')?.value||'');
+    if (/Type\s*S/i.test(itemTxt)) { setQtyAndUse(row, qty); }
+  } else if (row){
+    clearRow(row);
+  }
+  // Defensive: never let 10" CMU block mirror mortar
+  try{
+    var blk = byRowId('mUSR_10_hollow_concrete_block_each');
+    if (blk){
+      var q = blk.querySelector('.mat_qty'); var v = q ? parseFloat(q.value||'0') : 0;
+      if (v === qty){ clearRow(blk); }
+    }
+  }catch(e){}
+})();
+// ---------- FLUE TILES (size-driven) ----------
+        (function(){
+          var qty = (typeof flueTotal==='number') ? flueTotal : 0;
+          var sizeSel = document.getElementById('flue_size');
+          var size = sizeSel ? String(sizeSel.value) : '8x12';
+          var MAP = {
+            '8x8':  { id:'mUSR_Flu_8x8_each',  re:/Flu\s*8\s*[×x]\s*8/i },
+            '8x12': { id:'mUSR_Flu_8x12_each', re:/Flu\s*8\s*[×x]\s*12/i },
+            '12x12':{ id:'mROB_FLU_12x12',     re:/Flu\s*12\s*[×x]\s*12/i },
+            '13x18':{ id:'mUSR_Flu_13x18_each',re:/Flu\s*13\s*[×x]\s*18/i }
+          };
+          var sel = MAP[size] || MAP['8x12'];
+          var row = byRowId(sel.id) || findByText(sel.re);
+          if (qty>0 && row){ setQtyAndUse(row, Math.ceil(qty)); }
+          else if (row){ clearRow(row); }
+          // Clear other flue sizes
+          Object.keys(MAP).forEach(function(k){ if (k!==size){ var r=byRowId(MAP[k].id); if (r) clearRow(r); } });
+        })();
+
+        // ---------- CROWN: Concrete 80‑lb Bag (create if missing) ----------
+        (function(){
+          var qty = (typeof crownBags==='number') ? crownBags : 0;
+          var useCrown = document.getElementById('opt_crown') ? document.getElementById('opt_crown').checked : false;
+          var row = null;
+          if (qty>0 && useCrown){
+            if (typeof getOrCreateConcrete80Row === 'function') row = getOrCreateConcrete80Row();
+            else {
+              // Fallback create minimal row
+              row = ensureRowWithDefaults({ id:'mNHM_Concrete_80lb', re:/Concrete\s*80\s*lb\s*Bag/i, item:'Concrete 80lb Bag', sup:'New Haven Masonry', units:'bag', price:'' });
+            }
+            if (row) setQtyAndUse(row, Math.ceil(qty));
+          } else {
+            // Try to clear if exists
+            row = byRowId('mNHM_Concrete_80lb') || findByText(/Concrete\s*80\s*lb\s*Bag/i);
+            if (row) clearRow(row);
+          }
+        })();
+
+        // ---------- FLASHING LF (no material mapping; labor/visibility only) ----------
+(function(){
+  var useFlash = document.getElementById('opt_flash') ? document.getElementById('opt_flash').checked : false;
+  var row = byRowId('mUSR_CopperFlashing_LF') || findByText(/flashing\s*—?\s*lf/i);
+  if (row) { clearRow(row); } // always clear; we roll copper into sheets instead
+  // Safety: if a 10" block row was incorrectly set to Flashing LF, clear it
+  try{
+    var blk = byRowId('mUSR_10_hollow_concrete_block_each');
+    if (blk){
+      var q = blk.querySelector('.mat_qty');
+      if (q){
+        var val = parseFloat(q.value||'0');
+        if (useFlash && typeof flashLF==='number' && Math.abs(val - flashLF) < 0.001) { clearRow(blk); }
       }
-    }catch(e){ /* non-fatal */ }
+    }
+  }catch(e){}
+})();
 
+        // ---------- COPPER SHEET 3×8 (24 ft² per sheet) ----------
+(function(){
+  var useFlash = document.getElementById('opt_flash') ? document.getElementById('opt_flash').checked : false;
+  // copperSF is already computed from perimeter × flashH; treat it as total copper area for flashing/counter/step
+  var sf = (useFlash && typeof copperSF==='number') ? copperSF : 0;
+  var row = byRowId('mROB_COPPER_3x8') || findByText(/Copper\s*Sheet\s*3\s*[×x]\s*8/i);
+  if (row){
+    var sheets = Math.ceil(sf / 24); // 3×8 = 24 ft²
+    if (sheets>0){ setQtyAndUse(row, sheets); }
+    else { clearRow(row); }
+  }
+})();
 
-    // Calc details
+      }
+    } finally {
+      window.__chimneyMatSync = 0;
+    }
+  }
+}catch(e){ /* non-fatal */ }
+// Calc details
     $('#calcOut').innerHTML =
       '<div><b>Face area</b>: '+faceAreaSF.toFixed(2)+' sf</div>' +
       '<div><b>Perimeter</b>: '+(facePerimIn/12).toFixed(2)+' lf</div>' +
@@ -6338,6 +6629,18 @@ document.addEventListener('DOMContentLoaded', function() {
   function debounce(fn, ms){ clearTimeout(tmr); tmr=setTimeout(fn, ms||0); }
   function num(v){ var n=parseFloat(String(v||'').replace(/[^0-9.\-]/g,'')); return isFinite(n)?n:0; }
   function readyTable(){
+    // Attach a manual-marking listener once the table exists
+    try {
+      var tb_el = document.getElementById('matTbody');
+      if (tb_el && !tb_el.__bwManualBound){
+        tb_el.addEventListener('change', function(e){
+          if (e && e.target && e.target.classList && e.target.classList.contains('mat_use') && e.isTrusted){
+            var tr = e.target.closest('tr'); if (tr) tr.setAttribute('data-bw-manual','1');
+          }
+        });
+        tb_el.__bwManualBound = true;
+      }
+    } catch(e){}
     var tb = document.getElementById('matTbody');
     if (!tb) return null;
     if (!tb.querySelector('tr') && typeof renderMaterials==='function'){ try{ renderMaterials(); }catch(e){} }
@@ -6392,6 +6695,41 @@ document.addEventListener('DOMContentLoaded', function() {
     return cmuRows(tb).find(function(tr){ return rx.test(tr.textContent||''); }) || null;
   }
   function targetDWR(tb, t){
+  }
+
+  function legacyCleanup(tb, t){
+    if (!tb) return;
+    if (String(t) === '12') return;
+    // Clear legacy 12" CMU row if selected and not manually set
+    var twelve = tb.querySelector('tr[data-id="mNH1"]');
+    if (!twelve){
+      // fallback by text match
+      var rows = Array.from(tb.querySelectorAll('tr'));
+      for (var i=0;i<rows.length;i++){
+        var txt = (rows[i].textContent||'');
+        if (/^\s*12\"\s*hollow\s*concrete\s*block/i.test(txt)){ twelve = rows[i]; break; }
+      }
+    }
+    if (twelve){
+      if (twelve.getAttribute('data-bw-manual') !== '1'){
+        var cb = twelve.querySelector('.mat_use');
+        if (cb && cb.checked){ setUse(twelve, false); setQty(twelve, 0); }
+      }
+    }
+    // Also clear 12" Durawall if matched and not manual
+    var rowsD = Array.from(tb.querySelectorAll('tr'));
+    for (var j=0;j<rowsD.length;j++){
+      var txtD = (rowsD[j].textContent||'');
+      if (/\b12\"\s*Durawall\b/i.test(txtD)){
+        if (rowsD[j].getAttribute('data-bw-manual') !== '1'){
+          var cbD = rowsD[j].querySelector('.mat_use');
+          if (cbD && cbD.checked){ setUse(rowsD[j], false); setQty(rowsD[j], 0); }
+        }
+      }
+    }
+  }
+
+  function targetDWR(tb, t){
     // match "6" Durawall — 10'" (tolerant to punctuation/spacing)
     var rx = new RegExp('\\b'+t+'\\\"\\s*Durawall\\b','i');
     return dwrRows(tb).find(function(tr){ return rx.test(tr.textContent||''); }) || null;
@@ -6413,6 +6751,8 @@ document.addEventListener('DOMContentLoaded', function() {
     var ord = orderFromResults();
     if (!(haveArea() && ord>0 && course()==='8')) return;
     var t = getT(); if(!t) return;
+    // Clear legacy 12\" selection if present (not marked manual)
+    legacyCleanup(tb, t);
     // CMU: clear only prior auto rows, then set the new auto row
     clearAuto(tb, 'cmu');
     var cmu = targetCMU(tb, t);
