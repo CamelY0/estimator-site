@@ -6778,5 +6778,50 @@ document.addEventListener('DOMContentLoaded', function() {
 })();
 </script>
 &lt;!-- Scoped auto-linker appended on 2025-09-23T04:08:46 --&gt;
+<script>
+/* === TM: Crew role → default rate mapping (hardened) === */
+(function(){
+  'use strict';
+  function rows(){ var tb=document.getElementById('crewTbody'); return tb ? Array.from(tb.getElementsByTagName('tr')) : []; }
+  function getRole(tr){ var els = tr ? tr.getElementsByClassName('crew_role') : null; var sel = (els && els[0]) || null; return sel ? (sel.value||'') : ''; }
+  function currentRate(tr){ var els = tr ? tr.getElementsByClassName('crew_rate') : null; var inp = (els && els[0]) || null; return inp ? Number(inp.value||0) : 0; }
+  function defaultRate(role){ var map = (typeof window.TM_DEFAULT_RATES==='object' && window.TM_DEFAULT_RATES) ? window.TM_DEFAULT_RATES : null; if(map && Object.prototype.hasOwnProperty.call(map, role)) return map[role]; return null; }
+  function isOwnerRow(tr){ return !!(tr && tr.dataset && tr.dataset.id === 'owner'); }
+  function setRate(tr, val){ var els = tr ? tr.getElementsByClassName('crew_rate') : null; var inp = (els && els[0]) || null; if(!inp) return; inp.value = String(val); try{ if(typeof window.updateAll==='function') window.updateAll(); }catch(e){} }
+  function markManual(tr){ if(tr) tr.dataset.manualRate = 'true'; }
+  function bindRow(tr){
+    if(!tr || tr.__tmBound) return;
+    var roleSel = (tr.getElementsByClassName('crew_role')[0]) || null;
+    var rateInp = (tr.getElementsByClassName('crew_rate')[0]) || null;
+    if(rateInp){ rateInp.addEventListener('input', function(){ markManual(tr); }, true); }
+    if(roleSel){
+      roleSel.addEventListener('change', function(){
+        var def = defaultRate(getRole(tr));
+        if(def==null) return;
+        if(isOwnerRow(tr) || tr.dataset.manualRate!=='true' || def===currentRate(tr)){ setRate(tr, def); }
+      }, true);
+    }
+    if(isOwnerRow(tr)){ var def0=defaultRate(getRole(tr)); if(def0!=null && currentRate(tr)!==def0){ setRate(tr, def0); } }
+    tr.__tmBound = true;
+  }
+  function attachAll(){ rows().forEach(bindRow); }
+  function init(){
+    attachAll();
+    var tb=document.getElementById('crewTbody');
+    if(tb){
+      try{
+        var mo=new MutationObserver(function(muts){
+          for(var i=0;i<muts.length;i++){
+            var nodes=muts[i].addedNodes||[];
+            for(var j=0;j<nodes.length;j++){ var n=nodes[j]; if(n&&n.nodeType===1&&n.tagName==='TR'){ bindRow(n); } }
+          }
+        });
+        mo.observe(tb,{childList:true});
+      }catch(e){}
+    }
+  }
+  if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', init, {once:true}); } else { init(); }
+})();
+</script>
 </body>
 </html>
