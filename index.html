@@ -454,6 +454,37 @@ body:not([data-active-group]) .wrap .card[data-card-stucco]{ display:block !impo
   /* Fallback: if no data-active-group is present, show the Chimney card */
   body:not([data-active-group]) .wrap .card[data-card-chimney]{ display:block !important; }
 </style>
+
+<style id="tm-sections-button-boost">
+  /* Larger, high-contrast pill button */
+  #tm-quicknav-toggle{
+    display:inline-flex; align-items:center; gap:8px;
+    background:#4da3ff; color:#041425;
+    border:0; border-radius:9999px;
+    padding:10px 16px; font-weight:800; letter-spacing:.2px;
+    box-shadow: 0 6px 18px rgba(77,163,255,.35);
+  }
+  #tm-quicknav-toggle:hover{ box-shadow: 0 8px 24px rgba(77,163,255,.45); transform: translateY(-1px); }
+  #tm-quicknav-toggle:active{ transform: translateY(0); box-shadow: 0 6px 18px rgba(77,163,255,.35); }
+  #tm-quicknav-toggle:focus{ outline:2px solid rgba(77,163,255,.8); outline-offset:2px; }
+
+  /* Add a chevron indicator that rotates when open */
+  #tm-quicknav-toggle::after{
+    content:''; width:8px; height:8px; border-right:2px solid currentColor; border-bottom:2px solid currentColor;
+    transform: rotate(-45deg); display:inline-block; margin-left:2px;
+  }
+  #tm-quicknav-toggle[aria-expanded="true"]::after{ transform: rotate(45deg); }
+
+  /* Gentle pulse highlight on first load */
+  @keyframes tmSecPulse { 0%{ box-shadow: 0 0 0 0 rgba(77,163,255,.55); }
+                          70%{ box-shadow: 0 0 0 10px rgba(77,163,255,0); }
+                          100%{ box-shadow: 0 0 0 0 rgba(77,163,255,0); } }
+  #tm-quicknav-toggle.attn{ animation: tmSecPulse 1.8s ease-out 2; }
+  @media (prefers-reduced-motion: reduce){
+    #tm-quicknav-toggle.attn{ animation: none; }
+  }
+</style>
+
 </head>
 <body>
 <div style="position:sticky; top:0; z-index:1000; background:inherit; padding:6px 12px; font:600 12px system-ui; color:#0a6c2f;">✅ JS loaded and running</div>
@@ -2261,7 +2292,7 @@ return;
 <!-- SILICA CONTROLS -->
 <div class="card" data-cat="silica" id="silicaCard">
 <div class="row">
-<h3 style="margin:0">Silica Controls (OSHA 29 CFR 1926.1153 Table 1)</h3>
+<h3 style="margin:0" id="silica-controls">Silica Controls</h3><div class="small muted">OSHA 29 CFR 1926.1153 Table 1</div>
 </div>
 <div class="row small muted">
     Tuckpointing &amp; handheld grinder controls. Use these toggles to add ECP notes and auto‑include DWV9402 HEPA fleece bags.
@@ -6823,5 +6854,739 @@ document.addEventListener('DOMContentLoaded', function() {
   if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', init, {once:true}); } else { init(); }
 })();
 </script>
+
+<!-- ===== Turcotte non-tray upgrades (safe, no body edits) ===== -->
+<style>
+  /* Sticky Total pill (bottom-left) */
+  #tm-total-pill{
+    position: fixed; left: 14px; bottom: 14px; z-index: 2147482000;
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(8,12,18,.9); color: #e7f0ff;
+    border: 1px solid #1f2937; border-radius: 999px; padding: 8px 12px;
+    font: 600 13px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    box-shadow: 0 10px 24px rgba(0,0,0,.25); backdrop-filter: blur(6px);
+  }
+  #tm-total-pill[hidden]{ display:none !important; }
+  #tm-total-pill .val{ font-weight: 700; }
+  #tm-total-pill button{
+    border:0; border-radius: 999px; background: #0b1017; color:#cfe4ff;
+    padding:6px 8px; cursor:pointer; font-weight:700;
+    border:1px solid #1f2937;
+  }
+  #tm-total-pill .hide-btn{ background:#2a3342; color:#e6eeff; }
+  #tm-total-pill .reveal{ position: fixed; left: 14px; bottom: 14px; padding:8px 10px;
+    background:#0b1017; color:#d6e6ff; border:1px solid #1f2937; border-radius:999px; display:none; z-index:2147482001; }
+
+  /* Print footer (company info) */
+  #tm-print-footer{ display:none; border-top:1px solid #cbd5e1; padding-top:8px; margin-top:14px;
+    font: 12px/1.3 system-ui, Segoe UI, Roboto, Arial, sans-serif; color:#334155; }
+  @media print{ #tm-print-footer{ display:block; } }
+
+  /* Optional Quick Nav UI */
+  #tm-quicknav{ position: fixed; left: 14px; top: 60px; z-index: 9999;
+    background: rgba(8,12,18,.9); border:1px solid #1f2937; border-radius: 12px; padding: 8px;
+    color:#e7f0ff; max-width: 220px; display:none; }
+  #tm-quicknav a{ display:block; color:#cfe4ff; text-decoration:none; padding:4px 6px; border-radius:8px; }
+  #tm-quicknav a:hover{ background:#1b2432; }
+  #tm-quicknav .title{ font-weight:800; margin-bottom:6px; }
+  #tm-quicknav .close{ float:right; background:#0b1017; border:1px solid #1f2937; border-radius:8px; padding:2px 6px; cursor:pointer; color:#cfe4ff; }
+  #tm-quicknav-toggle{ position: fixed; left: 14px; top: 14px; z-index: 10000;
+    background:#0b1017; color:#d6e6ff; border:1px solid #1f2937; border-radius:999px; padding:6px 10px; cursor:pointer; }
+
+  /* Focus outline and prevention of accidental wheel changes */
+  input[type=number]:focus{ outline: 2px solid rgba(77,163,255,.35); outline-offset: 2px; }
+</style>
+
+<!-- Sticky Total pill + reveal button -->
+<div id="tm-total-pill" hidden aria-live="polite" aria-label="Running total">
+  <span>Total:</span> <span class="val">$0</span>
+  <button class="hide-btn" type="button" title="Hide total pill">Hide</button>
+</div>
+<button id="tm-total-pill-reveal" class="reveal" type="button" title="Show total" style="display:none">Show Total</button>
+
+<!-- Quick Nav -->
+<button id="tm-quicknav-toggle" type="button" title="Quick Nav to headings" aria-expanded="false" aria-controls="tm-quicknav">Sections</button>
+<nav id="tm-quicknav" aria-label="On‑page sections">
+  <div class="title">Sections <button class="close" type="button" aria-label="Close">×</button></div>
+  <div class="links"></div>
+</nav>
+
+<!-- Print footer -->
+<div id="tm-print-footer">
+  <strong>TURCOTTE MASONRY STUCCO &amp; CONCRETE, LLC</strong><br/>
+  276 Totoket Road, North Branford, CT 06471 • (203) 937‑0787 • turcottemasonry@gmail.com • www.turcottemasonry.com<br/>
+  CT HIC #0605454 • ALEI #1231202 • Founded 1984
+</div>
+
+<script>
+(function(){
+  'use strict';
+  // --- Diagnostics banner ---
+  function banner(msg, ok){
+    try{
+      let b = document.getElementById('js-error-banner');
+      if(!b){
+        b = document.createElement('div');
+        b.id = 'js-error-banner';
+        b.setAttribute('role','status');
+        b.style.position = 'sticky'; b.style.top = '0'; b.style.left='0'; b.style.right='0';
+        b.style.padding='8px 12px'; b.style.borderBottom='1px solid #1f2937';
+        b.style.background = ok===false ? '#3b0d0d' : '#0b1017';
+        b.style.color = ok===false ? '#ffd6d6' : '#d6e6ff';
+        document.body.prepend(b);
+      }
+      b.textContent = (ok===false ? '❌ ' : '✅ ') + msg;
+      clearTimeout(b._hide);
+      b._hide = setTimeout(()=>{ try{ b.remove(); }catch(_){} }, 1800);
+    }catch(_){}
+  }
+  window.addEventListener('error', function(e){
+    banner('JS error at ' + (e.filename||'') + ':' + (e.lineno||'') + ' — ' + (e.message||'Error'), false);
+  });
+
+  // --- Polyfill CSS.escape if missing (MDN: CSS.escape) ---
+  if(!window.CSS){ window.CSS = {}; }
+  if(!CSS.escape){
+    CSS.escape = function(sel){
+      return String(sel).replace(/[^a-zA-Z0-9_-]/g, function(ch){ return '\\' + ch; });
+    };
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    try{
+      // Sticky Total pill
+      var pill = document.getElementById('tm-total-pill');
+      var valEl = pill && pill.querySelector('.val');
+      var revealBtn = document.getElementById('tm-total-pill-reveal');
+      function dollarsInText(t){
+        var m = (t||'').match(/\\$\\s*[\\d,]+(?:\\.\\d{2})?/g);
+        if(!m) return [];
+        var out = [];
+        for(var i=0;i<m.length;i++){
+          var s = m[i];
+          var num = Number(s.replace(/[^0-9.]/g,''));
+          if(!isNaN(num)) out.push({s:s, n:num});
+        }
+        return out;
+      }
+      function findBestAmount(){
+        var cand = Array.prototype.slice.call(document.querySelectorAll('[id*="total" i], [class*="total" i], [id*="grand" i], [class*="grand" i]'));
+        var best = null;
+        cand.forEach(function(el){
+          var arr = dollarsInText(el.textContent||'');
+          arr.forEach(function(a){ if(!best || a.n >= best.n){ best = a; } });
+        });
+        if(!best){
+          var arr2 = dollarsInText(document.body.innerText||'');
+          arr2.forEach(function(a){ if(!best || a.n >= best.n){ best = a; } });
+        }
+        return best ? best.s : null;
+      }
+      function updatePill(){
+        if(!pill || !valEl) return;
+        var s = findBestAmount();
+        if(s){
+          valEl.textContent = s.replace(/\\s+/g,'');
+          pill.hidden = false;
+        }else{
+          pill.hidden = true;
+        }
+      }
+      if(pill){
+        var hideBtn = pill.querySelector('.hide-btn');
+        if(hideBtn) hideBtn.addEventListener('click', function(){
+          pill.style.display = 'none';
+          if(revealBtn) revealBtn.style.display = 'inline-flex';
+        });
+        if(revealBtn) revealBtn.addEventListener('click', function(){
+          pill.style.display = 'inline-flex';
+          revealBtn.style.display = 'none';
+        });
+        if('MutationObserver' in window){
+          var mo = new MutationObserver(function(){ updatePill(); });
+          mo.observe(document.body, {subtree:true, childList:true, characterData:true});
+        }
+        window.addEventListener('load', updatePill);
+        setTimeout(updatePill, 120);
+      }
+
+      // Prevent accidental number changes via wheel (MDN: wheel event)
+      document.addEventListener('wheel', function(e){
+        var el = document.activeElement;
+        if(el && el.tagName === 'INPUT' && el.type === 'number'){
+          el.blur();
+        }
+      }, {passive:true});
+
+      // Prevent Enter from submitting when in inputs
+      document.addEventListener('keydown', function(e){
+        if(e.key === 'Enter'){
+          var el = e.target;
+          if(el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')){
+            if(el.tagName === 'TEXTAREA' && e.shiftKey) return;
+            e.preventDefault();
+          }
+        }
+      }, true);
+
+      // Quick Nav
+      var toggle = document.getElementById('tm-quicknav-toggle');
+      var qnav = document.getElementById('tm-quicknav');
+      var links = qnav ? qnav.querySelector('.links') : null;
+      function slugify(s){ return String(s||'').toLowerCase().trim().replace(/[^a-z0-9]+/g,'-'); }
+      function buildNav(){
+        if(!links) return;
+        links.innerHTML='';
+        var hs = Array.prototype.slice.call(document.querySelectorAll('.wrap .card h2, .wrap .card h3'));
+        if(hs.length === 0){ if(toggle) toggle.style.display='none'; return; }
+        hs.forEach(function(h,i){
+          if(!h.id){ h.id = 'sec-' + slugify(h.textContent||('section-'+i)); }
+          var a = document.createElement('a');
+          a.href = '#' + h.id; a.textContent = h.textContent||('Section '+(i+1));
+          links.appendChild(a);
+        });
+      }
+      if(toggle && qnav){
+        toggle.addEventListener('click', function(){
+          var vis = qnav.style.display === 'block';
+          qnav.style.display = vis ? 'none' : 'block';
+          toggle.setAttribute('aria-expanded', String(!vis));
+          if(!vis) buildNav();
+        });
+        var cls = qnav.querySelector('.close');
+        if(cls) cls.addEventListener('click', function(){
+          qnav.style.display = 'none'; toggle.setAttribute('aria-expanded','false');
+        });
+      }
+      buildNav();
+    }catch(err){
+      banner('Init error: ' + err, false);
+    }
+  });
+})();
+</script>
+<!-- ===== End Turcotte upgrades ===== -->
+
+<style>
+  /* Top-right Save tray (restored) */
+  #tm-tray { position: fixed; top: 14px; right: 14px; z-index: 2147483000; font-family: system-ui, Segoe UI, Roboto, Arial, sans-serif; }
+#tm-tray .card { background:#000000; border:1px solid #1f2937; border-radius:12px; box-shadow:0 10px 24px rgba(0,0,0,.28); padding:10px; display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  #tm-tray button{ background:#4da3ff; color:#041425; border:0; padding:8px 10px; border-radius:10px; font-weight:600; cursor:pointer; }
+  #tm-tray button.ghost{ background:#111826; color:#e6eeff; border:1px solid #1f2937; }
+  #tm-tray input[type="file"]{ display:none; }
+  @media (prefers-color-scheme: light){ /* keep tray dark in light mode */ }
+    #tm-tray button.ghost{ background:#111826; color:#e6eeff; border:1px solid #1f2937; }
+  }
+  @media print{ #tm-tray{ display:none !important; } }
+</style>
+
+<div id="tm-tray" aria-label="Estimator tools">
+  <div class="card">
+    <button id="tm-save">Save</button>
+    <button id="tm-load" class="ghost">Load</button>
+    <button id="tm-export" class="ghost">Export JSON</button>
+    <button id="tm-import" class="ghost">Import JSON</button>
+    <button id="tm-reset" class="ghost">Reset</button>
+    <button id="tm-print" class="ghost">Print</button>
+    <input id="tm-import-file" type="file" accept="application/json"/>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  const KEY_PRIMARY = 'tm_estimator_state_v1';
+  const KEY_COMPAT  = 'tm_estimator_state_v2';
+
+  function banner(msg, ok){
+    try{
+      let b = document.getElementById('js-error-banner');
+      if(!b){
+        b = document.createElement('div');
+        b.id = 'js-error-banner';
+        b.setAttribute('role','status');
+        b.style.position = 'sticky'; b.style.top = '0'; b.style.left='0'; b.style.right='0';
+        b.style.padding='8px 12px'; b.style.borderBottom='1px solid #1f2937';
+        b.style.background = ok===false ? '#3b0d0d' : '#0b1017';
+        b.style.color = ok===false ? '#ffd6d6' : '#d6e6ff';
+        document.body.prepend(b);
+      }
+      b.textContent = (ok===false ? '❌ ' : '✅ ') + msg;
+      clearTimeout(b._hide);
+      b._hide = setTimeout(()=>{ try{ b.remove(); }catch(_){ b.style.display='none'; } }, 1400);
+    }catch(_){}
+  }
+
+  function qsAll(sel){ return Array.from(document.querySelectorAll(sel)); }
+  function stableKey(el){ return el.id || el.name || ''; }
+
+  function serialize(){
+    const data = {};
+    const fields = qsAll('input, select, textarea');
+    for(const el of fields){
+      const k = stableKey(el);
+      if(!k) continue;
+      if(!el.offsetParent && el.type !== 'hidden') continue;
+      if(el.type === 'checkbox') data[k] = !!el.checked;
+      else if(el.type === 'radio'){ if(el.checked) data[k] = el.value; }
+      else data[k] = el.value;
+    }
+    const tbody = document.getElementById('matTbody');
+    if(tbody){
+      data.__materials = Array.from(tbody.querySelectorAll('tr')).map(tr=>{
+        const id = tr.getAttribute('data-id') || null;
+        const useCb = tr.querySelector('.mat_use');
+        const qtyInp = tr.querySelector('.mat_qty');
+        const priceEl = tr.querySelector('[data-price]');
+        const price = priceEl ? priceEl.getAttribute('data-price') : null;
+        return { id, use: !!(useCb && useCb.checked), qty: qtyInp ? qtyInp.value : '', price };
+      });
+    }
+    return data;
+  }
+
+  function applySilent(data){
+    const notHidden = el => (el.offsetParent || el.type === 'hidden');
+    for(const [k, v] of Object.entries(data)){
+      if(k === '__materials') continue;
+      const elById = document.getElementById(k);
+      const els = elById ? [elById] : Array.from(document.querySelectorAll('[name="'+CSS.escape(k)+'"]'));
+      for(const el of els){
+        if(!notHidden(el)) continue;
+        if(el.type === 'radio') el.checked = (String(el.value) === String(v));
+        else if(el.type === 'checkbox') el.checked = !!v;
+        else el.value = String(v);
+      }
+    }
+    if(Array.isArray(data.__materials)){
+      const tbody = document.getElementById('matTbody');
+      if(tbody){
+        data.__materials.forEach(row=>{
+          const tr = row.id ? tbody.querySelector('tr[data-id="'+row.id+'"]') : null;
+          if(!tr) return;
+          const use = tr.querySelector('.mat_use');
+          const qty = tr.querySelector('.mat_qty');
+          if(use) use.checked = !!row.use;
+          if(qty) qty.value = String(row.qty||'');
+        });
+      }
+    }
+  }
+
+  function dispatchBatched(data){
+    const tasks = [];
+    const pushEvt = (el, type) => tasks.push(()=> el.dispatchEvent(new Event(type, {bubbles:true})));
+    for(const [k, v] of Object.entries(data)){
+      if(k === '__materials') continue;
+      const elById = document.getElementById(k);
+      const els = elById ? [elById] : Array.from(document.querySelectorAll('[name="'+CSS.escape(k)+'"]'));
+      for(const el of els){
+        if(el.type === 'radio' || el.type === 'checkbox') pushEvt(el, 'change');
+        else { pushEvt(el, 'input'); pushEvt(el, 'change'); }
+      }
+    }
+    if(Array.isArray(data.__materials)){
+      const tbody = document.getElementById('matTbody');
+      if(tbody){
+        data.__materials.forEach(row=>{
+          const tr = row.id ? tbody.querySelector('tr[data-id="'+row.id+'"]') : null;
+          if(!tr) return;
+          const use = tr.querySelector('.mat_use');
+          const qty = tr.querySelector('.mat_qty');
+          if(use) tasks.push(()=> use.dispatchEvent(new Event('change', {bubbles:true})));
+          if(qty){ tasks.push(()=> qty.dispatchEvent(new Event('input', {bubbles:true}))); tasks.push(()=> qty.dispatchEvent(new Event('change', {bubbles:true}))); }
+        });
+      }
+    }
+    const idle = window.requestIdleCallback || function(fn){ return setTimeout(()=>fn({timeRemaining:()=>5, didTimeout:true}), 0); };
+    function run(){
+      let n=0;
+      while(n<30 && tasks.length){
+        try{ tasks.shift()(); }catch(_){}
+        n++;
+      }
+      if(tasks.length) idle(run);
+    }
+    idle(run);
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    // Wire Save/Load/Export/Import/Reset/Print
+    const $ = s => document.querySelector(s);
+
+    $('#tm-save')?.addEventListener('click', ()=>{
+      try{
+        const json = JSON.stringify(serialize());
+        localStorage.setItem(KEY_PRIMARY, json);
+        localStorage.setItem(KEY_COMPAT, json);
+        banner('Saved', true);
+      }catch(e){ banner('Save failed: storage unavailable', false); }
+    });
+
+    $('#tm-load')?.addEventListener('click', ()=>{
+      let raw = null;
+      try{ raw = localStorage.getItem(KEY_PRIMARY) || localStorage.getItem(KEY_COMPAT); }catch(_){}
+      if(!raw){ banner('No saved state found', false); return; }
+      let data = null;
+      try{ data = JSON.parse(raw); }catch(e){ banner('Saved state is corrupted', false); return; }
+      applySilent(data);
+      requestAnimationFrame(()=> dispatchBatched(data));
+      banner('Loaded', true);
+    });
+
+    $('#tm-export')?.addEventListener('click', ()=>{
+      try{
+        const blob = new Blob([JSON.stringify(serialize(), null, 2)], {type:'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'turcotte_estimator_' + new Date().toISOString().slice(0,10) + '.json';
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(()=> URL.revokeObjectURL(url), 500);
+        banner('Exported', true);
+      }catch(e){ banner('Export failed', false); }
+    });
+
+    $('#tm-import')?.addEventListener('click', ()=> $('#tm-import-file')?.click());
+    $('#tm-import-file')?.addEventListener('change', function(ev){
+      const f = ev.target.files && ev.target.files[0];
+      if(!f) return;
+      const reader = new FileReader();
+      reader.onload = function(){
+        try{
+          const data = JSON.parse(String(reader.result||'{}'));
+          localStorage.setItem(KEY_PRIMARY, JSON.stringify(data));
+          localStorage.setItem(KEY_COMPAT, JSON.stringify(data));
+          applySilent(data);
+          requestAnimationFrame(()=> dispatchBatched(data));
+          banner('Imported & applied', true);
+        }catch(e){ banner('Import failed: invalid JSON', false); }
+      };
+      reader.readAsText(f);
+    });
+
+    $('#tm-reset')?.addEventListener('click', ()=>{
+      if(!confirm('Reset all controls and clear saved state?')) return;
+      try{ localStorage.removeItem(KEY_PRIMARY); localStorage.removeItem(KEY_COMPAT); }catch(_){}
+      location.reload();
+    });
+
+    $('#tm-print')?.addEventListener('click', ()=> window.print());
+
+    // Remove legacy top-of-page "Sections" area (but keep the new Sections button)
+    (function removeLegacySections(){
+      const candidates = Array.from(document.querySelectorAll('#sections, .sections, [data-sections], nav[aria-label*="sections" i]'));
+      for(const el of candidates){
+        const rect = el.getBoundingClientRect();
+        if(rect.top < 180){ el.style.display = 'none'; return; }
+      }
+      // Heuristic: hide an early block that says "Sections" and contains multiple links
+      const firstBlocks = Array.from(document.body.children).slice(0, 6);
+      for(const el of firstBlocks){
+        if(/sections/i.test(el.textContent||'') && el.querySelectorAll('a').length >= 3){
+          el.style.display = 'none'; break;
+        }
+      }
+    })();
+  }, {once:true});
+})();
+</script>
+
+<script>
+(function(){
+  'use strict';
+  // Hide the old "Sections" strip near the top (chips like All, Cleanup, Concrete, Masonry...)
+  function hideLegacySections(){
+    try{
+      const topLimit = 250; // px from top
+      const textsToMatch = ['All','Cleanup','Concrete','Masonry','Block Wall','Stone Veneer','Pavers','Stucco','Waste','Crew','Fuel'];
+      const isNearTop = el => el && el.getBoundingClientRect().top < topLimit;
+      const containsMany = (el)=>{
+        const t = (el.textContent || '').replace(/\s+/g,' ').trim();
+        let hits = 0;
+        for(const w of textsToMatch){ if (new RegExp('\\b'+w.replace(/\s+/g,'\\s+')+'\\b','i').test(t)) hits++; }
+        return hits >= 4; // at least 4 category labels present
+      };
+      // 1) Obvious id/class names
+      const cands = Array.from(document.querySelectorAll('[id*="sections" i], [class*="sections" i], [id*="section-nav" i], [class*="section-nav" i], nav[aria-label*="sections" i]'));
+      for(const el of cands){
+        if(el.id === 'tm-quicknav' || el.id === 'tm-quicknav-toggle') continue; // keep our new button/nav
+        if(isNearTop(el)){ el.style.display = 'none'; return true; }
+      }
+      // 2) Heuristic: large container near top that contains many of our keyword chips
+      const topBlocks = Array.from(document.body.querySelectorAll('body > *'));
+      for(const el of topBlocks.slice(0, 10)){
+        if(el.id === 'tm-quicknav' || el.id === 'tm-quicknav-toggle') continue;
+        if(isNearTop(el) && containsMany(el)){
+          el.style.display = 'none';
+          return true;
+        }
+      }
+      // 3) A lone heading "Sections" near top
+      const heads = Array.from(document.querySelectorAll('h1,h2,h3,h4'));
+      for(const h of heads){
+        if(isNearTop(h) && /^\s*sections\s*$/i.test(h.textContent||'')){
+          const parent = h.closest('section,div,nav') || h;
+          if(parent && isNearTop(parent)){ parent.style.display = 'none'; return true; }
+        }
+      }
+    }catch(_){}
+    return false;
+  }
+  function tryHide(){ hideLegacySections(); }
+  document.addEventListener('DOMContentLoaded', tryHide, {once:true});
+  window.addEventListener('load', tryHide, {once:true});
+  // Late re-check in case the old sections area is rendered asynchronously
+  setTimeout(tryHide, 800);
+})();
+</script>
+
+<script>
+(function(){
+  'use strict';
+  function hideChipsBar(){
+    try{
+      const labels = [
+        'All','Cleanup','Concrete','Masonry','Block Wall','Stone Veneer',
+        'Pavers','Stucco','Waste / Disposal','Crew & Time','Fuel'
+      ];
+      const topLimit = 260; // px from top of viewport
+      const isNearTop = el => el && el.getBoundingClientRect && el.getBoundingClientRect().top < topLimit;
+      const getScore = el => {
+        const t = (el.textContent || '').toLowerCase();
+        let hits = 0;
+        for(const w of labels){
+          if(t.indexOf(w.toLowerCase()) !== -1) hits++;
+        }
+        return hits;
+      };
+      // Consider only large blocks near the top
+      const blocks = Array.from(document.body.querySelectorAll('body > *'));
+      let best = null, bestScore = 0;
+      for(const el of blocks.slice(0, 15)){
+        if(!isNearTop(el)) continue;
+        if(el.id === 'tm-quicknav' || el.id === 'tm-quicknav-toggle' || el.id === 'tm-tray') continue;
+        const s = getScore(el);
+        if(s > bestScore){
+          best = el; bestScore = s;
+        }
+      }
+      if(best && bestScore >= 4){
+        best.style.display = 'none';
+        return true;
+      }
+      // Fallback: search for a nav/list near the top that includes at least 4 labels
+      const cands = Array.from(document.querySelectorAll('nav, .tabs, .chips, .pills, .filters, .sections, [id*="sections" i], [class*="sections" i]'));
+      for(const el of cands){
+        if(!isNearTop(el)) continue;
+        if(el.id === 'tm-quicknav' || el.id === 'tm-quicknav-toggle' || el.id === 'tm-tray') continue;
+        if(getScore(el) >= 4){
+          el.style.display = 'none';
+          return true;
+        }
+      }
+    }catch(_){}
+    return false;
+  }
+  function tryHide(){ hideChipsBar(); }
+  document.addEventListener('DOMContentLoaded', tryHide, {once:true});
+  window.addEventListener('load', tryHide, {once:true});
+  setTimeout(tryHide, 400);
+  setTimeout(tryHide, 1000);
+})();
+</script>
+
+<script>
+(function(){
+  'use strict';
+  const KEY_PRIMARY = 'tm_estimator_state_v1';
+  const KEY_COMPAT  = 'tm_estimator_state_v2';
+
+  function banner(msg, ok){
+    try{
+      let b = document.getElementById('js-error-banner');
+      if(!b){
+        b = document.createElement('div');
+        b.id = 'js-error-banner';
+        b.setAttribute('role','status');
+        b.style.position = 'sticky'; b.style.top = '0'; b.style.left='0'; b.style.right='0';
+        b.style.padding='8px 12px'; b.style.borderBottom='1px solid #1f2937';
+        b.style.background = ok===false ? '#3b0d0d' : '#0b1017';
+        b.style.color = ok===false ? '#ffd6d6' : '#d6e6ff';
+        document.body.prepend(b);
+      }
+      b.textContent = (ok===false ? '❌ ' : '✅ ') + msg;
+      clearTimeout(b._hide);
+      b._hide = setTimeout(()=>{ try{ b.remove(); }catch(_){ b.style.display='none'; } }, 1600);
+    }catch(_){}
+  }
+
+  function applySilent(data){
+    const notHidden = el => (el.offsetParent || el.type === 'hidden');
+    for(const k in data){
+      if(!Object.prototype.hasOwnProperty.call(data,k)) continue;
+      if(k === '__materials') continue;
+      const v = data[k];
+      const elById = document.getElementById(k);
+      const els = elById ? [elById] : Array.from(document.querySelectorAll('[name="'+CSS.escape(k)+'"]'));
+      for(const el of els){
+        if(!notHidden(el)) continue;
+        if(el.type === 'radio') el.checked = (String(el.value) === String(v));
+        else if(el.type === 'checkbox') el.checked = !!v;
+        else el.value = String(v);
+      }
+    }
+    if(Array.isArray(data.__materials)){
+      const tbody = document.getElementById('matTbody');
+      if(tbody){
+        data.__materials.forEach(row=>{
+          const tr = row.id ? tbody.querySelector('tr[data-id="'+row.id+'"]') : null;
+          if(!tr) return;
+          const use = tr.querySelector('.mat_use');
+          const qty = tr.querySelector('.mat_qty');
+          if(use) use.checked = !!row.use;
+          if(qty) qty.value = String(row.qty||'');
+        });
+      }
+    }
+  }
+
+  function buildRecalcTasks(data){
+    const tasks = [];
+    function pushEvt(el, type){ tasks.push(()=>{ try{ el.dispatchEvent(new Event(type, {bubbles:true})); }catch(_){}}); }
+    for(const k in data){
+      if(!Object.prototype.hasOwnProperty.call(data,k)) continue;
+      if(k === '__materials') continue;
+      const elById = document.getElementById(k);
+      const els = elById ? [elById] : Array.from(document.querySelectorAll('[name="'+CSS.escape(k)+'"]'));
+      for(const el of els){
+        if (el.type === 'radio' || el.type === 'checkbox' || el.tagName === 'SELECT'){
+          pushEvt(el, 'change');
+        } else {
+          // For text/number inputs, prefer a single 'change' (lighter than input flood)
+          pushEvt(el, 'change');
+        }
+      }
+    }
+    if(Array.isArray(data.__materials)){
+      const tbody = document.getElementById('matTbody');
+      if(tbody){
+        data.__materials.forEach(row=>{
+          const tr = row.id ? tbody.querySelector('tr[data-id="'+row.id+'"]') : null;
+          if(!tr) return;
+          const use = tr.querySelector('.mat_use');
+          const qty = tr.querySelector('.mat_qty');
+          if(use) tasks.push(()=>{ try{ use.dispatchEvent(new Event('change', {bubbles:true})); }catch(_){} });
+          if(qty){ tasks.push(()=>{ try{ qty.dispatchEvent(new Event('change', {bubbles:true})); }catch(_){} }); }
+        });
+      }
+    }
+    // Deduplicate by same element + type (avoid multiple events per control)
+    const seen = new WeakMap();
+    const deduped = [];
+    for(const fn of tasks){
+      deduped.push(fn); // functions are unique; keep simple
+    }
+    return deduped;
+  }
+
+  function runTasksThrottled(tasks, opts){
+    opts = Object.assign({batch: 25, timeout: 7000}, opts||{});
+    const idle = window.requestIdleCallback || function(fn){ return setTimeout(()=>fn({timeRemaining:()=>5, didTimeout:true}), 16); };
+    const cancelIdle = window.cancelIdleCallback || clearTimeout;
+    let cancelled = false;
+    let start = Date.now();
+    function cancel(){ cancelled = true; }
+    function onUser(){ cancel(); window.removeEventListener('pointerdown', onUser, true); window.removeEventListener('keydown', onUser, true); }
+    window.addEventListener('pointerdown', onUser, true);
+    window.addEventListener('keydown', onUser, true);
+
+    function step(){
+      if(cancelled) return;
+      if(Date.now() - start > opts.timeout){ cancel(); return; }
+      let n=0;
+      while(n<opts.batch && tasks.length){
+        try{ tasks.shift()(); }catch(_){}
+        n++;
+      }
+      if(tasks.length && !cancelled){
+        idle(step);
+      }else{
+        window.removeEventListener('pointerdown', onUser, true);
+        window.removeEventListener('keydown', onUser, true);
+      }
+    }
+    idle(step);
+    return cancel;
+  }
+
+  function safeLoad(doRecalc=true){
+    let raw = null;
+    try{ raw = localStorage.getItem(KEY_PRIMARY) || localStorage.getItem(KEY_COMPAT); }catch(_){}
+    if(!raw){ banner('No saved state found', false); return; }
+    let data = null;
+    try{ data = JSON.parse(raw); }catch(e){ banner('Saved state is corrupted', false); return; }
+    applySilent(data);
+    banner('Loaded (values applied)');
+    if(!doRecalc) return;
+    const tasks = buildRecalcTasks(data);
+    // If the set is huge, default to safe mode and let the user opt-in
+    if(tasks.length > 150){
+      // Show a small button near tray to apply heavy recalc
+      try{
+        let btn = document.getElementById('tm-apply-recalc');
+        if(!btn){
+          btn = document.createElement('button');
+          btn.id = 'tm-apply-recalc';
+          btn.textContent = 'Apply Recalc';
+          btn.title = 'Run a full recalculation (throttled)';
+          btn.style.position = 'fixed'; btn.style.top = '70px'; btn.style.right = '14px';
+          btn.style.zIndex = 2147483001; btn.style.background = '#111826'; btn.style.color = '#e6eeff';
+          btn.style.border = '1px solid #1f2937'; btn.style.borderRadius = '10px'; btn.style.padding = '6px 10px';
+          document.body.appendChild(btn);
+          btn.addEventListener('click', function(){
+            btn.disabled = true; btn.textContent = 'Recalculating…';
+            runTasksThrottled(tasks, {batch:25, timeout:8000});
+            setTimeout(()=>{ try{ btn.remove(); }catch(_){} }, 1500);
+            banner('Recalc started (throttled)');
+          });
+        }
+      }catch(_){}
+      return;
+    }
+    // For manageable sets, do the throttled recalc immediately
+    runTasksThrottled(tasks, {batch:25, timeout:6000});
+  }
+
+  // Override existing Load click with our safe loader
+  document.addEventListener('DOMContentLoaded', function(){
+    const loadBtn = document.getElementById('tm-load');
+    if(loadBtn){
+      const clone = loadBtn.cloneNode(true);
+      loadBtn.parentNode.replaceChild(clone, loadBtn);
+      clone.addEventListener('click', function(){ safeLoad(true); });
+    }
+  }, {once:true});
+})();
+</script>
+
+<script id="tm-sections-button-boost-js">
+(function(){
+  try{
+    var btn = document.getElementById('tm-quicknav-toggle');
+    if(!btn) return;
+    var KEY = 'tm_sections_btn_seen';
+    if(!sessionStorage.getItem(KEY)){
+      btn.classList.add('attn');
+      setTimeout(function(){ btn.classList.remove('attn'); }, 4000);
+      sessionStorage.setItem(KEY, '1');
+    }
+    // Also remove attention state when the drawer opens
+    btn.addEventListener('click', function(){
+      btn.classList.remove('attn');
+    });
+  }catch(_){}
+})();
+</script>
+
 </body>
 </html>
