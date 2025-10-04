@@ -733,6 +733,55 @@ button[aria-label="Sections"]:focus-visible{
   outline-offset: 2px;
 }
 </style>
+
+<style id="mobile-enhancements">
+/* --- Mobile-first polish (≤ 840px) --- */
+:root{
+  /* gentle type scaling with clamp */
+  --fs-body: clamp(14px, 2.5vw, 16px);
+  --fs-small: clamp(12px, 2.2vw, 14px);
+}
+@media (max-width: 840px){
+  html, body { font-size: var(--fs-body); }
+  .wrap{ max-width: 100%; padding: 12px 12px 160px; }
+  .row{ display:flex; flex-direction: column; align-items: stretch; gap: 10px; }
+  .group{ flex-wrap: wrap; gap: 8px; }
+  .card{ margin: 12px 0 !important; padding: 12px !important; border-radius: 14px !important; }
+  h2, h3, h4 { margin: 4px 0 8px; line-height: 1.2; }
+  label{ width: 100%; display: block; font-size: var(--fs-small); }
+  input, select, textarea{
+    width: 100%; max-width: 100%;
+    font-size: 16px;              /* prevents iOS zoom-on-focus */
+  }
+  input[type="number"]{ width: 100% !important; }
+  /* Pills/buttons: bigger touch targets */
+  .pill{ width: 100%; justify-content: flex-start; padding: 10px 12px; }
+  button{ width: 100%; padding: 12px 14px; font-size: 16px; }
+  /* Make tab bars & long button rows scrollable horizontally */
+  .a11y-tabs [role="tablist"]{ overflow-x: auto; white-space: nowrap; padding-bottom: 4px; }
+  /* Tables: allow horizontal scroll when needed */
+  table{ display:block; overflow-x:auto; white-space: nowrap; font-size: var(--fs-small); }
+  th, td{ padding: 8px 8px; }
+  /* Keep bottom sticky from covering content */
+  .sticky{ bottom: 0; }
+  .sticky-inner{ flex-direction: column; align-items: stretch; gap: 8px; }
+  /* Hide heavy debug UI on phones */
+  #js-error-banner, #bw_diag, details[open]#bw_diag { display: none !important; }
+  /* Reposition tray so it doesn't collide with headers */
+  #tm-tray{ position: fixed !important; top: 12px !important; right: 12px !important; }
+  #tm-tray .card{ padding: 6px 8px; }
+  /* Prevent oversized selects from forcing page width */
+  select{ min-width: 0 !important; }
+}
+/* Improve accessibility on touch devices */
+@media (pointer: coarse){
+  .pill input[type="checkbox"], .pill input[type="radio"]{ transform: scale(1.15); margin-right: 6px; }
+  button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible{
+    outline: 2px solid #0ea5e9; outline-offset: 2px;
+  }
+}
+</style>
+
 </head>
 <body>
 <div style="position:sticky; top:0; z-index:1000; background:inherit; padding:6px 12px; font:600 12px system-ui; color:#0a6c2f;">✅ JS loaded and running</div>
@@ -7785,6 +7834,17 @@ document.addEventListener('DOMContentLoaded', function() {
       btn.classList.remove('attn');
     });
   }catch(_){}
+})();
+</script>
+
+
+<script id="device-flag">
+(function(){
+  try{
+    var isMobile = window.matchMedia("(max-width: 840px)").matches || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+    document.documentElement.setAttribute("data-device", isMobile ? "mobile" : "desktop");
+    document.body && document.body.setAttribute("data-device", isMobile ? "mobile" : "desktop");
+  }catch(e){ /* no-op */ }
 })();
 </script>
 
