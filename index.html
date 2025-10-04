@@ -485,6 +485,254 @@ body:not([data-active-group]) .wrap .card[data-card-stucco]{ display:block !impo
   }
 </style>
 
+
+<style>
+
+#tm-tray {
+  position: absolute; /* pinned to page top-right; scrolls away with content */
+  top: 10px;
+  right: 10px;
+  z-index: 10;
+  font-family: system-ui, Segoe UI, Roboto, Arial, sans-serif;
+}
+#tm-tray .card{
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
+#tm-tray button{
+  font-size: 12px;
+  line-height: 1;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  cursor: pointer;
+}
+#tm-tray button.ghost{
+  background: #ffffff;
+  border-color: #e2e8f0;
+}
+#tm-tray button:hover{
+  filter: brightness(0.97);
+}
+#tm-tray input[type="file"]{ display:none; }
+
+</style>
+
+<style>
+
+/* --- High-contrast tray buttons (WCAG AA) --- */
+#tm-tray .card{
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
+#tm-tray button{
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 7px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+/* Primary (Save) – dark on light for 4.5:1+ contrast */
+
+
+/* Ghost buttons – outline, dark text on white for 4.5:1+ contrast */
+#tm-tray button.ghost{
+  background: #ffffff;
+  color: #0f172a;         /* dark text */
+  border: 1.5px solid #0f172a;
+}
+#tm-tray button.ghost:hover{
+  background: #f8fafc;
+}
+/* Clear focus ring for keyboard users */
+#tm-tray button:focus-visible{
+  outline: 2px solid #0ea5e9;   /* sky-500 */
+  outline-offset: 2px;
+}
+
+</style>
+
+<style>
+
+/* --- Ensure Save is highly readable --- */
+
+
+
+</style>
+
+<style>
+
+/* --- Turcotte tray: uniform white buttons on black background --- */
+#tm-tray{
+  position: absolute !important;
+  top: 4px !important;
+  right: 68px !important;
+  z-index: 12 !important;
+  font-family: system-ui, Segoe UI, Roboto, Arial, sans-serif;
+}
+#tm-tray .card{
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid #111 !important;
+  background: #000 !important;       /* black background */
+  box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+}
+#tm-tray button{
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+  padding: 8px 12px !important;
+  border-radius: 10px !important;
+  border: 2px solid #0f172a !important;  /* dark outline for definition */
+  background: #fff !important;           /* white button */
+  color: #0f172a !important;             /* dark text */
+  cursor: pointer !important;
+}
+/* Make all buttons identical: remove 'ghost' differences */
+#tm-tray button.ghost{ 
+  background: #fff !important;
+  color: #0f172a !important;
+  border: 2px solid #0f172a !important;
+}
+/* Hover + active states for clarity on black tray */
+#tm-tray button:hover{ 
+  background: #f8fafc !important;
+}
+#tm-tray button:active{ 
+  background: #eef2f7 !important;
+}
+/* Keyboard focus: 2px focus ring at 3:1+ contrast on both black and white */
+#tm-tray button:focus-visible{
+  outline: 2px solid #0ea5e9 !important;  /* sky-500 */
+  outline-offset: 2px !important;
+}
+/* Hide the file input control */
+#tm-tray input[type="file"]{ display:none !important; }
+
+</style>
+
+<style>
+/* Sections button: transparent background, keep all other styling */
+#tm-quicknav-toggle{
+  background: rgba(255,255,255,0.50) !important;
+  color: #4da3ff !important;                 /* keep the accent color readable on dark bg */
+  box-shadow: none !important;               /* remove blue glow from fill */
+  border: 2px solid rgba(77,163,255,.85) !important; /* subtle outline for clarity */
+}
+#tm-quicknav-toggle:hover,
+#tm-quicknav-toggle:active{
+  background: rgba(255,255,255,0.75) !important;
+  box-shadow: none !important;
+}
+</style>
+
+<style>
+/* Sections button: force black text across possible selectors */
+#tm-quicknav-toggle,
+#tm-sections-button-boost,
+#tm-sections-button-boost-js,
+button[aria-label="Sections"]{
+  color: #000000 !important;
+  text-shadow: none !important;
+}
+</style>
+
+<style>
+/* Sections button: gentle outer glow */
+#tm-quicknav-toggle,
+#tm-sections-button-boost,
+#tm-sections-button-boost-js,
+button[aria-label="Sections"]{
+  /* keep the 50% translucent white background and black text from prior build */
+  background: rgba(255,255,255,0.50) !important;
+  color: #000000 !important;
+  border: 1.5px solid rgba(0,0,0,0.55) !important;
+  border-radius: 10px !important;
+  /* layered glow: subtle ring + soft blue halo + drop shadow */
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.35),
+    0 0 22px rgba(77,163,255,0.45),
+    0 6px 16px rgba(0,0,0,0.25) !important;
+  /* optional: shape-aware shadow; complements box-shadow on rounded corners */
+  filter: drop-shadow(0 4px 12px rgba(77,163,255,0.30));
+  backdrop-filter: blur(2px);
+  transition: box-shadow .2s ease, background-color .15s ease, transform .12s ease;
+}
+#tm-quicknav-toggle:hover,
+#tm-sections-button-boost:hover,
+#tm-sections-button-boost-js:hover,
+button[aria-label="Sections"]:hover{
+  background: rgba(255,255,255,0.66) !important;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.45),
+    0 0 28px rgba(77,163,255,0.60),
+    0 8px 18px rgba(0,0,0,0.30) !important;
+}
+</style>
+
+<style>
+/* Remove blue border/halo; keep semi‑transparent bg + black text */
+#tm-quicknav-toggle,
+#tm-sections-button-boost,
+#tm-sections-button-boost-js,
+button[aria-label="Sections"]{
+  /* keep existing base */
+  background: rgba(255,255,255,0.50) !important;
+  color: #000 !important;
+  border: 1.5px solid rgba(0,0,0,0.55) !important;   /* neutral border */
+  /* neutral glow/shadow (no blue tint) */
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.35),
+    0 0 22px rgba(255,255,255,0.35),
+    0 6px 16px rgba(0,0,0,0.25) !important;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.25));   /* neutral drop shadow */
+}
+#tm-quicknav-toggle:hover,
+#tm-sections-button-boost:hover,
+#tm-sections-button-boost-js:hover,
+button[aria-label="Sections"]:hover{
+  background: rgba(255,255,255,0.66) !important;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.45),
+    0 0 28px rgba(255,255,255,0.45),
+    0 8px 18px rgba(0,0,0,0.30) !important;
+}
+</style>
+
+<style>
+/* Sections button: remove border entirely; keep background & glow */
+#tm-quicknav-toggle,
+#tm-sections-button-boost,
+#tm-sections-button-boost-js,
+button[aria-label="Sections"]{
+  border: none !important;
+}
+/* Optional: keep a clear focus ring for keyboard users */
+#tm-quicknav-toggle:focus-visible,
+#tm-sections-button-boost:focus-visible,
+#tm-sections-button-boost-js:focus-visible,
+button[aria-label="Sections"]:focus-visible{
+  outline: 2px solid #0ea5e9;
+  outline-offset: 2px;
+}
+</style>
 </head>
 <body>
 <div style="position:sticky; top:0; z-index:1000; background:inherit; padding:6px 12px; font:600 12px system-ui; color:#0a6c2f;">✅ JS loaded and running</div>
@@ -1066,8 +1314,8 @@ var tbody = document.getElementById('matTbody');
         dbg.push('area_sf='+fmt(area_sf,2));
         dbg.push('unitsPerSf='+unitsPerSf);
         dbg.push('blocks='+fmt(blocks,2)+' → order='+blocks_waste);
-        dbg.push('vert_bars='+vert_bars_count+' @ '+fmt(bar_len_ft,2)+' ft ('+fmt(rebar_lf,1)+' LF)');
-        dbg.push('grout_ft3='+fmt(grout_ft3,2)+' ('+fmt(grout_yd3,3)+' yd³)');
+        dbg.push('vert_bars='+vert_bars+' @ '+fmt(bar_len_ft,2)+' ft ('+fmt(rebar_lf,1)+' LF)');
+        dbg.push('groutFt3='+fmt(groutFt3,2)+' ('+fmt(groutYd3,3)+' yd³)');
         dbg.push('bond_beam_units='+bond_beam_units+', courses='+bondCourses);
         pre.textContent = dbg.join('\n');
       }
@@ -7069,7 +7317,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <style>
   /* Top-right Save tray (restored) */
-  #tm-tray { position: fixed; top: 14px; right: 14px; z-index: 2147483000; font-family: system-ui, Segoe UI, Roboto, Arial, sans-serif; }
+  #tm-tray {
+#tm-tray {
+  position: absolute; /* pinned to page top-right; scrolls away with content */
+  top: 10px;
+  right: 10px;
+  z-index: 10;
+  font-family: system-ui, Segoe UI, Roboto, Arial, sans-serif;
+}
 #tm-tray .card { background:#000000; border:1px solid #1f2937; border-radius:12px; box-shadow:0 10px 24px rgba(0,0,0,.28); padding:10px; display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
   #tm-tray button{ background:#4da3ff; color:#041425; border:0; padding:8px 10px; border-radius:10px; font-weight:600; cursor:pointer; }
   #tm-tray button.ghost{ background:#111826; color:#e6eeff; border:1px solid #1f2937; }
@@ -7077,7 +7332,7 @@ document.addEventListener('DOMContentLoaded', function() {
   @media (prefers-color-scheme: light){ /* keep tray dark in light mode */ }
     #tm-tray button.ghost{ background:#111826; color:#e6eeff; border:1px solid #1f2937; }
   }
-  @media print{ #tm-tray{ display:none !important; } }
+  @media print{  }
 </style>
 
 <div id="tm-tray" aria-label="Estimator tools">
@@ -7174,41 +7429,36 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function dispatchBatched(data){
-    const tasks = [];
-    const pushEvt = (el, type) => tasks.push(()=> el.dispatchEvent(new Event(type, {bubbles:true})));
-    for(const [k, v] of Object.entries(data)){
-      if(k === '__materials') continue;
-      const elById = document.getElementById(k);
-      const els = elById ? [elById] : Array.from(document.querySelectorAll('[name="'+CSS.escape(k)+'"]'));
-      for(const el of els){
-        if(el.type === 'radio' || el.type === 'checkbox') pushEvt(el, 'change');
-        else { pushEvt(el, 'input'); pushEvt(el, 'change'); }
+
+  try{
+    // Apply __materials silently (no events)
+    if (data && Array.isArray(data.__materials)){
+      var tbody = document.getElementById('matTbody');
+      if (tbody){
+        for (var i=0; i<data.__materials.length; i++){
+          var row = data.__materials[i];
+          if (!row || !row.id) continue;
+          var tr = tbody.querySelector('tr[data-id="'+row.id+'"]');
+          if (!tr) continue;
+          var use = tr.querySelector('.mat_use');
+          var qty = tr.querySelector('.mat_qty');
+          if (use) use.checked = !!row.use;
+          if (qty) qty.value = (row.qty==null ? '' : String(row.qty));
+          var priceEl = tr.querySelector('[data-price]');
+          if (priceEl && row.price != null) priceEl.setAttribute('data-price', String(row.price));
+        }
       }
     }
-    if(Array.isArray(data.__materials)){
-      const tbody = document.getElementById('matTbody');
-      if(tbody){
-        data.__materials.forEach(row=>{
-          const tr = row.id ? tbody.querySelector('tr[data-id="'+row.id+'"]') : null;
-          if(!tr) return;
-          const use = tr.querySelector('.mat_use');
-          const qty = tr.querySelector('.mat_qty');
-          if(use) tasks.push(()=> use.dispatchEvent(new Event('change', {bubbles:true})));
-          if(qty){ tasks.push(()=> qty.dispatchEvent(new Event('input', {bubbles:true}))); tasks.push(()=> qty.dispatchEvent(new Event('change', {bubbles:true}))); }
-        });
-      }
+  }catch(e){ /* ignore */ }
+  // Single final calc on next frame
+  try {
+    if (typeof window.calc === 'function'){
+      requestAnimationFrame(function(){ try{ window.calc(); }catch(_){} });
     }
-    const idle = window.requestIdleCallback || function(fn){ return setTimeout(()=>fn({timeRemaining:()=>5, didTimeout:true}), 0); };
-    function run(){
-      let n=0;
-      while(n<30 && tasks.length){
-        try{ tasks.shift()(); }catch(_){}
-        n++;
-      }
-      if(tasks.length) idle(run);
-    }
-    idle(run);
-  }
+  } catch(_){}
+
+}
+
 
   document.addEventListener('DOMContentLoaded', function(){
     // Wire Save/Load/Export/Import/Reset/Print
@@ -7451,73 +7701,23 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function buildRecalcTasks(data){
-    const tasks = [];
-    function pushEvt(el, type){ tasks.push(()=>{ try{ el.dispatchEvent(new Event(type, {bubbles:true})); }catch(_){}}); }
-    for(const k in data){
-      if(!Object.prototype.hasOwnProperty.call(data,k)) continue;
-      if(k === '__materials') continue;
-      const elById = document.getElementById(k);
-      const els = elById ? [elById] : Array.from(document.querySelectorAll('[name="'+CSS.escape(k)+'"]'));
-      for(const el of els){
-        if (el.type === 'radio' || el.type === 'checkbox' || el.tagName === 'SELECT'){
-          pushEvt(el, 'change');
-        } else {
-          // For text/number inputs, prefer a single 'change' (lighter than input flood)
-          pushEvt(el, 'change');
-        }
-      }
-    }
-    if(Array.isArray(data.__materials)){
-      const tbody = document.getElementById('matTbody');
-      if(tbody){
-        data.__materials.forEach(row=>{
-          const tr = row.id ? tbody.querySelector('tr[data-id="'+row.id+'"]') : null;
-          if(!tr) return;
-          const use = tr.querySelector('.mat_use');
-          const qty = tr.querySelector('.mat_qty');
-          if(use) tasks.push(()=>{ try{ use.dispatchEvent(new Event('change', {bubbles:true})); }catch(_){} });
-          if(qty){ tasks.push(()=>{ try{ qty.dispatchEvent(new Event('change', {bubbles:true})); }catch(_){} }); }
-        });
-      }
-    }
-    // Deduplicate by same element + type (avoid multiple events per control)
-    const seen = new WeakMap();
-    const deduped = [];
-    for(const fn of tasks){
-      deduped.push(fn); // functions are unique; keep simple
-    }
-    return deduped;
-  }
 
-  function runTasksThrottled(tasks, opts){
-    opts = Object.assign({batch: 25, timeout: 7000}, opts||{});
-    const idle = window.requestIdleCallback || function(fn){ return setTimeout(()=>fn({timeRemaining:()=>5, didTimeout:true}), 16); };
-    const cancelIdle = window.cancelIdleCallback || clearTimeout;
-    let cancelled = false;
-    let start = Date.now();
-    function cancel(){ cancelled = true; }
-    function onUser(){ cancel(); window.removeEventListener('pointerdown', onUser, true); window.removeEventListener('keydown', onUser, true); }
-    window.addEventListener('pointerdown', onUser, true);
-    window.addEventListener('keydown', onUser, true);
+  // Bypass building any tasks; import will trigger a single calc instead.
+  return [];
 
-    function step(){
-      if(cancelled) return;
-      if(Date.now() - start > opts.timeout){ cancel(); return; }
-      let n=0;
-      while(n<opts.batch && tasks.length){
-        try{ tasks.shift()(); }catch(_){}
-        n++;
-      }
-      if(tasks.length && !cancelled){
-        idle(step);
-      }else{
-        window.removeEventListener('pointerdown', onUser, true);
-        window.removeEventListener('keydown', onUser, true);
-      }
+}
+
+
+  function /*shim:*/window.calc&&requestAnimationFrame(window.calc), /*orig:*/ runTasksThrottled(tasks, opts){
+
+  try {
+    if (typeof window.calc === 'function'){
+      requestAnimationFrame(function(){ try{ window.calc(); }catch(_){} });
     }
-    idle(step);
-    return cancel;
-  }
+  } catch(_){}
+
+}
+
 
   function safeLoad(doRecalc=true){
     let raw = null;
@@ -7545,7 +7745,7 @@ document.addEventListener('DOMContentLoaded', function() {
           document.body.appendChild(btn);
           btn.addEventListener('click', function(){
             btn.disabled = true; btn.textContent = 'Recalculating…';
-            runTasksThrottled(tasks, {batch:25, timeout:8000});
+            /*shim:*/window.calc&&requestAnimationFrame(window.calc), /*orig:*/ runTasksThrottled(tasks, {batch:25, timeout:8000});
             setTimeout(()=>{ try{ btn.remove(); }catch(_){} }, 1500);
             banner('Recalc started (throttled)');
           });
@@ -7554,7 +7754,7 @@ document.addEventListener('DOMContentLoaded', function() {
       return;
     }
     // For manageable sets, do the throttled recalc immediately
-    runTasksThrottled(tasks, {batch:25, timeout:6000});
+    /*shim:*/window.calc&&requestAnimationFrame(window.calc), /*orig:*/ runTasksThrottled(tasks, {batch:25, timeout:6000});
   }
 
   // Override existing Load click with our safe loader
